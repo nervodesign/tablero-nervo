@@ -90,3 +90,6 @@
 
 /* tema visual: se carga al final para que gane */
 (function(){function t(){if(document.getElementById("nv-tema-l"))return;var l=document.createElement("link");l.id="nv-tema-l";l.rel="stylesheet";l.href="tema.css?v="+Math.floor(Date.now()/600000);document.body.appendChild(l);}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",t);else t();})();
+
+/* siempre claro */
+(function(){try{localStorage.setItem("hub_theme","light")}catch(e){}var h=document.documentElement;function L(){if(h.getAttribute("data-theme")!=="light")h.setAttribute("data-theme","light");}L();new MutationObserver(L).observe(h,{attributes:true,attributeFilter:["data-theme"]});document.addEventListener("DOMContentLoaded",function(){var b=document.getElementById("themeBtn");if(b)b.style.display="none";});})();
