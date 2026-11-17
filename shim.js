@@ -93,3 +93,6 @@
 
 /* siempre claro */
 (function(){try{localStorage.setItem("hub_theme","light")}catch(e){}var h=document.documentElement;function L(){if(h.getAttribute("data-theme")!=="light")h.setAttribute("data-theme","light");}L();new MutationObserver(L).observe(h,{attributes:true,attributeFilter:["data-theme"]});document.addEventListener("DOMContentLoaded",function(){var b=document.getElementById("themeBtn");if(b)b.style.display="none";});})();
+
+/* chat tipo Slack */
+(function(){function t(){if(document.getElementById('nv-chat-l'))return;var v=Date.now();var l=document.createElement('link');l.id='nv-chat-l';l.rel='stylesheet';l.href='chat.css?v='+v;document.body.appendChild(l);var s=document.createElement('script');s.src='chat-plus.js?v='+v;document.body.appendChild(s);}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',t);else t();})();
