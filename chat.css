@@ -1,0 +1,59 @@
+
+/* ===== Chat tipo Slack ===== */
+html:not(#nv) .chw{border-radius:24px!important;box-shadow:0 1px 2px rgba(58,36,28,.04),0 8px 24px rgba(58,36,28,.06)!important;border:0!important;overflow:hidden}
+/* lista de canales */
+html:not(#nv) .chw .chc{background:#F8F2EC!important;border-right:1px solid #F0E6DD!important}
+html:not(#nv) .chw .cht{font-size:10px!important;letter-spacing:.2em!important;color:#B7A293!important;font-weight:500!important}
+html:not(#nv) .chw .chb{border-radius:10px!important;padding:7px 10px!important;margin:1px 0!important;background:transparent!important;transition:background .15s!important}
+html:not(#nv) .chw .chb:hover{background:rgba(255,255,255,.75)!important}
+html:not(#nv) .chw .chb.on{background:#59392D!important;box-shadow:0 6px 14px -8px rgba(89,57,45,.6)!important}
+html:not(#nv) .chw .chb.on *{color:#fff!important}
+html:not(#nv) .chw .chb.on .chp{color:rgba(255,255,255,.75)!important}
+html:not(#nv) .chw .chb .chl1{font-weight:500!important}
+html:not(#nv) .chw .chb .chl1::before{content:"# ";opacity:.45;font-weight:400}
+html:not(#nv) .chw .chdmt~.chb .chl1::before{content:none}
+html:not(#nv) .chw .chb .chn{background:#9A5F5A!important;color:#fff!important;border-radius:10px!important;font-weight:600!important}
+html:not(#nv) .chw .chb .chi{border-radius:4px!important;width:9px!important;height:9px!important}
+html:not(#nv) .chw .chsq{border-radius:10px!important;background:#fff!important;border:1px solid #F0E6DD!important}
+/* encabezado del canal */
+html:not(#nv) .chw .chtt{border-bottom:1px solid #F0E6DD!important;padding:14px 20px!important;display:flex;align-items:center;gap:8px;font-size:16px}
+html:not(#nv) .chw .chtt b::before{content:"# ";color:#C7B6A8;font-weight:400}
+html:not(#nv) .nvbell{margin-left:auto;font:inherit;font-size:12.5px;border:1px solid #F0E6DD;background:#fff;color:#6C4D38;border-radius:20px;padding:5px 12px;cursor:pointer}
+html:not(#nv) .nvbell.on{background:#EEF3EC;border-color:#EEF3EC;color:#5B6E57}
+/* mensajes */
+html:not(#nv) .chw .chlist{padding:8px 0!important}
+html:not(#nv) .chw .chmsg{position:relative;padding:6px 22px 6px 66px!important;margin:0!important;border-radius:0!important;transition:background .12s}
+html:not(#nv) .chw .chmsg:hover{background:#FAF5F0!important}
+html:not(#nv) .chw .chmsg .chav{position:absolute;left:20px;top:8px;width:36px!important;height:36px!important;border-radius:10px!important;font-size:14px!important}
+html:not(#nv) .chw .chmsg .chh{display:flex;align-items:baseline;gap:8px}
+html:not(#nv) .chw .chmsg .chh b{color:#3A241C!important;font-weight:700!important;font-size:15px}
+html:not(#nv) .chw .chmsg .chh>span:not(.chav){color:#A8968A!important;font-size:12px!important}
+html:not(#nv) .chw .chmsg .chh button{position:absolute;top:-12px;opacity:0;pointer-events:none;background:#fff!important;border:1px solid #F0E6DD!important;border-radius:8px!important;box-shadow:0 4px 12px rgba(58,36,28,.1)!important;padding:3px 9px!important;font-size:12.5px!important;transition:opacity .12s!important;z-index:2}
+html:not(#nv) .chw .chmsg .chh .chpkb{right:118px}
+html:not(#nv) .chw .chmsg .chh .chhilo{right:20px}
+html:not(#nv) .chw .chmsg:hover .chh button{opacity:1;pointer-events:auto}
+html:not(#nv) .chw .chx{font-size:15px!important;line-height:1.5!important;color:#3A241C!important;white-space:pre-wrap}
+/* mensajes seguidos del mismo autor sin avatar repetido se ven igual: Slack compacto */
+html:not(#nv) .chw .nvf b{font-weight:700}
+html:not(#nv) .chw .nvc{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#F6EFE8;color:#9A5F5A;border:1px solid #F0E6DD;border-radius:5px;padding:1px 5px}
+html:not(#nv) .chw .nvh{display:block;font-size:17px;font-weight:700;margin:2px 0}
+html:not(#nv) .chw .nvli{display:block;padding-left:18px;position:relative}
+html:not(#nv) .chw .nvli::before{content:"•";position:absolute;left:4px;color:#9B6F53}
+html:not(#nv) .chw .nvol::before{content:attr(data-n);left:0;font-size:13px}
+html:not(#nv) .chw .nvq{display:block;border-left:3px solid #E6D7C3;padding-left:12px;color:#6C4D38}
+html:not(#nv) .chw .nvf a{color:#4F6B80;text-decoration:underline}
+/* fijados: destacados */
+html:not(#nv) .chw .chpins{background:#FBF4EC!important;border-bottom:1px solid #F0E6DD!important}
+/* caja para escribir */
+html:not(#nv) .chw form.chf{margin:8px 18px 16px!important;border:1.5px solid #E6D7C3!important;border-radius:14px!important;background:#fff!important;padding:6px 8px!important;display:flex!important;flex-wrap:wrap!important;align-items:center;gap:4px;box-shadow:none!important;transition:border-color .2s,box-shadow .2s}
+html:not(#nv) .chw form.chf:focus-within{border-color:#CBB4A0!important;box-shadow:0 0 0 4px #F6EFE8!important}
+html:not(#nv) .chw form.chf .nvtb{flex-basis:100%;display:flex;gap:2px;align-items:center;padding:2px 2px 6px;border-bottom:1px solid #F6EFE9;margin-bottom:2px}
+html:not(#nv) .chw .nvtb button{min-width:30px;height:28px;border:0;background:transparent;border-radius:7px;color:#6C4D38;font:inherit;font-size:14px;cursor:pointer}
+html:not(#nv) .chw .nvtb button:hover{background:#F6EFE8}
+html:not(#nv) .chw .nvtb .nvsep{width:1px;height:16px;background:#F0E6DD;margin:0 4px}
+html:not(#nv) .chw form.chf textarea{flex:1;border:0!important;box-shadow:none!important;background:transparent!important;min-height:40px;padding:8px 6px!important;font-size:15px!important;order:3}
+html:not(#nv) .chw form.chf .chatt{order:2}
+html:not(#nv) .chw form.chf .chsend{order:4;background:#59392D!important;border-radius:10px!important}
+/* aviso dentro de la app, tipo WhatsApp */
+html:not(#nv) .chnot{background:#fff!important;border:0!important;border-radius:18px!important;box-shadow:0 2px 6px rgba(58,36,28,.08),0 20px 50px rgba(58,36,28,.2)!important;color:#3A241C!important}
+html:not(#nv) .nvtoast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#3A241C;color:#fff;padding:12px 18px;border-radius:14px;font-size:14px;z-index:99999;max-width:90vw}
