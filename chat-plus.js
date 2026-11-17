@@ -35,8 +35,9 @@
     });
   }
   function limpiarPrevia(el){
-    if (!/\*\*|__|~~|`|(^|:\s*)#{1,3}\s|(^|\s)[*_~][^\s]/.test(el.textContent)) return;
-    el.textContent = el.textContent.replace(/\*\*|__|~~|`/g, "").replace(/(^|\s)[*_~]([^*_~]+)[*_~]/g, "$1$2").replace(/(^|:\s*)#{1,3}\s+/, "$1");
+    var t = el.textContent;
+    var nt = t.replace(/\*\*|__|~~|`/g, "").replace(/(^|\s)[*_~]([^*_~\s][^*_~]*)[*_~]/g, "$1$2").replace(/(^|:\s*)#{1,3}\s+/, "$1");
+    if (nt !== t) el.textContent = nt;
   }
 
   /* ---------- barra de formato ---------- */
