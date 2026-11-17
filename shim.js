@@ -87,3 +87,6 @@
   SB.auth.onAuthStateChange(function(ev){ if (ev === "PASSWORD_RECOVERY") { var n = prompt("Elegí tu nueva contraseña"); if (n) SB.auth.updateUser({ password: n }); } });
   if ("serviceWorker" in navigator) navigator.serviceWorker.getRegistrations().then(function(rs){ rs.forEach(function(r){ r.unregister(); }); }).catch(function(){});
 })();
+
+/* tema visual: se carga al final para que gane */
+(function(){function t(){if(document.getElementById("nv-tema-l"))return;var l=document.createElement("link");l.id="nv-tema-l";l.rel="stylesheet";l.href="tema.css?v="+Math.floor(Date.now()/600000);document.body.appendChild(l);}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",t);else t();})();
