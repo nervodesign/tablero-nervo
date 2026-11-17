@@ -35,9 +35,8 @@
     });
   }
   function limpiarPrevia(el){
-    if (el.dataset.nvf) return; el.dataset.nvf = 1;
-    var nt = el.textContent.replace(/\*\*|__|~~|`/g, "").replace(/(^|\s)[*_~]([^*_~]+)[*_~]/g, "$1$2").replace(/(^|:\s*)#{1,3}\s+/, "$1");
-    if (nt !== el.textContent) el.textContent = nt;
+    if (!/\*\*|__|~~|`|(^|:\s*)#{1,3}\s|(^|\s)[*_~][^\s]/.test(el.textContent)) return;
+    el.textContent = el.textContent.replace(/\*\*|__|~~|`/g, "").replace(/(^|\s)[*_~]([^*_~]+)[*_~]/g, "$1$2").replace(/(^|:\s*)#{1,3}\s+/, "$1");
   }
 
   /* ---------- barra de formato ---------- */
@@ -137,7 +136,7 @@
   /* ---------- observar la app ---------- */
   function pasar(raiz){
     (raiz.querySelectorAll ? raiz : document).querySelectorAll(".chx:not([data-nvf])").forEach(formatear);
-    (raiz.querySelectorAll ? raiz : document).querySelectorAll(".chp:not([data-nvf])").forEach(limpiarPrevia);
+    (raiz.querySelectorAll ? raiz : document).querySelectorAll(".chp").forEach(limpiarPrevia);
     document.querySelectorAll("form.chf").forEach(barra);
     document.querySelectorAll(".chtt").forEach(botonAvisos);
   }
