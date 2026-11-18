@@ -96,3 +96,6 @@
 
 /* chat tipo Slack */
 (function(){function t(){if(document.getElementById('nv-chat-l'))return;var v=Date.now();var l=document.createElement('link');l.id='nv-chat-l';l.rel='stylesheet';l.href='chat.css?v='+v;document.body.appendChild(l);var s=document.createElement('script');s.src='chat-plus.js?v='+v;document.body.appendChild(s);}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',t);else t();})();
+
+/* Hoy con el diseño nuevo */
+(function(){function t(){if(document.getElementById('nv-hoy-l'))return;var v=Date.now();var l=document.createElement('link');l.id='nv-hoy-l';l.rel='stylesheet';l.href='hoy.css?v='+v;document.body.appendChild(l);var s=document.createElement('script');s.src='hoy-plus.js?v='+v;document.body.appendChild(s);}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',t);else t();})();
