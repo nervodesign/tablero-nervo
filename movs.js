@@ -295,6 +295,13 @@
     (r.falta || []).forEach(function(t){ sub.append(h("span", "nvmov-al", "Falta: " + t)); });
     if (r.estado === "procesando") sub.append(h("span", "nvmov-al", "⏳ Leyendo…"));
     if (r.estado === "aprobado") sub.append(h("span", "nvmov-apro", "✓ En Finanzas " + (NOM[r.por] || "") + (r.aprobado_por ? " · aprobó " + (NOM[r.aprobado_por] || r.aprobado_por) : "")));
+    if (r.estado === "pendiente"){
+      var bo = h("button", "nvmov-ok", r.por ? "Aprobar · cargar en Finanzas " + NOM[r.por] : "Aprobar · elegí a quién se carga"); bo.type = "button";
+      bo.title = "Confirma que está bien y lo carga en Finanzas";
+      bo.onclick = function(){ ck.checked = true; ck.dispatchEvent(new Event("change")); };
+      qu.addEventListener("change", function(){ bo.textContent = qu.value ? "Aprobar · cargar en Finanzas " + NOM[qu.value] : "Aprobar · elegí a quién se carga"; });
+      sub.append(bo);
+    }
     w.append(sub);
     return w;
   }
@@ -353,10 +360,10 @@
     if (!v.cliente){ toast("Falta el cliente."); return Promise.reject(); }
     if (!quienDeCobro(v.cobro)){ toast("Elegí quién cobró (Euge o Pau)."); return Promise.reject(); }
     if (!Number(v.cobrado || v.facturar)){ toast("Falta el total."); return Promise.reject(); }
-    var paso;
+    var paso, conFin = FIN[it.id] !== false;
     if (it.src === "web"){
       paso = new Promise(function(ok, mal){ google.script.run.withSuccessHandler(ok).withFailureHandler(mal).baseGuardarVarios("base_min", [{ id: v.id, env: "PARA HACER", cambiado: Date.now(), por: SOY }]); })
-        .then(function(){ v.env = "PARA HACER"; return crearPlata(v); });
+        .then(function(){ v.env = "PARA HACER"; return conFin ? crearPlata(v) : null; });
     } else {
       var id = "min" + Date.now(), num = v.num || proxNumWhats();
       var fila = { id: id, num: num, venta: num, env: "PARA HACER", prods: v.prods || "[]", cant: v.cant || "", obs: v.obs || "", fecha: v.fecha || diaDe(Date.now()), cliente: v.cliente, datos: v.datos || "",
@@ -364,9 +371,9 @@
         cobro: v.cobro || "[]", fact: v.fact || "", web: "", creado: Date.now(), cambiado: Date.now(), por: SOY };
       paso = new Promise(function(ok, mal){ google.script.run.withSuccessHandler(ok).withFailureHandler(mal).baseGuardarVarios("base_min", [fila]); })
         .then(function(){ baseMin().push(fila); return guardar(it.mov, { estado: "aprobado", aprobado_por: SOY, aprobado_at: new Date().toISOString(), cargado: "base_min:" + id }); })
-        .then(function(){ return crearPlata(Object.assign({}, fila)); });
+        .then(function(){ return conFin ? crearPlata(Object.assign({}, fila)) : null; });
     }
-    return paso.then(function(){ toast("Venta aprobada: pasó a Ventas minoristas. La plata quedó para aprobar abajo."); pintar(); });
+    return paso.then(function(){ toast(conFin ? "Venta aprobada: pasó a Ventas minoristas. El cobro quedó abajo para aprobarlo en Finanzas." : "Venta aprobada: pasó a Ventas minoristas (sin Finanzas)."); pintar(); });
   }
   function pintarVentas(p, lista){
     if (!lista.length){ var v = h("div", "nvmov-vacio"); v.append(h("b", null, "No hay ventas para revisar 🎉"), h("small", null, "Las de Tienda Nube aparecen solas. Las de WhatsApp o Instagram mandalas a #movimientos, por ejemplo: “Venta Juana Pérez $85.000 transferencia por Pau”.")); p.append(v); return; }
@@ -376,6 +383,33 @@
     tb.append(t); p.append(tb);
   }
   function inp(val, ph, cls, on){ var e = h("input", "nvmov-in " + (cls || "")); e.value = val == null ? "" : val; e.placeholder = ph || ""; e.onchange = function(){ on(e.value.trim()); }; return e; }
+  var FIN = {};
+  /* productos tal cual el tablero de ventas: una línea por producto con su cantidad */
+  function cantDe(linea){ var m = /\]\s*(\d+)/.exec(linea || "") || /^\s*(\d+)/.exec(linea || ""); return m ? m[1] : "1"; }
+  function listaProds(it){
+    var v = it.row, box = h("div", "nvmov-prods");
+    var ps = arr(v.prods).slice(), cs = String(v.cant || "").split("\n");
+    function guardarTodo(){
+      var lim = []; var cl = [];
+      ps.forEach(function(p, i){ if (!String(p || "").trim()) return; lim.push(p.trim()); var l = cs[i] || "[ ] 1"; cl.push(l); });
+      ps = lim; cs = cl; guardarVenta(it, { prods: JSON.stringify(ps), cant: cs.join("\n") });
+    }
+    function linea(i){
+      var r = h("div", "nvmov-pl");
+      var q = h("input", "nvmov-in nvmov-q"); q.value = cantDe(cs[i]); q.inputMode = "numeric"; q.title = "Cantidad";
+      q.onchange = function(){ var n = String(q.value).replace(/\D/g, "") || "1"; var l = cs[i] || "[ ] 1"; cs[i] = /\]\s*\d+/.test(l) ? l.replace(/(\]\s*)\d+/, "$1" + n) : "[ ] " + n; guardarTodo(); };
+      var p = h("input", "nvmov-in nvmov-pn"); p.value = ps[i] || ""; p.placeholder = "Producto"; p.title = ps[i] || "";
+      p.onchange = function(){ ps[i] = p.value; p.title = p.value; guardarTodo(); if (!p.value.trim()) pintarLista(); };
+      r.append(q, h("span", "nvmov-x1", "×"), p); return r;
+    }
+    function pintarLista(){
+      box.innerHTML = ""; ps.forEach(function(_, i){ box.append(linea(i)); });
+      var mas = h("button", "nvmov-pmas", "+ producto"); mas.type = "button";
+      mas.onclick = function(){ ps.push(""); cs.push("[ ] 1"); pintarLista(); var u = box.querySelectorAll(".nvmov-pn"); if (u.length) u[u.length - 1].focus(); };
+      box.append(mas);
+    }
+    pintarLista(); return box;
+  }
   function filaVenta(it){
     var v = it.row, w = h("div", "nvmov-it"), f = h("div", "nvmov-tr nvmov-vr");
     var ck = h("input"); ck.type = "checkbox"; ck.className = "nvmov-ck"; ck.title = "Aprobar venta";
@@ -384,8 +418,7 @@
     var nu = inp(v.num, it.src === "web" ? "" : "WHATS / INSTA", "up", function(x){ guardarVenta(it, { num: x, venta: x }); });
     var fe = h("input", "nvmov-in"); fe.type = "date"; fe.value = v.fecha || ""; fe.onchange = function(){ guardarVenta(it, { fecha: fe.value }); };
     var cl = inp(v.cliente, "Cliente", "fuerte", function(x){ guardarVenta(it, { cliente: x }); });
-    var pr = inp(arr(v.prods).join(" · "), "Productos", "", function(x){ guardarVenta(it, { prods: JSON.stringify(x.split(/\s*·\s*|\n/).filter(Boolean)) }); });
-    pr.title = arr(v.prods).join("\n");
+    var pr = listaProds(it);
     var to = inp(v.facturar ? Math.round(Number(v.facturar)).toLocaleString("es-AR") : "", "$ total", "tot in", function(x){ guardarVenta(it, { facturar: String(numAR(x) || "") }); });
     var co = inp(v.cobrado && Number(v.cobrado) ? Math.round(Number(v.cobrado)).toLocaleString("es-AR") : "", "$ cobrado", "tot", function(x){ guardarVenta(it, { cobrado: String(numAR(x) || "") }); });
     var me = h("select", "nvmov-in cat"); var mv = arr(v.metodo)[0] || ""; var o0 = h("option", null, "❓ Medio"); o0.value = ""; me.append(o0);
@@ -404,6 +437,17 @@
     if (v.suc) sub.append(h("span", "nvmov-tx", v.suc));
     if (v.cobrado && v.facturar && Number(v.cobrado) && Math.abs(Number(v.cobrado) - Number(v.facturar)) > 1) sub.append(h("span", "nvmov-al", "Cobrado distinto del total"));
     if (!Number(v.cobrado)) sub.append(h("span", "nvmov-al", "Todavía sin cobrar"));
+    var fw = h("label", "nvmov-fin"); var fc = h("input"); fc.type = "checkbox"; fc.checked = FIN[it.id] !== false;
+    var ft = h("span"); function txtFin(){ var q = quienDeCobro(v.cobro); ft.textContent = fc.checked ? "💰 También a Finanzas " + (q === "pau" ? "Pau" : q === "euge" ? "Euge" : "(elegí quién cobró)") : "Solo a Ventas minoristas (sin Finanzas)"; fw.classList.toggle("off", !fc.checked); }
+    fc.onchange = function(){ FIN[it.id] = fc.checked; txtFin(); }; txtFin(); qu.addEventListener("change", txtFin);
+    fw.title = "Al aprobar, la venta pasa a Ventas minoristas. Si está tildado, además se crea el cobro abajo para aprobarlo en Finanzas.";
+    fw.append(fc, ft); sub.prepend(fw);
+    var bv = h("button", "nvmov-ok"); bv.type = "button";
+    function txtBv(){ var q = quienDeCobro(v.cobro); bv.textContent = "Aprobar venta · Ventas minoristas" + (fc.checked ? " + Finanzas " + (q === "pau" ? "Pau" : q === "euge" ? "Euge" : "") : ""); }
+    txtBv(); fc.addEventListener("change", txtBv); qu.addEventListener("change", txtBv);
+    bv.title = "Confirma que la venta está bien cargada";
+    bv.onclick = function(){ ck.checked = true; ck.dispatchEvent(new Event("change")); };
+    sub.append(bv);
     w.append(sub);
     var det = h("div", "nvmov-det"); det.hidden = true;
     function area(lab, val, on){ var l = h("label", "nvmov-f"); var t = h("textarea", "nvmov-in"); t.value = val || ""; t.rows = 3; t.onchange = function(){ on(t.value); }; l.append(h("span", null, lab), t); return l; }
