@@ -2,6 +2,9 @@
 (function(){
   if (window.__nvMov) return; window.__nvMov = 1;
   var SB = window.__sb; if (!SB) return;
+  /* el lector (sin IA) viene en su propio archivo */
+  (function(){ if (window.__nvLector) return; var cs = document.currentScript, v = cs && /[?&]v=(\d+)/.exec(cs.src);
+    var sc = document.createElement("script"); sc.src = "lector.js" + (v ? "?v=" + v[1] : "?t=" + Date.now()); document.head.appendChild(sc); })();
   var CANAL = "mov", DESDE = Date.parse("2026-11-18T00:00:00-03:00");
   var TIPOS = [["venta","Venta minorista","+"],["mayorista","Venta mayorista","+"],["sena","Seña","+"],["pago","Pago","-"],["sueldo","Sueldo","-"],["envio","Envío","-"],["otro","Otro",""]];
   var QUIEN = { "eugeabdon@gmail.com": "euge", "mpauabdon@gmail.com": "pau", "nervodesigncordoba@gmail.com": "nervo" };
@@ -50,6 +53,29 @@
       try { google.script.run.withSuccessHandler(ok).withFailureHandler(mal).iaMovimiento(m.texto || "", m.adj || [], NOM[m.por] || m.por || "", CATS); } catch(e){ mal(e); }
     });
   }
+  function esperarLector(){ return new Promise(function(ok){ (function mirar(n){ if (window.__nvLector || n > 60) ok(); else setTimeout(function(){ mirar(n + 1); }, 250); })(0); }); }
+  var IDX_P = null;
+  function indice(){
+    if (IDX_P) return IDX_P;
+    IDX_P = new Promise(function(ok){
+      try { google.script.run.withSuccessHandler(function(d){ try { window.__nvLector.armarIndice((d.fin_euge || []).concat(d.fin_pau || []), CATS); } catch(e){} ok(); })
+        .withFailureHandler(function(){ window.__nvLector.armarIndice([], CATS); ok(); }).baseLeer(); } catch(e){ ok(); }
+    });
+    return IDX_P;
+  }
+  function ayudaIA(x, m){
+    ia(m).then(function(res){
+      res = res || {}; var c = {};
+      if (!x.monto && Number(res.monto)) c.monto = Number(res.monto);
+      if (!x.por && /^(euge|pau)$/.test(res.por || res.cuenta)) c.por = /^(euge|pau)$/.test(res.por) ? res.por : res.cuenta;
+      if (!x.fecha && /^\d{4}-\d{2}-\d{2}$/.test(res.fecha || "")) c.fecha = res.fecha;
+      if (!x.contraparte && res.contraparte) c.contraparte = res.contraparte;
+      if (!x.cat && catLimpia(res.cat)) c.cat = catLimpia(res.cat);
+      if (!Object.keys(c).length || x.estado !== "pendiente") return;
+      c.falta = (x.falta || []).filter(function(f){ return !((f === "monto" && c.monto) || (f === "a quién se carga" && c.por) || (f === "categoría" && c.cat)); });
+      guardar(x, c);
+    }, function(){});
+  }
   function procesar(){
     var N = window.__nv, S = N && N.S; if (!LISTO || !S || !S.chat || !S.chat.m || !SOY) return;
     var ahora = Date.now();
@@ -64,18 +90,17 @@
         if (r.error) throw r.error; var x = r.data[0]; upsertLocal(x); pintarSuave(); return x;
       });
       paso.then(function(x){
-        return ia(m).then(function(res){
-          res = res || {};
-          var por = /^(euge|pau)$/.test(res.por) ? res.por : (/^(euge|pau)$/.test(res.cuenta) ? res.cuenta : null);
-          var falta = Array.isArray(res.falta) ? res.falta.slice(0, 6) : [];
+        return esperarLector().then(indice).then(function(){
+          var S2 = window.__nv && window.__nv.S;
+          return window.__nvLector.leer(m, (S2 && S2.presupuestos) || []);
+        }).then(function(res){
           return guardar(x, { tipo: tipoDe(res.tipo)[0], cat: catLimpia(res.cat), signo: /^(ingreso|egreso)$/.test(res.signo) ? res.signo : null, monto: Number(res.monto) || null,
-            fecha: /^\d{4}-\d{2}-\d{2}$/.test(res.fecha || "") ? res.fecha : null, por: por, cuenta: /^(euge|pau)$/.test(res.cuenta) ? res.cuenta : null,
-            contraparte: res.contraparte || null, concepto: res.concepto || null, medio: res.medio || null, presupuesto: res.presupuesto || null,
-            cliente: res.cliente || null, falta: falta, ia: res, estado: "pendiente" });
-        }, function(e){
-          var n = ((x.ia && x.ia.intentos) || 0) + 1;
-          if (n < 4) return guardar(x, { ia: { intentos: n, error: String(e && e.message || e).slice(0, 200) } });
-          return guardar(x, { estado: "pendiente", tipo: x.tipo || "otro", falta: ["La IA no lo pudo leer: completalo a mano"], ia: { intentos: n } });
+            fecha: /^\d{4}-\d{2}-\d{2}$/.test(res.fecha || "") ? res.fecha : null, por: /^(euge|pau)$/.test(res.por) ? res.por : null, cuenta: /^(euge|pau)$/.test(res.cuenta) ? res.cuenta : null,
+            contraparte: res.contraparte || null, concepto: null, medio: res.medio || null, presupuesto: res.presupuesto || null,
+            cliente: res.datos ? { datos: res.datos } : null, falta: res.falta || [], ia: { lector: res.leido, errores: res.errores || null }, estado: "pendiente" }).then(function(){
+            /* solo si quedó sin monto o sin dueño y hay un archivo, pedimos ayuda a la IA (si está saturada, no pasa nada) */
+            if ((!x.monto || !x.por) && (m.adj || []).length) ayudaIA(x, m);
+          });
         });
       }).catch(function(e){ if (!/duplicate|23505/i.test(String(e && (e.code || e.message)))) console.warn(e); }).then(function(){ delete ENCURSO[m.id]; });
     });
