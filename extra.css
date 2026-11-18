@@ -80,3 +80,9 @@ html:not(#nv) .nvmov-det[hidden]{display:none}
 html:not(#nv) .nvmov-det .nvmov-f>span{font-size:10.5px;color:#A8968A}
 html:not(#nv) .nvmov-det textarea.nvmov-in{background:#F7F3EF;resize:vertical;font-size:12.5px;line-height:1.4}
 html:not(#nv) .nvmov-x:disabled{opacity:.25;cursor:default}
+/* Hoy: numeros en crudo sobre pastilla en relieve (mas pro) */
+html:root body #list .nvh .kpi.nvh-k>b{color:#FBF4EA!important;font-weight:500!important;font-size:24px!important;letter-spacing:-.02em!important;padding:6px 18px!important;border-radius:16px!important;text-shadow:0 1px 2px rgba(70,40,30,.18)!important}
+html:root body #list .nvh .kpi.nvh-k.hp-lila>b{background:linear-gradient(160deg,#DDA7B3 0%,#C48A99 100%)!important;box-shadow:-4px -4px 10px rgba(255,255,255,.95),5px 6px 14px rgba(150,85,100,.25),inset 1px 1px 1px rgba(255,255,255,.35),inset -1px -2px 3px rgba(120,60,75,.15)!important}
+html:root body #list .nvh .kpi.nvh-k.hp-rosa>b{background:linear-gradient(160deg,#A3BED6 0%,#7F9FBD 100%)!important;box-shadow:-4px -4px 10px rgba(255,255,255,.95),5px 6px 14px rgba(70,105,140,.25),inset 1px 1px 1px rgba(255,255,255,.35),inset -1px -2px 3px rgba(50,80,110,.15)!important}
+html:root body #list .nvh .kpi.nvh-k .hp-kt [class*=ic],html:root body #list .nvh .kpi.nvh-k .hp-kt > span:first-child{width:34px!important;height:34px!important;border-radius:50%!important;background:rgba(255,255,255,.7)!important;box-shadow:inset 2px 2px 5px rgba(120,90,70,.12),inset -2px -2px 5px rgba(255,255,255,.9)!important;display:grid!important;place-items:center!important}
+html:root body #list .nvh .kpi.nvh-k .hp-kt{letter-spacing:.14em!important;color:#8A7466!important}
