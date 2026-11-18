@@ -32,3 +32,6 @@ html:not(#nv) .nvh .nvh-pipe{grid-column:2/span 2;margin:0!important}
   html:not(#nv) .nvh .nvh-pipe{grid-column:1/-1}
   html:not(#nv) .nvh-big{font-size:36px}
 }
+
+/* chat en el celu: que no se salga de la pantalla */
+@media (max-width:800px){html:not(#nv) .chw.nvchat{width:auto!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important;box-sizing:border-box!important}html:not(#nv) .chw.nvchat .chmain,html:not(#nv) .chw.nvchat .chc{min-width:0!important;max-width:100%!important}html:not(#nv) .chw .nvacts{gap:5px}html:not(#nv) .chw .nvib{min-width:30px;height:30px;padding:0 8px}}
