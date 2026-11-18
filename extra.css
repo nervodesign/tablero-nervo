@@ -99,3 +99,14 @@ html:not(#nv) .chw .nvgl .chb,html:not(#nv) .chw .chb:not(.nvmovtop){background:
 html:not(#nv) .chw .nvgl .chb:hover,html:not(#nv) .chw .chb:not(.nvmovtop):hover{background:rgba(255,255,255,.6)!important}
 html:not(#nv) .chw .nvgl .chb.on,html:not(#nv) .chw .chb:not(.nvmovtop).on{background:#FBF6F3!important;box-shadow:-2px -2px 6px rgba(255,255,255,.9),3px 3px 8px rgba(120,95,80,.12)!important}
 html:not(#nv) .chw .nvg:has(+ .nvgl:empty){display:none!important}
+/* Hoy: tarjeta marrón estilo soft (relieve), números blancos */
+html:not(#nv) .nvh-hero{background:linear-gradient(155deg,#A88772 0%,#8E6C57 55%,#7A5A47 100%)!important;border-radius:28px!important;padding:20px!important;box-shadow:-6px -6px 16px rgba(255,255,255,.85),10px 14px 30px rgba(90,58,43,.35),inset 1px 1px 0 rgba(255,255,255,.22),inset -2px -3px 8px rgba(60,35,25,.25)!important}
+html:not(#nv) .nvh-lab{opacity:1!important;color:rgba(255,248,240,.8)!important;font-size:10.5px!important;letter-spacing:.2em!important}
+html:not(#nv) .nvh-big{align-self:flex-start;color:#fff!important;font-weight:300!important;font-size:42px!important;letter-spacing:-.03em!important;margin-top:12px!important;padding:6px 20px 8px!important;border-radius:20px;background:rgba(60,36,26,.22);box-shadow:inset 3px 4px 8px rgba(40,22,14,.35),inset -2px -2px 6px rgba(255,255,255,.12)}
+html:not(#nv) .nvh-chip{margin-top:12px!important;background:rgba(255,255,255,.16)!important;color:#fff!important;font-weight:500!important;padding:5px 12px!important;box-shadow:-2px -2px 5px rgba(255,255,255,.12),3px 3px 8px rgba(40,22,14,.25)!important}
+html:not(#nv) .nvh-sp{border-radius:16px;margin-top:12px!important;padding:6px 0;background:rgba(60,36,26,.12);box-shadow:inset 2px 3px 7px rgba(40,22,14,.25),inset -2px -2px 5px rgba(255,255,255,.08)}
+html:not(#nv) .nvh-split>div{background:rgba(60,36,26,.18)!important;border:0!important;border-radius:16px!important;padding:10px 13px!important;box-shadow:inset 3px 3px 8px rgba(40,22,14,.32),inset -2px -2px 6px rgba(255,255,255,.12)!important}
+html:not(#nv) .nvh-split small{color:rgba(255,248,240,.78)!important;opacity:1!important;font-size:11.5px!important}
+html:not(#nv) .nvh-split b{color:#fff!important;font-weight:400!important;font-size:21px!important;letter-spacing:-.02em}
+html:not(#nv) .nvh-bar{height:6px!important;background:rgba(40,22,14,.28)!important;box-shadow:inset 1px 1px 2px rgba(30,15,10,.4)}
+html:not(#nv) .nvh-bar em{box-shadow:0 0 8px rgba(255,255,255,.35)}
