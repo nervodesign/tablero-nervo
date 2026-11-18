@@ -166,7 +166,10 @@
     var pend = vivos.filter(function(r){ return r.estado === "pendiente" || r.estado === "procesando"; });
     var apro = vivos.filter(function(r){ return r.estado === "aprobado"; });
     var cab = h("div", "nvmov-cab");
-    var tt = h("div"); tt.append(h("h1", null, "Movimientos"), h("p", null, "Las ventas y la plata quedan acá hasta que las aprueben."));
+    var ult = 0; ROWS.forEach(function(r){ var t = Date.parse(r.cambiado || r.creado || r.msg_at || "") || 0; if (t > ult) ult = t; });
+    ventasWeb().forEach(function(r){ var t = Number(r.cambiado || r.creado) || Date.parse(r.cambiado || "") || 0; if (t > ult) ult = t; });
+    var ultTx = ult ? new Date(ult).toLocaleDateString("es-AR", { day: "numeric", month: "long" }) + " · " + new Date(ult).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }) : "—";
+    var tt = h("div"); tt.append(h("h1", null, "Canal Movimientos"), h("p", null, "Todo esto está pendiente de aprobar · Última actualización: " + ultTx));
     cab.append(tt); p.append(cab);
     var vw = ventasTodas(), plataPend = pend.length;
     function bloque(k, titulo, sub, n){
