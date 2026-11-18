@@ -221,3 +221,15 @@ html:not(#nv) .nvmov-vr{grid-template-columns:30px 98px 112px minmax(130px,1.2fr
 html:not(#nv) .nvmov-ok{position:static!important;margin-left:8px!important;padding:3px 12px!important;font-size:11.5px!important;font-weight:500!important;color:#3F7A4E!important;background:#E6F2E8!important;box-shadow:none!important;border:1px solid #CFE5D3!important;border-radius:999px!important;line-height:1.4}
 html:not(#nv) .nvmov-ok:hover{background:#D7ECDB!important;transform:none!important;box-shadow:none!important}
 html:not(#nv) .nvmov-sub .nvmov-ok{margin-left:8px!important}
+
+/* productos: sacar con ✕ · vista previa de cómo queda en Finanzas */
+html:not(#nv) .nvmov-pl{grid-template-columns:30px 10px minmax(0,1fr) 18px!important}
+html:not(#nv) .nvmov-pdel{border:0;background:none;color:#C9B8AC;font-size:10px;cursor:pointer;padding:0;width:18px;height:18px;border-radius:50%;opacity:0;transition:opacity .15s}
+html:not(#nv) .nvmov-pl:hover .nvmov-pdel{opacity:1}
+html:not(#nv) .nvmov-pdel:hover{background:#F8E4E7;color:#8E4E5A}
+html:not(#nv) .nvmov-vfin{grid-column:1/-1;background:#F3F8F4;border:1px solid #DCEBDF;border-radius:14px;padding:12px 14px;margin-bottom:4px}
+html:not(#nv) .nvmov-vfin>b{font-size:12.5px;font-weight:500;color:#3F7A4E}
+html:not(#nv) .nvmov-vfin>p{font-size:11.5px;color:#8A9A8D;margin:8px 0 0}
+html:not(#nv) .nvmov-vfg{display:grid;grid-template-columns:2fr 1fr 2fr 1fr 1.4fr 2fr;gap:10px;margin-top:8px}
+html:not(#nv) .nvmov-vfg small{display:block;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#9AAE9E;margin-bottom:2px}
+html:not(#nv) .nvmov-vfg span{font-size:12.5px;color:#3B2418}

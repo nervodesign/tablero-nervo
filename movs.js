@@ -403,7 +403,9 @@
       q.onchange = function(){ var n = String(q.value).replace(/\D/g, "") || "1"; var l = cs[i] || "[ ] 1"; cs[i] = /\]\s*\d+/.test(l) ? l.replace(/(\]\s*)\d+/, "$1" + n) : "[ ] " + n; guardarTodo(); };
       var p = h("input", "nvmov-in nvmov-pn"); p.value = ps[i] || ""; p.placeholder = "Producto"; p.title = ps[i] || "";
       p.onchange = function(){ ps[i] = p.value; p.title = p.value; guardarTodo(); if (!p.value.trim()) pintarLista(); };
-      r.append(q, h("span", "nvmov-x1", "×"), p); return r;
+      var del = h("button", "nvmov-pdel", "✕"); del.type = "button"; del.title = "Sacar este producto";
+      del.onclick = function(){ ps.splice(i, 1); cs.splice(i, 1); guardarVenta(it, { prods: JSON.stringify(ps), cant: cs.join("\n") }); pintarLista(); };
+      r.append(q, h("span", "nvmov-x1", "×"), p, del); return r;
     }
     function pintarLista(){
       box.innerHTML = ""; ps.forEach(function(_, i){ box.append(linea(i)); });
@@ -430,7 +432,7 @@
     var qu = h("select", "nvmov-in quien" + (quienDeCobro(v.cobro) ? "" : " falta")); [["","❓"],["euge","Euge"],["pau","Pau"]].forEach(function(o){ var e = h("option", null, o[1]); e.value = o[0]; qu.append(e); });
     qu.value = quienDeCobro(v.cobro) || ""; qu.onchange = function(){ guardarVenta(it, { cobro: JSON.stringify(cobroDeQuien(qu.value)) }); pintarSuave(); };
     var en = inp([v.tipo, v.menv].filter(Boolean).join(" · "), "Envío", "", function(x){ var pz = x.split(/\s*·\s*/); if (pz.length > 1) guardarVenta(it, { tipo: pz[0], menv: pz.slice(1).join(" · ") }); else guardarVenta(it, { menv: x }); });
-    var ab = h("button", "nvmov-mas", "Datos"); ab.type = "button";
+    var ab = h("button", "nvmov-mas", "Abrir"); ab.type = "button";
     var x = h("button", "nvmov-x", "✕"); x.type = "button"; x.title = it.src === "web" ? "No se puede descartar una venta de la tienda (se revisa y aprueba)" : "Descartar";
     if (it.src === "web") x.disabled = true; else x.onclick = function(){ guardar(it.mov, { estado: "descartado" }); };
     f.append(ckw, nu, fe, cl, pr, to, co, me, qu, en, ab, x); w.append(f);
@@ -457,7 +459,17 @@
       area("Cantidades / detalle", v.cant, function(x){ guardarVenta(it, { cant: x }); }),
       area("Observaciones", v.obs, function(x){ guardarVenta(it, { obs: x }); }),
       area("Factura", v.fact, function(x){ guardarVenta(it, { fact: x }); }));
-    ab.onclick = function(){ det.hidden = !det.hidden; ab.classList.toggle("on", !det.hidden); };
+    var vf = h("div", "nvmov-vfin");
+    function pintarVf(){
+      vf.innerHTML = ""; var q = quienDeCobro(v.cobro), cat = catVenta(v.metodo, v.fact), mon = Number(v.cobrado || v.facturar) || 0;
+      if (FIN[it.id] === false){ vf.append(h("b", null, "Así se carga en Finanzas"), h("p", null, "Esta venta no va a Finanzas (destildaste “También a Finanzas”).")); return; }
+      vf.append(h("b", null, "Así se carga en Finanzas " + (q === "pau" ? "Pau" : q === "euge" ? "Euge" : "(elegí quién cobró)")));
+      var g = h("div", "nvmov-vfg");
+      [["Concepto", ("VENTA #" + (v.num || "") + " · " + (v.cliente || "")).toUpperCase()], ["Fecha", v.fecha || "—"], ["Categoría", cat], ["Total", mon ? "$ " + Math.round(mon).toLocaleString("es-AR") : "—"], ["Cuenta", GRUPOS_FIN[cat.split(".")[0]] || ""], ["Notas", "Creado desde Movimientos (venta aprobada)"]].forEach(function(c){ var d = h("div"); d.append(h("small", null, c[0]), h("span", null, c[1])); g.append(d); });
+      vf.append(g, h("p", null, "Primero queda abajo en “Movimientos de plata” para que lo apruebes; recién ahí entra en Finanzas."));
+    }
+    det.prepend(vf);
+    ab.onclick = function(){ det.hidden = !det.hidden; ab.classList.toggle("on", !det.hidden); if (!det.hidden) pintarVf(); };
     w.append(det);
     return w;
   }
