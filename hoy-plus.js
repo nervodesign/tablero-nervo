@@ -1,3 +1,6 @@
+/* carga extra.css (retoques chicos) con la misma versión */
+(function(){ if (document.getElementById("nv-extra")) return; var cs = document.currentScript, v = cs && /[?&]v=(\d+)/.exec(cs.src);
+  var l = document.createElement("link"); l.id = "nv-extra"; l.rel = "stylesheet"; l.href = "extra.css" + (v ? "?v=" + v[1] : "?t=" + Date.now()); document.head.appendChild(l); })();
 /* Hoy con el diseño nuevo: tarjeta grande de facturación + tarjetas + pedidos en camino */
 (function(){
   if (window.__nvHoy) return; window.__nvHoy = 1;
