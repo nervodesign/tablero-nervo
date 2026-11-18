@@ -117,3 +117,21 @@ html:not(#nv) .nvh-split>div{background:rgba(255,255,255,.12)!important;box-shad
 html:not(#nv) .nvh-sp{background:rgba(255,255,255,.08)!important;box-shadow:inset 2px 2px 5px rgba(90,60,45,.15)!important}
 html:not(#nv) .nvh-bar{background:rgba(90,60,45,.2)!important}
 html:not(#nv) .nvh-hero .nvh-split b,html:not(#nv) .nvh-hero .nvh-big{color:#fff!important}
+
+/* letra delicada (Outfit liviana, estilo Cera Pro) */
+html:not(#nv) body{font-weight:300!important;letter-spacing:.005em}
+html:not(#nv) body :is(b,strong){font-weight:500!important}
+html:not(#nv) main#list .pz-hi,html:not(#nv) main#list h1,html:not(#nv) h2.sec,html:not(#nv) .nvmov-cab h1{font-weight:500!important;letter-spacing:-.025em!important}
+html:not(#nv) :is(.hp-h,.hp-h b,.nvpk-h b,.nvmov-blqh b,.nvmov-diah b){font-weight:500!important}
+html:not(#nv) .nvh-hero .nvh-big{font-weight:300!important}
+html:not(#nv) .nvh-hero .nvh-split b{font-weight:300!important}
+html:not(#nv) .nvpk-tk b{font-weight:500!important}
+html:not(#nv) nav.tabs .tab,html:not(#nv) nav.tabs .tab .lb{font-weight:400!important}
+html:not(#nv) .item .title,html:not(#nv) .tt-b .title{font-weight:400!important}
+/* tarjeta marrón soft: nada hundido, casilleros flotando como la pastilla del 129% */
+html:not(#nv) .nvh-hero{background:linear-gradient(155deg,#D2BAA7 0%,#BFA18A 55%,#AF907A 100%)!important;box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 18px 40px rgba(120,85,65,.18),0 4px 12px rgba(120,85,65,.10)!important}
+html:not(#nv) .nvh-hero .nvh-big{background:none!important;box-shadow:none!important;padding:0!important}
+html:not(#nv) .nvh-hero .nvh-sp{background:none!important;box-shadow:none!important;border:0!important}
+html:not(#nv) .nvh-hero .nvh-split>div{background:rgba(255,255,255,.16)!important;box-shadow:-2px -2px 5px rgba(255,255,255,.12),3px 4px 10px rgba(70,42,28,.16)!important;border:0!important}
+html:not(#nv) .nvh-hero .nvh-chip{box-shadow:-2px -2px 5px rgba(255,255,255,.12),3px 4px 10px rgba(70,42,28,.16)!important}
+html:not(#nv) .nvh-hero .nvh-bar{background:rgba(255,255,255,.22)!important;box-shadow:none!important}
