@@ -89,7 +89,7 @@ html:not(#nv) .chw form.chf .chatt:not(.chmic){order:3}
 html:not(#nv) .chw form.chf textarea{order:4;flex:1;min-width:0;border:1.5px solid var(--lat)!important;border-radius:22px!important;background:#fff!important;box-shadow:none!important;min-height:44px;max-height:180px;padding:11px 16px!important;font-size:15px!important;line-height:1.4!important;resize:none}
 html:not(#nv) .chw form.chf textarea:focus{border-color:#CBB4A0!important;box-shadow:0 0 0 4px #F8F1EA!important}
 html:not(#nv) .chw form.chf .chmic{order:5}
-html:not(#nv) .chw form.chf .chsend{order:6;height:44px!important;min-width:44px;border-radius:22px!important;background:var(--esp)!important;color:#fff!important;border:0!important;padding:0 20px!important;font-size:0!important;cursor:pointer}
+html:not(#nv) .chw form.chf .chsend{order:6;height:44px!important;width:auto!important;min-width:44px;flex:none;border-radius:22px!important;background:var(--esp)!important;color:#fff!important;border:0!important;padding:0 20px!important;font-size:0!important;cursor:pointer}
 html:not(#nv) .chw form.chf .chsend::after{content:"Enviar";font-size:15px;font-weight:500}
 html:not(#nv) .chw .nvpop{position:absolute;bottom:64px;left:18px;z-index:20;background:#fff;border:1px solid var(--ln);border-radius:16px;box-shadow:0 14px 40px rgba(58,36,28,.18);padding:8px;display:grid;grid-template-columns:repeat(8,34px);gap:2px}
 html:not(#nv) .chw .nvpop button{width:34px;height:34px;border:0;background:transparent;border-radius:8px;font-size:19px;cursor:pointer}
