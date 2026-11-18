@@ -377,3 +377,6 @@ html:not(#nv) .nvmov-dia:not(.nvmov-vt) .nvmov-sub{padding:6px 16px 9px 16px!imp
   html:not(#nv) body,html:not(#nv) main#list{overflow-x:hidden!important}
 }
 html:not(#nv) body.nvmov-on header.top #secTitle{display:none!important}
+
+/* en el chat no va el + (tapa el botón de enviar) */
+html:not(#nv) body:has(main#list .chw) #fab.fab{display:none!important}
