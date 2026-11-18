@@ -187,3 +187,35 @@
     antes = now;
   }, 300);
 })();
+
+/* ---------- Aviso abajo: "Tenés N para revisar en Movimientos" ---------- */
+(function(){
+  if (window.__nvAviso) return; window.__nvAviso = 1;
+  var antes = null, box = null, tOcultar = null, t0 = Date.now();
+  function crear(){
+    box = document.createElement("div"); box.className = "nvaviso";
+    box.style.cssText = "position:fixed;left:50%;bottom:24px;transform:translate(-50%,30px);opacity:0;z-index:99998;display:flex;align-items:center;gap:12px;background:#FBF8F6;color:#3B2418;border-radius:20px;padding:10px 10px 10px 16px;font:400 14px Outfit,system-ui,sans-serif;box-shadow:-4px -4px 12px rgba(255,255,255,.9),6px 10px 28px rgba(90,58,43,.22);transition:all .4s cubic-bezier(.2,.8,.2,1);pointer-events:none;max-width:calc(100vw - 32px)";
+    box.innerHTML = '<span style="width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(160deg,#DDA7B3,#C48A99);color:#FBF4EA;font-size:14px;box-shadow:inset 1px 1px 1px rgba(255,255,255,.35)">🔔</span><span class="nvav-t"></span>' +
+      '<button type="button" class="nvav-ver" style="border:0;border-radius:14px;padding:7px 14px;background:#5A3A2B;color:#FBF4EA;font:500 13px Outfit,system-ui,sans-serif;cursor:pointer">Revisar</button>' +
+      '<button type="button" class="nvav-x" aria-label="Cerrar" style="border:0;background:none;color:#A08B7D;font-size:16px;cursor:pointer;padding:4px 6px">✕</button>';
+    document.body.appendChild(box);
+    box.querySelector(".nvav-ver").onclick = function(){ var b = document.querySelector(".nvmov-tab"); if (b) b.click(); ocultar(); };
+    box.querySelector(".nvav-x").onclick = ocultar;
+  }
+  function mostrar(n, nuevo){
+    if (!box) crear();
+    box.querySelector(".nvav-t").innerHTML = (nuevo ? "<b style='font-weight:600'>Entró algo nuevo.</b> " : "") + "Tenés <b style='font-weight:600'>" + n + "</b> " + (n === 1 ? "movimiento" : "movimientos") + " para revisar";
+    box.style.pointerEvents = "auto"; box.style.opacity = "1"; box.style.transform = "translate(-50%,0)";
+    clearTimeout(tOcultar); tOcultar = setTimeout(ocultar, 9000);
+  }
+  function ocultar(){ if (!box) return; box.style.opacity = "0"; box.style.transform = "translate(-50%,30px)"; box.style.pointerEvents = "none"; }
+  setInterval(function(){
+    if (Date.now() - t0 < 15000) return;
+    var c = document.querySelector(".nvmov-tab .nvmov-n"); if (!c) return;
+    var n = parseInt(c.textContent, 10) || 0;
+    var enMov = document.body.classList.contains("nvmov-on");
+    if (antes === null){ antes = n; if (n > 0 && !enMov) mostrar(n, false); return; }
+    if (n > antes && !enMov) mostrar(n, true);
+    antes = n;
+  }, 2000);
+})();
