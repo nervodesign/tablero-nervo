@@ -97,7 +97,7 @@
         }).then(function(res){
           return guardar(x, { tipo: tipoDe(res.tipo)[0], cat: catLimpia(res.cat), signo: /^(ingreso|egreso)$/.test(res.signo) ? res.signo : null, monto: Number(res.monto) || null,
             fecha: /^\d{4}-\d{2}-\d{2}$/.test(res.fecha || "") ? res.fecha : null, por: /^(euge|pau)$/.test(res.por) ? res.por : null, cuenta: /^(euge|pau)$/.test(res.cuenta) ? res.cuenta : null,
-            contraparte: res.contraparte || null, concepto: null, medio: res.medio || null, presupuesto: res.presupuesto || null,
+            contraparte: res.contraparte || null, concepto: res.concepto || null, medio: res.medio || null, presupuesto: res.presupuesto || null,
             cliente: res.datos ? { datos: res.datos } : null, falta: res.falta || [], ia: { lector: res.leido, errores: res.errores || null }, estado: "pendiente" }).then(function(){
             /* solo si quedó sin monto o sin dueño y hay un archivo, pedimos ayuda a la IA (si está saturada, no pasa nada) */
             if ((!x.monto || !x.por) && (m.adj || []).length) ayudaIA(x, m);

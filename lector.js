@@ -25,10 +25,13 @@
     ["venta", /^\s*(venta|vendi|vendimos)\b/i],
     ["sueldo", /^\s*sueldo\b/i],
     ["envio", /^\s*(env[ií]o|v[ií]a\s*cargo|andreani|correo|oca)\b/i],
-    ["pago", /^\s*(pago|pagu[eé]|pagamos|pag[oó]|compra|compr[eé])\b/i]
+    ["pago", /^\s*(pago|pagu[eé]|pagamos|pag[oó]|compra|compr[eé])(?![a-záéíóúñ])/i]
   ];
   function leerTexto(t){
     var r = { falta: [] }, s = String(t || "").trim(); if (!s) return r;
+    /* "Euge pagó…", "Pau cobró…": quién va primero, la acción después */
+    var pre = s.match(/^\s*(euge|eugenia|pau|paula|pali)\s+(?=(pag|cobr|compr|vend|transf|deposit|gast|abon|sueld))/i);
+    if (pre){ r.por = quien(pre[1]); s = s.slice(pre[0].length); }
     for (var i = 0; i < TIPOS_RE.length; i++) if (TIPOS_RE[i][1].test(s)){ r.tipo = TIPOS_RE[i][0]; break; }
     if (!r.tipo && /v[ií]a\s*cargo|andreani|etiqueta/i.test(s)) r.tipo = "envio";
     var por = s.match(/\b(?:por|pag[oó]|cobr[oó]|entr[oó]\s+a|a\s+cuenta\s+de)\s+(euge|eugenia|pau|paula|pali)\b/i);
@@ -40,13 +43,17 @@
     if (/no\s+factur/i.test(s)) r.factura = "no"; else if (/factur/i.test(s)) r.factura = "si";
     var pres = s.match(/presupuesto\s*(?:n[°º.]?|#)?\s*(\d+)|#\s*(\d{2,6})\b/i); if (pres) r.presupuesto = pres[1] || pres[2];
     /* contraparte: lo que queda en la primera línea sin la palabra clave, el monto y el "por X" */
+    /* "por lámparas" = el concepto (si no es "por Euge/Pau") */
+    var porC = s.split(/\n/)[0].match(/\bpor\s+(?!(?:euge|eugenia|pau|paula|pali)\b)([a-záéíóúñü][a-záéíóúñü\s]*?)\s*(?=$|,|\.|\d|\$|\b(?:en\s+)?(?:efectivo|transf\w*|tarjeta|mercado\s*pago|mp)\b)/i);
+    if (porC && porC[1].trim()) r.concepto = porC[1].trim().charAt(0).toUpperCase() + porC[1].trim().slice(1);
     var l1 = s.split(/\n/)[0]
-      .replace(/^\s*(venta\s+mayorista|venta|mayorista|se[ñn]a|sueldo|pago|pagu[eé]|pagamos|compra|compr[eé]|env[ií]o)\b/i, "")
-      .replace(/\$\s*[\d.,]+/g, "").replace(/\b\d{1,3}(?:\.\d{3})+(?:,\d+)?\b/g, "")
+      .replace(/^\s*(venta\s+mayorista|venta|mayorista|se[ñn]a|sueldo|pag[oó]|pagu[eé]|pagamos|compra|compr[eé]|env[ií]o)(?![a-záéíóúñ])/i, "")
+      .replace(/\$\s*[\d.,]+/g, "").replace(/\b\d{4,9}\b/g, "").replace(/\bpor\s+(?!(?:euge|eugenia|pau|paula|pali)\b).*$/i, "").replace(/\b\d{1,3}(?:\.\d{3})+(?:,\d+)?\b/g, "")
       .replace(/\b(?:por|pag[oó]|cobr[oó])\s+(euge|eugenia|pau|paula|pali)\b/ig, "")
       .replace(/[()\-–:,.]+/g, " ")
       .split(/\s+/).filter(function(w){ return w && !/^(de|a|al|la|el|en|efectivo|transferencia|transf|tarjeta|no|facturado|facturada|facturar)$/i.test(w); }).join(" ").trim();
     if (r.tipo === "envio" && !l1) l1 = (s.match(/v[ií]a\s*cargo|andreani|correo|oca/i) || [""])[0];
+    if (r.tipo !== "sueldo") l1 = l1.replace(/\b(euge|eugenia|pau|paula|pali)\b/ig, " ").replace(/\s+/g, " ").trim();
     if (l1) r.contraparte = l1.split(" ").map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); }).join(" ");
     r.datos = s.split(/\n/).slice(1).join("\n").trim();
     return r;
@@ -113,6 +120,8 @@
   function catDe(r){
     var cats = CATS || [];
     function cat(prefijo){ return cats.find(function(c){ return c.indexOf(prefijo + " ") === 0; }) || null; }
+    /* proveedores de reventa: siempre 3.1 COMPRA PRODUCTOS - REVENTA */
+    if (r.tipo !== "venta" && r.tipo !== "mayorista" && r.tipo !== "sena"){ var pv = norm((r.contraparte || "") + " " + String(r.texto || "").split(/\n/)[0]).match(/\b(AURORA|LICARI|GRASS|TIKKA|MEKK|ENTRANCE)\b/); if (pv){ r.contraparte = pv[1]; var c31 = cat("3.1"); if (c31) return c31; } }
     if (r.tipo === "sueldo"){
       var q = quien(r.contraparte || "");
       if (q === "euge") return cat("2.2"); if (q === "pau") return cat("2.1");
@@ -128,6 +137,7 @@
       var puntos = {};
       norm((r.contraparte || "") + " " + (r.concepto || "") + " " + (r.texto || "").split(/\n/)[0]).split(" ").forEach(function(w){
         var o = IDX[w]; if (!o || w.length < 4) return;
+        if (r.tipo !== "sueldo" && /^(EUGE|EUGENIA|PAULA|PALI)$/.test(w)) return;
         var tot = 0; for (var k in o) tot += o[k];
         for (var c in o) puntos[c] = (puntos[c] || 0) + o[c] / tot;
       });
