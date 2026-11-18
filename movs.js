@@ -299,10 +299,10 @@
     if (r.estado === "procesando") sub.append(h("span", "nvmov-al", "⏳ Leyendo…"));
     if (r.estado === "aprobado") sub.append(h("span", "nvmov-apro", "✓ En Finanzas " + (NOM[r.por] || "") + (r.aprobado_por ? " · aprobó " + (NOM[r.aprobado_por] || r.aprobado_por) : "")));
     if (r.estado === "pendiente"){
-      var bo = h("button", "nvmov-ok", r.por ? "Aprobar · cargar en Finanzas " + NOM[r.por] : "Aprobar · elegí a quién se carga"); bo.type = "button";
-      bo.title = "Confirma que está bien y lo carga en Finanzas";
+      var bo = h("button", "nvmov-ok", "✓ Aprobar"); bo.type = "button";
+      bo.title = r.por ? "Lo carga en Finanzas " + NOM[r.por] : "Primero elegí a quién se carga";
       bo.onclick = function(){ ck.checked = true; ck.dispatchEvent(new Event("change")); };
-      qu.addEventListener("change", function(){ bo.textContent = qu.value ? "Aprobar · cargar en Finanzas " + NOM[qu.value] : "Aprobar · elegí a quién se carga"; });
+      qu.addEventListener("change", function(){ bo.title = qu.value ? "Lo carga en Finanzas " + NOM[qu.value] : "Primero elegí a quién se carga"; });
       sub.append(bo);
     }
     w.append(sub);
@@ -446,9 +446,8 @@
     fw.title = "Al aprobar, la venta pasa a Ventas minoristas. Si está tildado, además se crea el cobro abajo para aprobarlo en Finanzas.";
     fw.append(fc, ft); sub.prepend(fw);
     var bv = h("button", "nvmov-ok"); bv.type = "button";
-    function txtBv(){ var q = quienDeCobro(v.cobro); bv.textContent = "Aprobar venta · Ventas minoristas" + (fc.checked ? " + Finanzas " + (q === "pau" ? "Pau" : q === "euge" ? "Euge" : "") : ""); }
+    function txtBv(){ var q = quienDeCobro(v.cobro); bv.textContent = "✓ Aprobar"; bv.title = "Pasa a Ventas minoristas" + (fc.checked ? " y crea el cobro para Finanzas " + (q === "pau" ? "Pau" : q === "euge" ? "Euge" : "") : ""); }
     txtBv(); fc.addEventListener("change", txtBv); qu.addEventListener("change", txtBv);
-    bv.title = "Confirma que la venta está bien cargada";
     bv.onclick = function(){ ck.checked = true; ck.dispatchEvent(new Event("change")); };
     sub.append(bv);
     w.append(sub);

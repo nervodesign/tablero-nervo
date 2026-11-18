@@ -215,3 +215,9 @@ html:not(#nv) .nvmov-asa:hover::after,html:not(#nv) body.nvmov-estirando .nvmov-
 html:not(#nv) body.nvmov-estirando{cursor:col-resize!important;user-select:none!important}
 html:not(#nv) .nvmov-ok{position:sticky!important;right:14px;margin-left:12px!important}
 html:not(#nv) .nvmov-sub .nvmov-ok{margin-left:auto!important}
+
+/* aprobar: botoncito verde clarito, chico; tabla sin ensancharse de más */
+html:not(#nv) .nvmov-vr{grid-template-columns:30px 98px 112px minmax(130px,1.2fr) minmax(170px,1.8fr) 98px 98px 150px 64px minmax(110px,1fr) 52px 26px!important}
+html:not(#nv) .nvmov-ok{position:static!important;margin-left:8px!important;padding:3px 12px!important;font-size:11.5px!important;font-weight:500!important;color:#3F7A4E!important;background:#E6F2E8!important;box-shadow:none!important;border:1px solid #CFE5D3!important;border-radius:999px!important;line-height:1.4}
+html:not(#nv) .nvmov-ok:hover{background:#D7ECDB!important;transform:none!important;box-shadow:none!important}
+html:not(#nv) .nvmov-sub .nvmov-ok{margin-left:8px!important}
