@@ -403,7 +403,7 @@
     var mx = 0; baseMin().forEach(function(r){ var m = /WHATS\s*(\d+)/i.exec(r.num || ""); if (m) mx = Math.max(mx, +m[1]); }); return "WHATS " + (mx + 1);
   }
   function crearPlata(v, f){
-    var q = quienDeCobro(v.cobro), monto = Number(String(v.cobrado || v.facturar || "").replace(",", ".")) || null; f = f || {};
+    var q = quienDeCobro(v.cobro), monto = Number(String(v.cobrado || "").replace(",", ".")) || null; f = f || {};
     return SB.from("movimientos").insert({ msg_id: "venta:" + v.id, msg_at: new Date().toISOString(), autor: SOY, texto: "Venta " + (v.num || "") + " · " + (v.cliente || ""), adj: [],
       tipo: "venta", signo: "ingreso", monto: f.total || monto, fecha: f.fecha || v.fecha || null, por: q, cuenta: q, contraparte: f.concepto || ("Venta #" + (v.num || "") + " · " + (v.cliente || "")),
       concepto: f.notas || null, cat: f.cat || catVenta(v.metodo, v.fact), falta: [], estado: "pendiente" }).select().then(function(r){
@@ -414,21 +414,22 @@
     var v = it.row;
     if (!v.cliente){ toast("Falta el cliente."); return Promise.reject(); }
     if (!quienDeCobro(v.cobro)){ toast("Elegí quién cobró (Euge o Pau)."); return Promise.reject(); }
-    if (!Number(v.cobrado || v.facturar)){ toast("Falta el total."); return Promise.reject(); }
+    if (!Number(v.cobrado)){ toast("Falta el total cobrado."); return Promise.reject(); }
+    var dest = DEST[it.id] || "PARA HACER";
     var paso, conFin = FIN[it.id] !== false;
     if (it.src === "web"){
-      paso = new Promise(function(ok, mal){ google.script.run.withSuccessHandler(ok).withFailureHandler(mal).baseGuardarVarios("base_min", [{ id: v.id, env: "PARA HACER", cambiado: Date.now(), por: SOY }]); })
-        .then(function(){ v.env = "PARA HACER"; return conFin ? crearPlata(v, finFinal(it)) : null; });
+      paso = new Promise(function(ok, mal){ google.script.run.withSuccessHandler(ok).withFailureHandler(mal).baseGuardarVarios("base_min", [{ id: v.id, env: dest, cambiado: Date.now(), por: SOY }]); })
+        .then(function(){ v.env = dest; return conFin ? crearPlata(v, finFinal(it)) : null; });
     } else {
       var id = "min" + Date.now(), num = v.num || proxNumWhats();
-      var fila = { id: id, num: num, venta: num, env: "PARA HACER", prods: v.prods || "[]", cant: v.cant || "", obs: v.obs || "", fecha: v.fecha || diaDe(Date.now()), cliente: v.cliente, datos: v.datos || "",
+      var fila = { id: id, num: num, venta: num, env: dest, prods: v.prods || "[]", cant: v.cant || "", obs: v.obs || "", fecha: v.fecha || diaDe(Date.now()), cliente: v.cliente, datos: v.datos || "",
         etq: "[]", suc: v.suc || "", cobrado: v.cobrado || "", facturar: v.facturar || v.cobrado || "", costoEnv: "0", pago: "Finalizado", metodo: v.metodo || "[]", menv: v.menv || "", tipo: v.tipo || "",
         cobro: v.cobro || "[]", fact: v.fact || "", web: "", creado: Date.now(), cambiado: Date.now(), por: SOY };
       paso = new Promise(function(ok, mal){ google.script.run.withSuccessHandler(ok).withFailureHandler(mal).baseGuardarVarios("base_min", [fila]); })
         .then(function(){ baseMin().push(fila); return guardar(it.mov, { estado: "aprobado", aprobado_por: SOY, aprobado_at: new Date().toISOString(), cargado: "base_min:" + id }); })
         .then(function(){ return conFin ? crearPlata(Object.assign({}, fila), finFinal(it)) : null; });
     }
-    return paso.then(function(){ toast(conFin ? "Venta aprobada: pasó a Ventas minoristas. El cobro quedó abajo para aprobarlo en Finanzas." : "Venta aprobada: pasó a Ventas minoristas (sin Finanzas)."); pintar(); });
+    return paso.then(function(){ toast(conFin ? "Venta aprobada: pasó a Ventas minoristas · " + dest + ". El cobro quedó abajo para aprobarlo en Finanzas." : "Venta aprobada: pasó a Ventas minoristas · " + dest + " (sin Finanzas)."); pintar(); });
   }
   function pintarVentas(p, lista){
     if (!lista.length){ var v = h("div", "nvmov-vacio"); v.append(h("b", null, "No hay ventas para revisar 🎉"), h("small", null, "Las de Tienda Nube aparecen solas. Las de WhatsApp o Instagram mandalas a #movimientos, por ejemplo: “Venta Juana Pérez $85.000 transferencia por Pau”.")); p.append(v); return; }
@@ -438,7 +439,7 @@
     tb.append(t); p.append(tb);
   }
   function inp(val, ph, cls, on){ var e = h("input", "nvmov-in " + (cls || "")); e.value = val == null ? "" : val; e.placeholder = ph || ""; e.onchange = function(){ on(e.value.trim()); }; return e; }
-  var FIN = {};
+  var FIN = {}, DEST = {};
   /* ===== Ventas: mismas columnas que el tablero de Ventas minoristas ===== */
   var PAGOS = ["Finalizado", "Pendiente", "PARCIAL", "FALTA ENVIO"];
   var MENVS = ["Vía Cargo", "Andreani", "Acordar envío", "Retira depósito cliente", "Retira depósito transporte", "BUSPACK"];
@@ -490,7 +491,7 @@
   function ovDe(id){ try { return JSON.parse(localStorage.getItem("nvfinov_" + id) || "{}") || {}; } catch(e){ return {}; } }
   function ovSet(id, o){ try { if (Object.keys(o).length) localStorage.setItem("nvfinov_" + id, JSON.stringify(o)); else localStorage.removeItem("nvfinov_" + id); } catch(e){} }
   function finAuto(it){
-    var v = it.row, cat = catVenta(v.metodo, v.fact), mon = Number(v.cobrado || v.facturar) || 0;
+    var v = it.row, cat = catVenta(v.metodo, v.fact), mon = Number(v.cobrado) || 0;
     return { concepto: ("Venta #" + (v.num || "") + " · " + (v.cliente || "")).toUpperCase(), fecha: v.fecha || "", cat: cat, total: mon, notas: "" };
   }
   function finFinal(it){ var a = finAuto(it), o = ovDe(it.id); return { concepto: o.concepto || a.concepto, fecha: o.fecha || a.fecha, cat: o.cat || a.cat, total: o.total != null && o.total !== "" ? Number(o.total) : a.total, notas: o.notas != null ? o.notas : a.notas }; }
@@ -556,7 +557,10 @@
     sub.append(fa, fw, lf);
     if (it.src === "chat") sub.append(h("span", "nvmov-tx", "“" + (it.mov.texto || "") + "”"));
     if (v.cobrado && v.facturar && Number(v.cobrado) && Math.abs(Number(v.cobrado) - Number(v.facturar)) > 1) sub.append(h("span", "nvmov-al", "Cobrado distinto de lo a facturar"));
-    f.firstChild.append(bv); w.append(sub);
+    var de = h("select", "nvmov-dest"); de.title = "A qué estado pasa en Ventas minoristas al aprobar";
+    ["PARA HACER", "EN PROCESO", "PARA EMBALAR", "LISTO PARA ENVIAR"].forEach(function(e){ var o = h("option", null, e.charAt(0) + e.slice(1).toLowerCase()); o.value = e; de.append(o); });
+    de.value = DEST[it.id] || "PARA HACER"; de.onchange = function(){ DEST[it.id] = de.value; };
+    var c1 = f.firstChild; c1.append(bv); c1.append(h("small", "nvmov-destl", "pasa a")); c1.append(de); w.append(sub);
     /* al abrir: todo el detalle + cómo queda en Finanzas */
     var det = h("div", "nvmov-det"); det.hidden = true;
     function area(lab, val, on){ var l = h("label", "nvmov-f"); var t = h("textarea", "nvmov-in"); t.value = val || ""; t.rows = 4; t.onchange = function(){ on(t.value); }; l.append(h("span", null, lab), t); return l; }
