@@ -101,7 +101,7 @@
   }
   function quitarLogin(){ if (caja) { caja.remove(); caja = null; } }
   SB.auth.onAuthStateChange(function(ev){ if (ev === "PASSWORD_RECOVERY") { var n = prompt("Elegí tu nueva contraseña"); if (n) SB.auth.updateUser({ password: n }); } });
-  if ("serviceWorker" in navigator) navigator.serviceWorker.getRegistrations().then(function(rs){ rs.forEach(function(r){ r.unregister(); }); }).catch(function(){});
+  if ("serviceWorker" in navigator) navigator.serviceWorker.getRegistrations().then(function(rs){ rs.forEach(function(r){ var u = ((r.active || r.installing || r.waiting) || {}).scriptURL || ""; if (!/avisos-sw\.js/.test(u)) r.unregister(); }); }).catch(function(){});
 })();
 
 /* tema visual, chat y Hoy: se cargan de entrada para que no aparezca el diseño viejo */

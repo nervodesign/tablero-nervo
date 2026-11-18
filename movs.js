@@ -664,7 +664,7 @@
 /* ---------- Configuración: qué avisos recibir, horarios, por persona (se guarda en la cuenta de cada una) ---------- */
 (function(){
   if (window.__nvCfg) return; window.__nvCfg = 1;
-  var DEF = { mov: true, ventas: true, chat: true, canales: {}, tareas: true, tareasHora: "09:00", vencidas: true, pagos: true, pagosDias: 2, silencio: false, silDesde: "22:00", silHasta: "08:00" };
+  var DEF = { mov: true, ventas: true, buendia: true, chat: true, canales: {}, tareas: true, tareasHora: "09:00", vencidas: true, pagos: true, pagosDias: 2, silencio: false, silDesde: "22:00", silHasta: "08:00" };
   var AJ = Object.assign({}, DEF), CARGADO = false;
   function sb(){ return window.__sb; }
   function h(t, c, x){ var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
@@ -698,10 +698,12 @@
       var perm = ("Notification" in window) ? Notification.permission : "no";
       var txt = perm === "granted" ? "Este dispositivo tiene permiso para avisos ✓" : perm === "denied" ? "Este dispositivo bloqueó los avisos (se cambia en los ajustes del navegador)" : "Todavía no le diste permiso a este dispositivo";
       var bt = h("button", "nvcfg-bt", perm === "granted" ? "Probar un aviso" : "Activar avisos en este dispositivo"); bt.type = "button";
+      if (window.__nvPushListo && window.__nvPushListo()){ txt = "Avisos activados en este dispositivo ✓"; bt.textContent = "Mandarme un aviso de prueba"; }
       bt.onclick = function(){
-        if (!("Notification" in window)){ marcar("Este navegador no permite avisos"); return; }
-        if (Notification.permission === "granted"){ try { new Notification("Nervo Design", { body: "Así te van a llegar los avisos 🌿" }); } catch(e){ marcar("Probalo desde la app instalada en el celu"); } return; }
-        Notification.requestPermission().then(function(){ pintar(); });
+        if (!window.__nvPushActivar){ marcar("Recargá la app y probá de nuevo"); return; }
+        bt.disabled = true; bt.textContent = "Un segundo…";
+        var p = window.__nvPushListo() ? window.__nvPushProbar() : window.__nvPushActivar().then(function(){ return window.__nvPushProbar(); });
+        p.then(function(){ marcar("Te mandé un aviso de prueba ✓"); pintar(); }).catch(function(e){ var m = String((e && e.message) || e); marcar(m === "ios" ? "Primero agregá la app a la pantalla de inicio" : m === "permiso" ? "No diste permiso para los avisos" : "No se pudo activar"); pintar(); });
       };
       s0.append(fila("Este dispositivo", txt, bt));
       s0.append(h("p", "nvcfg-nota", "Para que lleguen con la app cerrada en el iPhone: abrí la app en Safari → Compartir → “Agregar a inicio”, entrá desde ese ícono y tocá “Activar avisos”."));
@@ -721,6 +723,7 @@
       var s2 = h("section", "nvcfg-s"); s2.append(h("h3", null, "Tareas"));
       s2.append(fila("Resumen de tareas del día", "Un aviso con lo que tenés para hoy", sw(AJ.tareas, function(v){ AJ.tareas = v; guardar(); pintar(); })));
       if (AJ.tareas) s2.append(fila("¿A qué hora?", null, hora(AJ.tareasHora, function(v){ AJ.tareasHora = v; guardar(); })));
+      s1.append(fila("Buen día ✨", "Lunes a viernes a las 9: “Hoy es día de muchas ventas 🔥”", sw(AJ.buendia, function(v){ AJ.buendia = v; guardar(); })));
       s2.append(fila("Tareas vencidas", "Te avisa si quedó algo sin hacer", sw(AJ.vencidas, function(v){ AJ.vencidas = v; guardar(); })));
       p.append(s2);
       /* pagos */
@@ -897,4 +900,51 @@
       nav.insertBefore(sec, yo); nav.insertBefore(b, yo);
     } catch(e){}
   }, 1500);
+})();
+
+/* ---------- Avisos al celu (con la app cerrada): activar en este dispositivo, avisar mensajes del chat ---------- */
+(function(){
+  if (window.__nvPush) return; window.__nvPush = 1;
+  function b64(s){ var p = "=".repeat((4 - s.length % 4) % 4); var r = atob((s + p).replace(/-/g, "+").replace(/_/g, "/")); var a = new Uint8Array(r.length); for (var i = 0; i < r.length; i++) a[i] = r.charCodeAt(i); return a; }
+  function llamar(body){ return window.__sb.functions.invoke("avisos", { body: body }).then(function(r){ if (r.error) throw r.error; return r.data || {}; }); }
+  function esIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+  function instalada(){ try { return window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; } catch(e){ return false; } }
+  function activar(){
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return Promise.reject(new Error(esIOS() && !instalada() ? "ios" : "no"));
+    return Notification.requestPermission().then(function(p){
+      if (p !== "granted") throw new Error("permiso");
+      return Promise.all([navigator.serviceWorker.register("avisos-sw.js", { scope: "./" }).then(function(){ return navigator.serviceWorker.ready; }), llamar({ accion: "clave" })]);
+    }).then(function(x){
+      var reg = x[0], k = x[1].publica; if (!k) throw new Error("no");
+      return reg.pushManager.getSubscription().then(function(s){ return s || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(k) }); });
+    }).then(function(sub){ return llamar({ accion: "suscribir", sub: sub.toJSON(), dispositivo: navigator.userAgent }); })
+      .then(function(r){ if (r && r.error) throw new Error(r.error); try { localStorage.setItem("nv-push", "1"); } catch(e){} return r; });
+  }
+  window.__nvPushActivar = activar;
+  window.__nvPushProbar = function(){ return llamar({ accion: "probar" }); };
+  window.__nvPushListo = function(){ try { return localStorage.getItem("nv-push") === "1" && Notification.permission === "granted"; } catch(e){ return false; } };
+  /* si ya estaba activado en este dispositivo, se renueva solo */
+  setTimeout(function(){ if (window.__nvPushListo()) activar().catch(function(){}); }, 6000);
+
+  /* chat: cuando mandás un mensaje, les llega el aviso a las demás */
+  var ult = "";
+  function canalActual(){
+    var b = document.querySelector(".chw .chtt b"), nom = b ? b.textContent.trim() : "";
+    var id = nom.toLowerCase();
+    try { (window.__nv.getCH() || []).forEach(function(c){ if (String(c[1]).toLowerCase() === nom.toLowerCase()) id = String(c[0]); }); } catch(e){}
+    return { id: id, nom: nom };
+  }
+  function avisarChat(form){
+    var ta = form.querySelector("textarea, input[type=text]"); var tx = ta ? ta.value.trim() : "";
+    var c = canalActual(); if (!c.id || /movimiento/i.test(c.nom)) return;
+    var clave = c.id + "|" + tx; if (clave === ult) return; ult = clave; setTimeout(function(){ if (ult === clave) ult = ""; }, 3000);
+    if (!tx && !form.querySelector(".chatt, .chadj, [data-adj]")) return;
+    llamar({ accion: "chat", canal: c.id, canalNombre: c.nom, texto: tx }).catch(function(){});
+  }
+  document.addEventListener("submit", function(e){ var f = e.target; if (f && f.matches && f.matches(".chw form.chf")) avisarChat(f); }, true);
+  document.addEventListener("keydown", function(e){ if (e.key === "Enter" && !e.shiftKey && !e.isComposing){ var f = e.target && e.target.closest && e.target.closest(".chw form.chf"); if (f) avisarChat(f); } }, true);
+  document.addEventListener("click", function(e){ var b = e.target && e.target.closest && e.target.closest(".chw form.chf button[type=submit], .chw form.chf .chsend"); if (b) avisarChat(b.closest("form")); }, true);
+
+  /* al tocar un aviso, abrir donde corresponde */
+  try { var ir = new URLSearchParams(location.search).get("ir"); if (ir) { var n = 0, t = setInterval(function(){ var el = document.getElementById(ir === "mov" ? "tab-mov" : "tab-chat"); if (el || ++n > 30){ clearInterval(t); if (el) el.click(); } }, 500); } } catch(e){}
 })();
