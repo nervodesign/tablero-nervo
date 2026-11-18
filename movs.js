@@ -117,7 +117,7 @@
   function decorarChat(){
     var S = window.__nv && window.__nv.S, ay = document.querySelector(".chw .nvmov-ayuda");
     if (!S || !S.chat || S.chat.canal !== CANAL){ if (ay) ay.remove(); return; }
-    if (!ay){ var fo = document.querySelector(".chw form.chf"); if (fo){ ay = h("div", "nvmov-ayuda"); ay.innerHTML = '<b>Cómo cargar</b><span>“Pagué 200000 a Licari por tela, transferencia”</span><span>“Venta Juana Pérez 85000 transferencia, cobró Pau”</span><span>“Me pagó Pintegral 50000 en efectivo”</span>'; fo.before(ay); } }
+    if (!ay){ var fo = document.querySelector(".chw form.chf"); if (fo){ ay = h("div", "nvmov-ayuda"); ay.innerHTML = '<b>Cómo cargar</b><span>“Pagué 200000 a Licari por lámparas, transferencia”</span><span>“Venta Juana Pérez 85000 transferencia, cobró Pau”</span><span>“Me pagó Pintegral 50000 en efectivo”</span>'; fo.before(ay); } }
     document.querySelectorAll(".chw .chmsg[data-id]").forEach(function(el){
       var r = ROWS.find(function(x){ return x.msg_id === el.dataset.id; }); if (!r) return;
       var e = etiqueta(r), b = el.querySelector(".nvmovchip");
