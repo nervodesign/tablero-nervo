@@ -145,3 +145,17 @@ html:not(#nv) .nvtoast{position:fixed;left:50%;bottom:24px;transform:translateX(
 /* respetar lista / conversación en el celu */
 html:not(#nv) .chw form.chf .chsend>*{display:none!important}
 @media (max-width:800px){html:not(#nv) .chw.vc .chc{display:none!important}html:not(#nv) .chw.vl .chmain{display:none!important}html:not(#nv) .chw .nvbell:not(.on){font-size:0!important}html:not(#nv) .chw .nvbell:not(.on)::before{content:"🔔";font-size:14px}}
+
+/* ---- más grande y cada uno con su color ---- */
+@media (min-width:801px){
+  html:not(#nv) .chw.nvchat{height:calc(100vh - 120px)!important;min-height:560px!important;max-height:none!important}
+  html:not(#nv) .chw.nvchat .chc,html:not(#nv) .chw.nvchat .chmain,html:not(#nv) .chw.nvchat .chrp{height:100%!important;max-height:none!important;min-height:0!important}
+  html:not(#nv) .chw.nvchat .chmain{display:flex!important;flex-direction:column!important}
+  html:not(#nv) .chw.nvchat .chlist{flex:1 1 auto!important;min-height:0!important;max-height:none!important;overflow-y:auto!important}
+  html:not(#nv) .chw .chmsg{padding:5px 22px 5px 68px!important}
+  html:not(#nv) .chw .chmsg .chx{display:inline-block;max-width:min(680px,92%);background:#F4F7FA;border-radius:4px 16px 16px 16px;padding:8px 14px!important;margin-top:3px;font-size:15.5px!important}
+  html:not(#nv) .chw .chmsg.nvme .chx{background:#F6EBDF}
+  html:not(#nv) .chw .chmsg:hover{background:transparent!important}
+  html:not(#nv) .chw .chmsg:hover .chx{filter:brightness(.985)}
+}
+html:not(#nv) .chw .chmsg .chav{box-shadow:0 0 0 3px #fff}
