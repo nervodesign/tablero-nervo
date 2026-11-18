@@ -6,6 +6,10 @@
   var TIPOS = [["venta","Venta minorista","+"],["mayorista","Venta mayorista","+"],["sena","Seña","+"],["pago","Pago","-"],["sueldo","Sueldo","-"],["envio","Envío","-"],["otro","Otro",""]];
   var QUIEN = { "eugeabdon@gmail.com": "euge", "mpauabdon@gmail.com": "pau", "nervodesigncordoba@gmail.com": "nervo" };
   var NOM = { euge: "Euge", pau: "Pau", nervo: "Nervo" };
+  var CATS = ["1.1 VENTA MIN. EFTVO", "1.2 VENTA MIN. TARJETA FACTURADA", "1.3 VENTA MIN. TARJETA NO FACTURADA", "1.4 VENTA MIN. TRANSFERENCIA FACTURADA", "1.5 VENTA MIN. TRANSFERENCIA NO FACTURADA", "1.6 VENTA MAY. NO FACTURADA", "1.7 VENTA MAY. FACTURADA", "1.8 DEVOLUCIÓN RECIBIDA", "2.1 SUELDO - SUELDO PAU", "2.2 SUELDO - SUELDO EUGE", "2.3 MO - HERRERO GABRIEL", "2.4 MO - TEJEDORA LAURA", "2.5 MO - EMP DEPÓSITO DAMIÁN", "2.6 MO - TEJEDORA RAQUEL", "2.7 MO - TEJEDORA IRIS", "2.8 PEDRO CARPINTERO", "3.1 COMPRA PRODUCTOS - REVENTA", "3.2 INSUMO - HIERRO", "3.3 INSUMO - HILOS Y TEJIDOS", "3.4 INSUMO - KITS ELÉCTRICOS", "3.5 INSUMO- ADHESIVOS Y TERMINACIONES", "3.6 INSUMO - FERRETERÍA Y OTROS", "4.1 LOGISTICA - ET. DE TRANSP. PAG. X NERVO", "4.2 LOGISTICA - ET. DE TRANSP. PAG. X CLIENTE", "4.3 EMBALAJE - MATERIALES", "4.4 EMBALAJE- PACKAGING DE MARCA", "4.5 GASTOS DE ENVIOS PROVEEDORES", "5.1 FIJO - CONTADOR", "5.2 FIJO- MONOTRIBUTO E IMPUESTOS", "5.3 FIJO - ALQUILER DEPÓSITO", "5.4 FIJO - PLATAFORMAS DIGITALES", "5.5 FIJO - SERVICIOS DEPOSITO", "6.1 MKT - PUBLICIDAD DIGITAL", "6.2 MANTENIMIENTO - DEPÓSITO Y EQUIPOS", "6.3 OPERATIVO - COMIDAS Y VIÁTICOS", "6.4 OPERATIVO - REGALOS Y EVENTOS", "6.5 OPERATIVO -  LIMPIEZA Y DEPÓSITO", "6.6 DEVOLUCION AL CLIENTE", "7.4 FINANCIERO - SALDO INICIAL"];
+  var GRUPOS_FIN = { "1": "1.0 INGRESOS", "2": "2.0 MANO DE OBRA", "3": "3.0 PRODUCCIÓN E INSUMOS", "4": "4.0 LOGÍSTICA Y ENVÍOS", "5": "5.0 GASTOS FIJOS", "6": "6.0 GASTOS VARIABLES OPERATIVOS", "7": "7.0 MOVIMIENTOS FINANCIEROS" };
+  function catLimpia(c){ c = String(c || "").trim(); if (!c) return null; var k = c.split(" ")[0]; return CATS.find(function(x){ return x === c; }) || CATS.find(function(x){ return x.split(" ")[0] === k; }) || null; }
+  function catCorta(c){ return String(c || "").replace(/^\d+\.\d+\s*/, ""); }
   var ROWS = [], SOY = null, LISTO = false, ENCURSO = {}, FILTRO = "pend", RECIEN = {};
   function h(tag, cls, txt){ var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
   function plata(n){ n = Number(n) || 0; return "$" + Math.round(n).toLocaleString("es-AR"); }
@@ -15,13 +19,8 @@
   function diaDe(ts){ var d = new Date(ts); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
   function diaLargo(k){ var p = k.split("-"), d = new Date(+p[0], +p[1] - 1, +p[2]); var s = d.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" }); return s.charAt(0).toUpperCase() + s.slice(1); }
   function destino(r){
-    var q = NOM[r.por] || "❓", s = signoDe(r);
-    var f = "Finanzas " + q + (s === "+" ? " (suma)" : s === "-" ? " (resta)" : "");
-    if (r.tipo === "venta") return "Ventas minoristas + " + f;
-    if (r.tipo === "mayorista") return "Ventas mayoristas + " + f;
-    if (r.tipo === "sueldo") return "Sueldos" + (r.contraparte ? " · " + r.contraparte : "") + " + " + f;
-    if (r.tipo === "pago" && r.contraparte) return "Pagos · " + r.contraparte + " + " + f;
-    return f;
+    var q = NOM[r.por] || "❓";
+    return "Finanzas " + q + " · " + (r.cat ? catCorta(r.cat) : "❓ categoría");
   }
 
   /* ---------- datos ---------- */
@@ -48,7 +47,7 @@
   /* ---------- la IA lee cada mensaje nuevo del canal ---------- */
   function ia(m){
     return new Promise(function(ok, mal){
-      try { google.script.run.withSuccessHandler(ok).withFailureHandler(mal).iaMovimiento(m.texto || "", m.adj || [], NOM[m.por] || m.por || ""); } catch(e){ mal(e); }
+      try { google.script.run.withSuccessHandler(ok).withFailureHandler(mal).iaMovimiento(m.texto || "", m.adj || [], NOM[m.por] || m.por || "", CATS); } catch(e){ mal(e); }
     });
   }
   function procesar(){
@@ -69,7 +68,7 @@
           res = res || {};
           var por = /^(euge|pau)$/.test(res.por) ? res.por : (/^(euge|pau)$/.test(res.cuenta) ? res.cuenta : null);
           var falta = Array.isArray(res.falta) ? res.falta.slice(0, 6) : [];
-          return guardar(x, { tipo: tipoDe(res.tipo)[0], signo: /^(ingreso|egreso)$/.test(res.signo) ? res.signo : null, monto: Number(res.monto) || null,
+          return guardar(x, { tipo: tipoDe(res.tipo)[0], cat: catLimpia(res.cat), signo: /^(ingreso|egreso)$/.test(res.signo) ? res.signo : null, monto: Number(res.monto) || null,
             fecha: /^\d{4}-\d{2}-\d{2}$/.test(res.fecha || "") ? res.fecha : null, por: por, cuenta: /^(euge|pau)$/.test(res.cuenta) ? res.cuenta : null,
             contraparte: res.contraparte || null, concepto: res.concepto || null, medio: res.medio || null, presupuesto: res.presupuesto || null,
             cliente: res.cliente || null, falta: falta, ia: res, estado: "pendiente" });
@@ -181,6 +180,17 @@
     });
     window.scrollTo(0, y);
   }
+  function cargarFinanzas(r){
+    var hoja = r.por === "pau" ? "fin_pau" : "fin_euge";
+    var id = "mov" + r.id + "x" + Date.now().toString(36);
+    var fecha = r.fecha || diaDe(r.msg_at || r.creado);
+    var monto = Math.abs(Number(r.monto) || 0), total = signoDe(r) === "-" ? -monto : monto;
+    var fila = { id: id, concepto: String(r.contraparte || r.concepto || tipoDe(r.tipo)[1]).toUpperCase(), fecha: fecha, cat: r.cat,
+      total: total, cuenta: GRUPOS_FIN[String(r.cat).split(".")[0]] || "", notas: (r.concepto ? r.concepto + " · " : "") + "desde #movimientos" };
+    return new Promise(function(ok, mal){
+      google.script.run.withSuccessHandler(function(){ ok(id); }).withFailureHandler(mal).baseGuardarVarios(hoja, [fila]);
+    });
+  }
   function campo(lab, el){ var l = h("label", "nvmov-f"); l.append(h("span", null, lab), el); return l; }
   function fila(r){
     var f = h("div", "nvmov-row " + (r.estado === "aprobado" ? "ok" : r.estado === "procesando" ? "lee" : r.estado === "descartado" ? "des" : ""));
@@ -190,8 +200,18 @@
       if (ck.checked){
         if (!r.por){ ck.checked = false; toast("Elegí a quién se carga (Euge o Pau) antes de aprobar."); return; }
         if (!Number(r.monto)){ ck.checked = false; toast("Falta el monto."); return; }
-        RECIEN[r.id] = 1; guardar(r, { estado: "aprobado", aprobado_por: SOY, aprobado_at: new Date().toISOString() });
-      } else guardar(r, { estado: "pendiente", aprobado_por: null, aprobado_at: null });
+        if (!r.cat){ ck.checked = false; toast("Elegí la categoría antes de aprobar."); return; }
+        if (signoDe(r) !== "+" && signoDe(r) !== "-"){ ck.checked = false; toast("Marcá si entra o sale."); return; }
+        RECIEN[r.id] = 1; ck.disabled = true;
+        cargarFinanzas(r).then(function(idFin){
+          return guardar(r, { estado: "aprobado", aprobado_por: SOY, aprobado_at: new Date().toISOString(), cargado: "fin_" + r.por + ":" + idFin });
+        }).then(function(){ toast("Cargado en Finanzas " + NOM[r.por] + "."); }, function(e){
+          ck.checked = false; ck.disabled = false; toast("No se pudo cargar en Finanzas: " + String(e && e.message || e));
+        });
+      } else {
+        if (r.cargado){ ck.checked = true; toast("Ya está cargado en Finanzas " + (NOM[r.por] || "") + ". Si hay que corregirlo, hacelo ahí."); return; }
+        guardar(r, { estado: "pendiente", aprobado_por: null, aprobado_at: null });
+      }
     };
     var ckw = h("label", "nvmov-ckw"); ckw.append(ck, h("i")); f.append(ckw);
     var cu = h("div", "nvmov-cu");
@@ -209,7 +229,11 @@
     var g2 = h("div", "nvmov-g dos");
     var co = h("input"); co.value = r.contraparte || ""; co.placeholder = "Cliente, proveedor o empleado"; co.onchange = function(){ guardar(r, { contraparte: co.value.trim() || null }); };
     var cc = h("input"); cc.value = r.concepto || ""; cc.placeholder = "Qué es"; cc.onchange = function(){ guardar(r, { concepto: cc.value.trim() || null }); };
-    g2.append(campo("Quién", co), campo("Concepto", cc));
+    var ca = h("select", r.cat ? "" : "falta"); var o0 = h("option", null, "❓ Elegí categoría"); o0.value = ""; ca.append(o0);
+    CATS.forEach(function(c){ var o = h("option", null, c); o.value = c; ca.append(o); }); ca.value = r.cat || "";
+    ca.onchange = function(){ guardar(r, { cat: ca.value || null }); };
+    g2.append(campo("Quién", co), campo("Concepto", cc), campo("Categoría", ca));
+    if (r.cargado) [tp, sg, mo, qu, fe, co, cc, ca].forEach(function(x){ x.disabled = true; });
     cu.append(g1, g2);
     var pie = h("div", "nvmov-pie");
     pie.append(h("span", "nvmov-dest", "→ " + destino(r)));

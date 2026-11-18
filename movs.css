@@ -35,7 +35,8 @@ html:not(#nv) .nvmov-ckw input:checked+i{background:#5E8C6A;border-color:#5E8C6A
 html:not(#nv) .nvmov-ckw input:checked+i::after{content:"";position:absolute;left:8px;top:4px;width:6px;height:11px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
 html:not(#nv) .nvmov-ckw input:disabled+i{opacity:.4}
 html:not(#nv) .nvmov-g{display:grid;grid-template-columns:1.3fr .8fr 1fr 1fr 1fr;gap:8px}
-html:not(#nv) .nvmov-g.dos{grid-template-columns:1fr 1fr;margin-top:8px}
+html:not(#nv) .nvmov-g.dos{grid-template-columns:1fr 1fr 1.4fr;margin-top:8px}
+html:not(#nv) .nvmov-f input:disabled,html:not(#nv) .nvmov-f select:disabled,html:not(#nv) .nvmov-sg:disabled{opacity:.75;cursor:default}
 html:not(#nv) .nvmov-f{display:flex;flex-direction:column;gap:3px;min-width:0}
 html:not(#nv) .nvmov-f>span{font-size:11px;color:#A8968A;letter-spacing:.02em}
 html:not(#nv) .nvmov-f input,html:not(#nv) .nvmov-f select,html:not(#nv) .nvmov-sg{width:100%;box-sizing:border-box;border:1px solid transparent;background:#F7F3EF;border-radius:10px;padding:8px 10px;font:inherit;font-size:14px;color:#3A241C;outline:0;min-height:36px;transition:border-color .15s,background .15s;-webkit-appearance:none;appearance:none}
