@@ -135,3 +135,9 @@ html:not(#nv) .nvh-hero .nvh-sp{background:none!important;box-shadow:none!import
 html:not(#nv) .nvh-hero .nvh-split>div{background:rgba(255,255,255,.16)!important;box-shadow:-2px -2px 5px rgba(255,255,255,.12),3px 4px 10px rgba(70,42,28,.16)!important;border:0!important}
 html:not(#nv) .nvh-hero .nvh-chip{box-shadow:-2px -2px 5px rgba(255,255,255,.12),3px 4px 10px rgba(70,42,28,.16)!important}
 html:not(#nv) .nvh-hero .nvh-bar{background:rgba(255,255,255,.22)!important;box-shadow:none!important}
+
+/* chat: títulos de grupo limpios (Outfit, sin mayúsculas ni emojis) y Movimientos en verde plata suave */
+html:not(#nv) .chw .nvg{text-transform:none!important;letter-spacing:-.005em!important;font-size:14px!important;font-weight:500!important;color:#3B2418!important;padding:14px 8px 6px!important}
+html:not(#nv) .chw .nvg .nvgi{display:none!important}
+html:not(#nv) .chw .nvg .nvga{color:#B9A79A!important;font-size:11px}
+html:not(#nv) .chw .chb.nvmovtop::before{background:linear-gradient(160deg,#C4DCC6,#97BC9E)!important;box-shadow:inset 1px 1px 1px rgba(255,255,255,.5),2px 3px 8px rgba(80,120,90,.22)!important}
