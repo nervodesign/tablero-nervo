@@ -72,6 +72,7 @@
     var D = datos(), g = list.querySelector(".nvh");
     if (g){
       if (g.dataset.ph && D){ var old = g.querySelector(".nvh-hero"); g.replaceChild(heroEl(D, kFac), old); delete g.dataset.ph; }
+      kanban(g);
       return;
     }
     var kTar = bs.find(function(b){ return /Tareas/i.test(b.textContent); });
@@ -84,6 +85,43 @@
     if (pipe){ pipe.classList.add("nvh-pipe"); g.append(pipe); }
     kpis.style.setProperty("display", "none", "important");
     top.appendChild(g);
+    kanban(g);
+  }
+
+  /* ---------- Pedidos en camino como kanban (solo muestra, no cambia nada) ---------- */
+  var KB = [["Por revisar",/REVISAR/i,"#E4B98F"],["Para hacer",/PARA HACER/i,"#DDA5AE"],["En proceso",/PROCESO/i,"#B4A6D6"],["Para embalar",/EMBALAR/i,"#94B3CF"],["Listo",/LISTO/i,"#94BE8A"]];
+  function txt(v){ if (v == null) return ""; if (Array.isArray(v)) return v.map(txt).filter(Boolean).join(", "); if (typeof v === "object") return txt(v.nombre || v.n || v.prod || v.producto || ""); return String(v); }
+  function kanban(g){
+    var S = window.__nv && window.__nv.S, B = S && S.bzData && S.bzData.min; if (!B) return;
+    var mes = new Date().toISOString().slice(0, 7), R = B.filter(function(r){ return !/ARCHIVADO/i.test(r.env || ""); });
+    var cols = KB.map(function(k){ return R.filter(function(r){ return k[1].test(r.env || ""); }); });
+    var env = R.filter(function(r){ return /ENVIADO|RETIRADO/i.test(r.env || "") && String(r.fecha || "").slice(0, 7) === mes; }).length;
+    var act = cols.reduce(function(a, c){ return a + c.length; }, 0);
+    var sig = cols.map(function(c){ return c.map(function(r){ return r.id || r.num; }).join(","); }).join("|") + "|" + env;
+    var card = g.querySelector(".nvpk");
+    if (card && card.dataset.sig === sig) return;
+    if (!card){ card = h("section", "nvpk"); g.append(card); }
+    card.dataset.sig = sig; card.replaceChildren();
+    var hd = h("div", "nvpk-h");
+    var t = h("div"); t.append(h("b", null, "Pedidos en camino"), h("small", null, act + " activos · " + env + " enviados este mes"));
+    var ver = h("button", "nvpk-ver", "Ver todos →"); ver.type = "button"; ver.onclick = function(){ try { window.__nv.setTab("base"); } catch(e){} };
+    hd.append(t, ver); card.append(hd);
+    var wrap = h("div", "nvpk-cols");
+    KB.forEach(function(k, i){
+      var c = h("div", "nvpk-col"), lst = cols[i];
+      var ch = h("div", "nvpk-ch"); var d = h("i"); d.style.background = k[2]; ch.append(d, h("span", null, k[0]), h("em", null, String(lst.length))); c.append(ch);
+      lst.slice().sort(function(a, b){ return String(a.fecha || "").localeCompare(String(b.fecha || "")); }).slice(0, 3).forEach(function(r){
+        var tk = h("div", "nvpk-tk"); tk.onclick = function(){ try { window.__nv.setTab("base"); } catch(e){} };
+        tk.append(h("b", null, txt(r.cliente) || ("Pedido " + txt(r.num))));
+        var p = txt(r.prods); if (p) tk.append(h("span", null, p));
+        var f = String(r.fecha || "").slice(0, 10); if (f || r.num) tk.append(h("small", null, (r.num ? "#" + txt(r.num) : "") + (f ? (r.num ? " · " : "") + f.split("-").reverse().slice(0, 2).join("/") : "")));
+        c.append(tk);
+      });
+      if (lst.length > 3) c.append(h("div", "nvpk-mas", "+ " + (lst.length - 3) + " más"));
+      if (!lst.length) c.append(h("div", "nvpk-vacio", "—"));
+      wrap.append(c);
+    });
+    card.append(wrap);
   }
 
   var pend = false;
