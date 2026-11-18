@@ -147,3 +147,30 @@ html:not(#nv) .nvpk-ch{color:#5A3A2B!important}
 /* menú: letra normal (ni negrita ni finita) */
 html:not(#nv) nav.tabs .tab,html:not(#nv) nav.tabs .tab .lb{font-weight:400!important;-webkit-font-smoothing:antialiased}
 html:not(#nv) nav.tabs .tab[aria-selected="true"],html:not(#nv) nav.tabs .tab[aria-selected="true"] .lb{font-weight:500!important}
+
+/* ===== toque "soft" (relieve suave) solo en algunos detalles, con nuestros colores ===== */
+html:root{--sf-up:-4px -4px 10px rgba(255,255,255,.95),5px 6px 14px rgba(120,90,70,.16);--sf-in:inset 3px 3px 7px rgba(120,90,70,.14),inset -3px -3px 7px rgba(255,255,255,.9)}
+/* columnas de pedidos: hundidas; tarjetas: en relieve */
+html:not(#nv) .nvpk-col{background:#F5EFEA!important;box-shadow:var(--sf-in)!important}
+html:not(#nv) .nvpk-tk{border:0!important;background:#FFFCFA!important;box-shadow:var(--sf-up)!important}
+html:not(#nv) .nvpk-ver{background:#F5EFEA!important;box-shadow:var(--sf-up)!important}
+html:not(#nv) .nvpk-ver:active{box-shadow:var(--sf-in)!important}
+/* números de Tareas y A pagar en una pastilla, como un reloj */
+html:root body #list .nvh .kpi.nvh-k>b{border-radius:14px;padding:4px 14px;box-shadow:var(--sf-in)}
+html:root body #list .nvh .kpi.nvh-k.hp-lila>b{background:#F6DDE2}
+html:root body #list .nvh .kpi.nvh-k.hp-rosa>b{background:#DCE7F1}
+/* círculos para tildar tareas: botón en relieve */
+html:not(#nv) .item > button.check{box-shadow:var(--sf-up),inset 0 0 0 1.5px #E3D3C8!important;border-color:transparent!important;background:#FBF7F4!important}
+/* buscador hundido */
+html:not(#nv) header.top .srch{background:#F5EFEA!important;box-shadow:var(--sf-in)!important;border:0!important}
+/* botón Crear en relieve */
+html:not(#nv) .fab{box-shadow:-3px -3px 8px rgba(255,255,255,.7),6px 8px 18px rgba(90,58,43,.35)!important}
+/* segmentos (Pendientes/Aprobados, Lista/Tablero...): riel hundido + botón en relieve */
+html:not(#nv) .nvmov-seg,html:not(#nv) .seg,html:not(#nv) .stk-tabs{background:#F3ECE6!important;box-shadow:var(--sf-in)!important}
+html:not(#nv) .nvmov-seg button.on,html:not(#nv) .seg button.on,html:not(#nv) .seg .on,html:not(#nv) .stk-tab.on{background:#FFFCFA!important;box-shadow:var(--sf-up)!important}
+/* tildes de Movimientos */
+html:not(#nv) .nvmov-ckw i{border:0!important;background:#FBF7F4!important;box-shadow:var(--sf-up),inset 0 0 0 1.5px #E3D3C8!important}
+html:not(#nv) .nvmov-ckw input:checked+i{background:#3F6E8C!important;box-shadow:var(--sf-in)!important}
+/* menú: la solapa elegida en relieve suave */
+html:not(#nv) nav.tabs .tab[aria-selected="true"]{background:#FBF4F1!important;box-shadow:-3px -3px 8px rgba(255,255,255,.9),4px 5px 12px rgba(120,90,70,.14)!important}
+html:not(#nv) .item.done > button.check,html:not(#nv) .item > button.check[aria-pressed="true"]{box-shadow:var(--sf-in)!important}
