@@ -176,3 +176,29 @@ html:not(#nv) .chw .chlist .chmsg:not(.mio)::after{left:100%}
 html:not(#nv) .chw .chlist .chmsg .chh button:is(.nvcit,.chhilo){font-size:0!important;color:#7A6456!important}
 html:not(#nv) .chw .chlist .chmsg .chh button.nvcit::before{content:"❝";font-size:13px}
 html:not(#nv) .chw .chlist .chmsg .chh button.chhilo::before{content:"↩";font-size:13px}
+
+/* movimientos: productos uno por línea con cantidad, botón de aprobar claro, opción Finanzas */
+html:not(#nv) .nvmov-vr{align-items:start!important}
+html:not(#nv) .nvmov-prods{display:flex;flex-direction:column;gap:3px;min-width:0}
+html:not(#nv) .nvmov-pl{display:grid;grid-template-columns:30px 10px minmax(0,1fr);align-items:center;gap:2px}
+html:not(#nv) .nvmov-pl .nvmov-q{text-align:center;padding:4px 2px!important;min-height:26px!important;font-weight:500}
+html:not(#nv) .nvmov-pl .nvmov-pn{min-height:26px!important;padding:4px 6px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html:not(#nv) .nvmov-x1{font-size:11px;color:#B09C8E;text-align:center}
+html:not(#nv) .nvmov-pmas{justify-self:start;align-self:flex-start;border:0;background:none;color:#9A8274;font:inherit;font-size:11.5px;padding:2px 6px;cursor:pointer;border-radius:999px}
+html:not(#nv) .nvmov-pmas:hover{background:#F6EEE9;color:#3B2418}
+html:not(#nv) .nvmov-ckw{visibility:hidden}
+html:not(#nv) .nvmov-sub{align-items:center;flex-wrap:wrap}
+html:not(#nv) .nvmov-fin{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:#EEF5EF;color:#4F7A5A;font-size:11.5px;font-weight:500;cursor:pointer}
+html:not(#nv) .nvmov-fin.off{background:#F4EFEB;color:#9A8274}
+html:not(#nv) .nvmov-fin input{accent-color:#6F9C7A;width:14px;height:14px;margin:0}
+html:not(#nv) .nvmov-ok{margin-left:auto;border:0;cursor:pointer;font:inherit;font-size:12.5px;font-weight:500;color:#fff;padding:7px 16px;border-radius:999px;background:linear-gradient(160deg,#8C6A56,#6E4F3E);box-shadow:-2px -2px 6px rgba(255,255,255,.9),3px 4px 10px rgba(90,58,43,.25);transition:transform .15s,box-shadow .15s}
+html:not(#nv) .nvmov-ok:hover{transform:translateY(-1px);box-shadow:-2px -2px 6px rgba(255,255,255,.9),4px 6px 14px rgba(90,58,43,.3)}
+html:not(#nv) .nvmov-ok:disabled{opacity:.5;cursor:default}
+/* chat: botones de arriba (Tareas, fijados…) con letra chocolate, no blanca */
+html:not(#nv) main#list .chw .chmain > :first-child button,html:not(#nv) main#list .chw .chmain > :first-child button *{color:#3B2418!important}
+/* chat un toque más blanco */
+html:not(#nv) main#list .chw{background:#FBF9F7!important}
+html:not(#nv) main#list .chw > .chc{background:#F7F4F1!important}
+html:not(#nv) main#list .chw .chlist{background:#F9F6F3!important}
+html:not(#nv) main#list .chw .chmain,html:not(#nv) main#list .chw .chmain > :first-child,html:not(#nv) .chw form.chf{background:#FCFBF9!important}
+html:not(#nv) .chw .chb{background:#FBF9F7!important}
