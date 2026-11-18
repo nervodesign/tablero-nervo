@@ -141,3 +141,38 @@ html:not(#nv) .chw .nvg{text-transform:none!important;letter-spacing:-.005em!imp
 html:not(#nv) .chw .nvg .nvgi{display:none!important}
 html:not(#nv) .chw .nvg .nvga{color:#B9A79A!important;font-size:11px}
 html:not(#nv) .chw .chb.nvmovtop::before{background:linear-gradient(160deg,#C4DCC6,#97BC9E)!important;box-shadow:inset 1px 1px 1px rgba(255,255,255,.5),2px 3px 8px rgba(80,120,90,.22)!important}
+
+/* chat estilo WhatsApp: burbujas claras, Euge a la derecha, Pau a la izquierda, caja de escribir más grande */
+html:not(#nv) main#list .chw .chlist{background:#F3EEEA!important;display:flex!important;flex-direction:column!important;gap:6px!important;padding:18px 22px!important}
+html:not(#nv) .chw .chlist .chd{align-self:center!important;background:#FFFFFF!important;color:#8A7466!important;font-size:11.5px!important;font-weight:500!important;padding:3px 12px!important;border-radius:999px!important;box-shadow:0 1px 2px rgba(80,55,40,.08)!important;margin:8px 0!important;border:0!important}
+html:not(#nv) .chw .chlist .chmsg{align-self:flex-start!important;max-width:min(70%,560px)!important;width:auto!important;background:#FFFFFF!important;border-radius:4px 16px 16px 16px!important;padding:7px 12px 8px!important;margin:0!important;box-shadow:0 1px 2px rgba(80,55,40,.08),0 2px 8px rgba(80,55,40,.05)!important;border:0!important;display:block!important}
+html:not(#nv) .chw .chlist .chmsg.mio{align-self:flex-end!important;background:#F7E6E9!important;border-radius:16px 4px 16px 16px!important}
+html:not(#nv) .chw .chlist .chmsg .chh{display:flex!important;align-items:center!important;gap:6px!important;margin:0 0 2px!important;padding:0!important;font-size:11.5px!important;min-height:0!important}
+html:not(#nv) .chw .chlist .chmsg .chh .chav{width:18px!important;height:18px!important;min-width:18px!important;font-size:9px!important}
+html:not(#nv) .chw .chlist .chmsg.mio .chh .chav{display:none!important}
+html:not(#nv) .chw .chlist .chmsg .chh>b{font-size:12px!important;font-weight:500!important;color:#9E5C6B!important}
+html:not(#nv) .chw .chlist .chmsg:not(.mio) .chh>b{color:#5F87A8!important}
+html:not(#nv) .chw .chlist .chmsg .chh>span:not(.chav){font-size:10.5px!important;color:#B09C8E!important}
+html:not(#nv) .chw .chlist .chmsg .chx{background:transparent!important;box-shadow:none!important;border:0!important;padding:0!important;margin:0!important;font-size:13.5px!important;line-height:1.4!important;color:#3B2418!important;border-radius:0!important;max-width:none!important}
+html:not(#nv) .chw .chlist .chmsg .nvmovchip{margin-top:6px!important;font-size:11px!important}
+html:not(#nv) .chw .chlist .chmsg .chh button{opacity:0;transition:opacity .15s}
+html:not(#nv) .chw .chlist .chmsg:hover .chh button{opacity:1}
+html:not(#nv) .chw form.chf{padding:12px 16px 14px!important}
+html:not(#nv) .chw form.chf textarea{min-height:64px!important;font-size:14px!important;line-height:1.45!important;padding:12px 16px!important;border-radius:18px!important}
+/* acciones del mensaje (tachito, fijar, citar, hilo) al costado de la burbuja, no arriba */
+html:not(#nv) .chw .chlist .chmsg{position:relative!important;overflow:visible!important}
+html:not(#nv) .chw .chlist .chmsg .chh button{position:absolute!important;top:50%!important;transform:translateY(-50%)!important;width:26px!important;height:26px!important;margin:0!important;border-radius:50%!important;background:#FFFFFF!important;box-shadow:0 1px 3px rgba(80,55,40,.15)!important;display:grid!important;place-items:center!important;font-size:12px!important;padding:0!important;z-index:2}
+html:not(#nv) .chw .chlist .chmsg.mio .chh button:nth-of-type(1){right:calc(100% + 8px)!important;left:auto!important}
+html:not(#nv) .chw .chlist .chmsg.mio .chh button:nth-of-type(2){right:calc(100% + 38px)!important;left:auto!important}
+html:not(#nv) .chw .chlist .chmsg.mio .chh button:nth-of-type(3){right:calc(100% + 68px)!important;left:auto!important}
+html:not(#nv) .chw .chlist .chmsg.mio .chh button:nth-of-type(4){right:calc(100% + 98px)!important;left:auto!important}
+html:not(#nv) .chw .chlist .chmsg:not(.mio) .chh button:nth-of-type(1){left:calc(100% + 8px)!important;right:auto!important}
+html:not(#nv) .chw .chlist .chmsg:not(.mio) .chh button:nth-of-type(2){left:calc(100% + 38px)!important;right:auto!important}
+html:not(#nv) .chw .chlist .chmsg:not(.mio) .chh button:nth-of-type(3){left:calc(100% + 68px)!important;right:auto!important}
+html:not(#nv) .chw .chlist .chmsg:not(.mio) .chh button:nth-of-type(4){left:calc(100% + 98px)!important;right:auto!important}
+html:not(#nv) .chw .chlist .chmsg::after{content:"";position:absolute;top:0;bottom:0;width:132px}
+html:not(#nv) .chw .chlist .chmsg.mio::after{right:100%}
+html:not(#nv) .chw .chlist .chmsg:not(.mio)::after{left:100%}
+html:not(#nv) .chw .chlist .chmsg .chh button:is(.nvcit,.chhilo){font-size:0!important;color:#7A6456!important}
+html:not(#nv) .chw .chlist .chmsg .chh button.nvcit::before{content:"❝";font-size:13px}
+html:not(#nv) .chw .chlist .chmsg .chh button.chhilo::before{content:"↩";font-size:13px}
