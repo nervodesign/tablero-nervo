@@ -380,3 +380,10 @@ html:not(#nv) body.nvmov-on header.top #secTitle{display:none!important}
 
 /* en el chat no va el + (tapa el botón de enviar) */
 html:not(#nv) body:has(main#list .chw) #fab.fab{display:none!important}
+
+/* celu: tareas y a pagar centrados */
+@media (max-width:760px){
+  html:not(#nv) main#list .nvh .kpi.nvh-k{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;text-align:center!important;gap:8px!important;padding:16px 10px!important}
+  html:not(#nv) main#list .nvh .kpi.nvh-k>*{margin-left:auto!important;margin-right:auto!important;text-align:center!important;justify-content:center!important;align-self:center!important;position:static!important}
+  html:not(#nv) main#list .nvh .kpi.nvh-k>b{margin:2px auto!important;font-size:20px!important;padding:4px 16px!important}
+}
