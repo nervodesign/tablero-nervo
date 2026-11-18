@@ -44,35 +44,41 @@
     return svg;
   }
 
+  function heroEl(D, kFac){
+    var hero = h("button", "nvh-hero"); hero.type = "button";
+    if (kFac) hero.onclick = function(){ kFac.click(); };
+    var mes = D ? D.mes : MESES[new Date().getMonth()];
+    var lab = h("div", "nvh-lab"); lab.append(h("span", null, "Facturado " + mes), h("span", null, "En curso"));
+    hero.append(lab, h("div", "nvh-big", D ? plata(D.total) : "…"));
+    if (D && D.antes > 0){
+      var p = Math.round((D.total / D.antes - 1) * 100);
+      hero.append(h("span", "nvh-chip", (p >= 0 ? "▲ " : "▼ ") + Math.abs(p) + "% vs. " + MESES[(new Date().getMonth() + 11) % 12] + " a esta altura"));
+    } else hero.append(h("span", "nvh-chip", D ? "Primer mes con datos" : "Cargando ventas…"));
+    hero.append(spark(D ? D.serie : null));
+    var sp = h("div", "nvh-split"), mxx = D ? (Math.max(D.minT, D.mayT) || 1) : 1;
+    function caja(t, v, bar, col){ var c = h("div"); c.append(h("small", null, t), h("b", null, v)); if (bar != null){ var br = h("i", "nvh-bar"), f = h("em"); f.style.width = Math.round(bar * 100) + "%"; f.style.background = col; br.append(f); c.append(br); } return c; }
+    sp.append(caja("Minorista" + (D ? " · " + D.minN + " ventas" : ""), D ? plata(D.minT) : "…", D ? D.minT / mxx : 0, "#E9C6C2"),
+              caja("Mayorista" + (D ? " · " + D.mayN + " pedidos" : ""), D ? plata(D.mayT) : "…", D ? D.mayT / mxx : 0, "#BFD0DD"),
+              caja("Ticket promedio", D ? plata(D.ticket) : "…"),
+              caja("Ventas hoy", D ? String(D.hoyN) : "…"));
+    hero.append(sp);
+    return hero;
+  }
   function armar(list){
-    var top = list.querySelector(".pz-top"); if (!top || list.querySelector(".nvh")) return;
-    var D = datos(); if (!D) return;
+    var top = list.querySelector(".pz-top"); if (!top) return;
     var kpis = top.querySelector(".kpis"); if (!kpis) return;
     var bs = Array.prototype.slice.call(kpis.querySelectorAll(".kpi"));
     var kFac = bs.find(function(b){ return /Facturado/i.test(b.textContent); });
+    var D = datos(), g = list.querySelector(".nvh");
+    if (g){
+      if (g.dataset.ph && D){ var old = g.querySelector(".nvh-hero"); g.replaceChild(heroEl(D, kFac), old); delete g.dataset.ph; }
+      return;
+    }
     var kTar = bs.find(function(b){ return /Tareas/i.test(b.textContent); });
     var kPag = bs.find(function(b){ return /pagar/i.test(b.textContent); });
     var pipe = list.querySelector(".hp-pipe");
-
-    var g = h("div", "nvh");
-    var hero = h("button", "nvh-hero"); hero.type = "button";
-    if (kFac) hero.onclick = function(){ kFac.click(); };
-    var lab = h("div", "nvh-lab"); lab.append(h("span", null, "Facturado " + D.mes), h("span", null, "En curso"));
-    var big = h("div", "nvh-big", plata(D.total));
-    hero.append(lab, big);
-    if (D.antes > 0){
-      var p = Math.round((D.total / D.antes - 1) * 100);
-      hero.append(h("span", "nvh-chip", (p >= 0 ? "▲ " : "▼ ") + Math.abs(p) + "% vs. " + MESES[(new Date().getMonth() + 11) % 12] + " a esta altura"));
-    }
-    hero.append(spark(D.serie));
-    var sp = h("div", "nvh-split"), mxx = Math.max(D.minT, D.mayT) || 1;
-    function caja(t, v, bar, col){ var c = h("div"); c.append(h("small", null, t), h("b", null, v)); if (bar != null){ var br = h("i", "nvh-bar"), f = h("em"); f.style.width = Math.round(bar * 100) + "%"; f.style.background = col; br.append(f); c.append(br); } return c; }
-    sp.append(caja("Minorista · " + D.minN + " ventas", plata(D.minT), D.minT / mxx, "#E9C6C2"),
-              caja("Mayorista · " + D.mayN + " pedidos", plata(D.mayT), D.mayT / mxx, "#BFD0DD"),
-              caja("Ticket promedio", plata(D.ticket)),
-              caja("Ventas hoy", String(D.hoyN)));
-    hero.append(sp);
-    g.append(hero);
+    g = h("div", "nvh"); if (!D) g.dataset.ph = 1;
+    g.append(heroEl(D, kFac));
     if (kTar){ kTar.classList.add("nvh-k"); g.append(kTar); }
     if (kPag){ kPag.classList.add("nvh-k"); g.append(kPag); }
     if (pipe){ pipe.classList.add("nvh-pipe"); g.append(pipe); }
