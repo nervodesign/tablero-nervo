@@ -417,6 +417,15 @@
   function caja(val, ph, on){ var t = h("textarea", "nvmov-in nvmov-ta"); t.value = val || ""; t.placeholder = ph || ""; t.rows = 2; t.title = val || ""; t.onchange = function(){ t.title = t.value; on(t.value); }; return t; }
   /* productos y cantidades: dos columnas alineadas, una línea por producto (como en la tabla de ventas) */
   function partirCant(l){ var m = /^\s*\[(.?)\]\s*/.exec(l || ""); return m ? { ck: m[1], tx: String(l).slice(m[0].length) } : { ck: " ", tx: String(l || "") }; }
+  /* buscador de productos: mismos nombres que el catálogo / stock / ventas anteriores (así se cuentan bien) */
+  function listaCatalogo(){
+    var id = "nvmov-catl", dl = document.getElementById(id); if (dl) return id;
+    dl = document.createElement("datalist"); dl.id = id; var S = (window.__nv && window.__nv.S) || {}, vis = {};
+    function add(n){ n = String(n || "").trim(); if (!n || vis[n.toLowerCase()]) return; vis[n.toLowerCase()] = 1; var o = document.createElement("option"); o.value = n; dl.appendChild(o); }
+    baseMin().forEach(function(r){ arr(r.prods).forEach(add); });
+    (S.stock || []).forEach(function(x){ add(x.producto); }); (S.catalogo || []).forEach(function(x){ add(x.nombre); });
+    document.body.appendChild(dl); return id;
+  }
   function prodsYCants(it, alCambiar){
     var v = it.row, cp = h("div", "nvmov-prods"), cc = h("div", "nvmov-prods");
     var ps = arr(v.prods).slice(), cs = String(v.cant || "").split("\n");
@@ -426,8 +435,7 @@
       cp.innerHTML = ""; cc.innerHTML = "";
       ps.forEach(function(p, i){
         var r = h("div", "nvmov-pl");
-        var pi = h("input", "nvmov-in nvmov-pn"); pi.value = p || ""; pi.placeholder = "Producto"; pi.title = p || "";
-        pi.onchange = function(){ ps[i] = pi.value.trim(); pi.title = ps[i]; if (!ps[i]){ ps.splice(i, 1); cs.splice(i, 1); pintarL(); } guardar2(); };
+        var pi = h("span", "nvmov-chip", p || ""); pi.title = p || "";
         var del = h("button", "nvmov-pdel", "✕"); del.type = "button"; del.title = "Sacar este producto";
         del.onclick = function(){ ps.splice(i, 1); cs.splice(i, 1); guardar2(); pintarL(); };
         r.append(pi, del); cp.append(r);
@@ -436,9 +444,9 @@
         ci.onchange = function(){ cs[i] = "[" + (pc.ck || " ") + "] " + ci.value.trim(); guardar2(); };
         var rc = h("div", "nvmov-pl nvmov-plc"); rc.append(ci); cc.append(rc);
       });
-      var mas = h("button", "nvmov-pmas", "+ producto"); mas.type = "button";
-      mas.onclick = function(){ ps.push(""); cs.splice(ps.length - 1, 0, "[ ] 1"); pintarL(); var u = cp.querySelectorAll(".nvmov-pn"); if (u.length) u[u.length - 1].focus(); };
-      cp.append(mas);
+      var bus = h("input", "nvmov-in nvmov-bus"); bus.placeholder = "🔍 Buscar producto…"; bus.setAttribute("list", listaCatalogo());
+      bus.onchange = function(){ var t = bus.value.trim(); if (!t) return; ps.push(t); cs.splice(ps.length - 1, 0, "[ ] 1"); guardar2(); pintarL(); var u = cp.querySelector(".nvmov-bus"); if (u) u.focus(); };
+      cp.append(bus);
     }
     pintarL(); return [cp, cc];
   }
