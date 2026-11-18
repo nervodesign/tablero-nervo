@@ -1018,3 +1018,6 @@
 
 /* ---------- Facturación (archivo aparte) ---------- */
 (function(){ if (window.__nvFactCarga) return; window.__nvFactCarga = 1; var cs = document.currentScript, v = cs && /[?&]v=(\d+)/.exec(cs.src); var sc = document.createElement("script"); sc.src = "fact.js" + (v ? "?v=" + v[1] : "?t=" + Date.now()); document.head.appendChild(sc); })();
+
+/* ---------- Mayoristas: diseño y WhatsApp (archivo aparte) ---------- */
+(function(){ if (window.__nvMayCarga) return; window.__nvMayCarga = 1; var cs = document.currentScript, v = cs && /[?&]v=(\d+)/.exec(cs.src); var sc = document.createElement("script"); sc.src = "may.js" + (v ? "?v=" + v[1] : "?t=" + Date.now()); document.head.appendChild(sc); })();
