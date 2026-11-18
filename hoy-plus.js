@@ -89,7 +89,7 @@
   }
 
   /* ---------- Pedidos en camino como kanban (solo muestra, no cambia nada) ---------- */
-  var KB = [["Por revisar",/REVISAR/i,"#E4B98F"],["Para hacer",/PARA HACER/i,"#DDA5AE"],["En proceso",/PROCESO/i,"#B4A6D6"],["Para embalar",/EMBALAR/i,"#94B3CF"],["Listo",/LISTO/i,"#94BE8A"]];
+  var KB = [["Por revisar",/REVISAR/i,"#C9AE9A"],["Para hacer",/PARA HACER/i,"#E2AEB8"],["En proceso",/PROCESO/i,"#9DBCD6"],["Para embalar",/EMBALAR/i,"#8A6552"],["Listo",/LISTO/i,"#5F87A8"]];
   function txt(v){ if (v == null) return ""; if (Array.isArray(v)) return v.map(txt).filter(Boolean).join(", "); if (typeof v === "object") return txt(v.nombre || v.n || v.prod || v.producto || ""); return String(v); }
   function kanban(g){
     var S = window.__nv && window.__nv.S, B = S && S.bzData && S.bzData.min; if (!B) return;
@@ -129,4 +129,58 @@
   new MutationObserver(function(){ if (pend) return; pend = true; requestAnimationFrame(function(){ pend = false; pasar(); }); })
     .observe(document.documentElement, { childList: true, subtree: true });
   pasar();
+})();
+
+/* ---------- Fiesta: cuando marcás una tarea como hecha, papelitos ---------- */
+(function(){
+  if (window.__nvFiesta) return; window.__nvFiesta = 1;
+  var COL = ["#DFB9B6","#F2C9CF","#6B4A3A","#A47E65","#B7CEDE","#8FB3CF","#EAD9C6"];
+  var ult = { t: 0, x: innerWidth / 2, y: innerHeight / 2 };
+  document.addEventListener("pointerdown", function(e){ ult = { t: Date.now(), x: e.clientX, y: e.clientY }; }, true);
+  function hoy(){ var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  function hechas(){
+    var S = window.__nv && window.__nv.S, T = S && S.tareas; if (!T) return null;
+    var o = {}, h = hoy();
+    T.forEach(function(t){ if (t.estado === "hecha" || String(t.hdia || "").indexOf(h) === 0) o[t.id] = 1; });
+    return o;
+  }
+  function fiesta(x, y){
+    var cv = document.createElement("canvas"), dpr = devicePixelRatio || 1;
+    cv.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:99999";
+    cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; document.body.appendChild(cv);
+    var c = cv.getContext("2d"); c.scale(dpr, dpr);
+    var P = [];
+    for (var i = 0; i < 90; i++){
+      var a = -Math.PI / 2 + (Math.random() - .5) * Math.PI * 1.1, v = 6 + Math.random() * 9;
+      P.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: Math.random() * 6.28, vr: (Math.random() - .5) * .35,
+        w: 5 + Math.random() * 6, h: 8 + Math.random() * 8, col: COL[i % COL.length], round: Math.random() < .3 });
+    }
+    var t0 = performance.now();
+    (function paso(t){
+      var dt = t - t0; c.clearRect(0, 0, innerWidth, innerHeight);
+      P.forEach(function(p){
+        p.vy += .28; p.vx *= .99; p.vy *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+        c.save(); c.globalAlpha = Math.max(0, 1 - dt / 1900); c.translate(p.x, p.y); c.rotate(p.r); c.fillStyle = p.col;
+        if (p.round){ c.beginPath(); c.arc(0, 0, p.w / 2, 0, 6.28); c.fill(); } else c.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * Math.abs(Math.cos(p.r * 2)));
+        c.restore();
+      });
+      if (dt < 1900) requestAnimationFrame(paso); else cv.remove();
+    })(t0);
+    var frases = ["¡Bien ahí!", "¡Una menos!", "¡Genia!", "¡Hecho!", "¡Vamos!"];
+    var m = document.createElement("div"); m.textContent = frases[Math.floor(Math.random() * frases.length)] + " 🎉";
+    m.style.cssText = "position:fixed;left:50%;bottom:40px;transform:translate(-50%,20px);opacity:0;background:#fff;color:#3B2418;border:1px solid #EEDCD5;border-radius:20px;padding:10px 18px;font:600 15px Outfit,system-ui,sans-serif;box-shadow:0 14px 34px rgba(58,36,28,.16);z-index:99999;transition:all .35s cubic-bezier(.2,.8,.2,1);pointer-events:none";
+    document.body.appendChild(m);
+    requestAnimationFrame(function(){ m.style.opacity = 1; m.style.transform = "translate(-50%,0)"; });
+    setTimeout(function(){ m.style.opacity = 0; m.style.transform = "translate(-50%,20px)"; setTimeout(function(){ m.remove(); }, 400); }, 1600);
+  }
+  window.__nvFiestaYa = fiesta;
+  var antes = null;
+  setInterval(function(){
+    var now = hechas(); if (!now) return;
+    if (antes){
+      var nueva = Object.keys(now).some(function(id){ return !antes[id]; });
+      if (nueva && Date.now() - ult.t < 4000){ fiesta(ult.x, ult.y); ult.t = 0; }
+    }
+    antes = now;
+  }, 300);
 })();
