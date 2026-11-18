@@ -492,7 +492,7 @@
     sub.append(fa, fw, lf);
     if (it.src === "chat") sub.append(h("span", "nvmov-tx", "“" + (it.mov.texto || "") + "”"));
     if (v.cobrado && v.facturar && Number(v.cobrado) && Math.abs(Number(v.cobrado) - Number(v.facturar)) > 1) sub.append(h("span", "nvmov-al", "Cobrado distinto de lo a facturar"));
-    sub.append(bv); w.append(sub);
+    f.firstChild.append(bv); w.append(sub);
     /* al abrir: todo el detalle + cómo queda en Finanzas */
     var det = h("div", "nvmov-det"); det.hidden = true;
     function area(lab, val, on){ var l = h("label", "nvmov-f"); var t = h("textarea", "nvmov-in"); t.value = val || ""; t.rows = 4; t.onchange = function(){ on(t.value); }; l.append(h("span", null, lab), t); return l; }
@@ -508,7 +508,7 @@
       falt.forEach(function(z){ if (z[2]) z[2].classList.toggle("falta", !!z[0]); });
       var fl = falt.filter(function(z){ return z[0]; }).map(function(z){ return z[1]; });
       fa.textContent = fl.length ? "Campos faltantes: " + fl.join(", ") : ""; fa.hidden = !fl.length;
-      bv.disabled = !!fl.length; bv.classList.toggle("off", !!fl.length);
+      bv.disabled = !!fl.length; bv.classList.toggle("off", !!fl.length); bv.textContent = fl.length ? "Faltan datos" : "✓ Aprobar";
       ft.textContent = si ? "💰 También a Finanzas " + (d.quien || "(elegí quién cobró)") : "Solo a Ventas minoristas";
       fw.classList.toggle("off", !si);
       lf.innerHTML = ""; lf.hidden = !si;
@@ -551,7 +551,7 @@
 (function(){
   if (window.__nvEstirar) return; window.__nvEstirar = 1;
   function clave(th){ return th.classList.contains("nvmov-vr") ? "ven" : "pla"; }
-  function leer(k){ try { return JSON.parse(localStorage.getItem("nvcols_" + k) || "null"); } catch(e){ return null; } }
+  function leer(k){ if (k === "ven") { try { var z = JSON.parse(localStorage.getItem("nvcols_ven") || "null"); if (z && z[0] < 80) localStorage.removeItem("nvcols_ven"); } catch(e){} } try { return JSON.parse(localStorage.getItem("nvcols_" + k) || "null"); } catch(e){ return null; } }
   function grabar(k, w){ try { localStorage.setItem("nvcols_" + k, JSON.stringify(w)); } catch(e){} }
   function aplicar(k, w){
     var tpl = w.map(function(x){ return Math.round(x) + "px"; }).join(" ");

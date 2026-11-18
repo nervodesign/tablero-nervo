@@ -296,3 +296,11 @@ html:not(#nv) .nvmov-vt .nvmov-vr .nvmov-chip{font-size:12.5px!important;backgro
 html:not(#nv) .nvmov-vt .nvmov-vr .nvmov-in.falta{background:#FBEDEF!important;box-shadow:none!important}
 html:not(#nv) .nvmov-vt .nvmov-vr>.nvmov-in.falta,html:not(#nv) .nvmov-vt .nvmov-vr select.falta{box-shadow:inset 0 0 0 1px #EBC3CB!important}
 html:not(#nv) .nvmov-vt .nvmov-sub{padding:8px 16px 10px 52px!important;background:#FDFBFA}
+
+/* aprobar al principio de la fila, bien marcado */
+html:not(#nv) .nvmov-vr{grid-template-columns:104px 100px 230px 140px 118px 140px 190px 180px 160px 130px 100px 100px 84px 110px 165px 145px 135px 70px 58px 26px!important}
+html:not(#nv) .nvmov-vt .nvmov-vr>.nvmov-c:first-child{display:flex;align-items:flex-start;padding:8px 6px 8px 10px!important}
+html:not(#nv) .nvmov-vt .nvmov-vr>.nvmov-c:first-child .nvmov-ckw{display:none}
+html:not(#nv) .nvmov-vt .nvmov-vr .nvmov-ok{margin:0!important;width:100%;padding:7px 8px!important;font-size:12.5px!important;font-weight:600!important;color:#2F6B40!important;background:#DCEFE0!important;border:1px solid #B9DCC1!important;border-radius:10px!important;box-shadow:0 1px 2px rgba(47,107,64,.12)!important;opacity:1!important;white-space:nowrap}
+html:not(#nv) .nvmov-vt .nvmov-vr .nvmov-ok:hover{background:#CBE7D1!important}
+html:not(#nv) .nvmov-vt .nvmov-vr .nvmov-ok.off{color:#A0717C!important;background:#FBF1F3!important;border:1px dashed #E7C4CC!important;box-shadow:none!important;font-weight:500!important;cursor:not-allowed}
