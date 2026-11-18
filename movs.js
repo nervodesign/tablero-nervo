@@ -488,8 +488,12 @@
   }
   /* cómo queda en Finanzas */
   /* lo que va a Finanzas se puede corregir a mano en la venta (se guarda hasta que se aprueba) */
-  function ovDe(id){ try { return JSON.parse(localStorage.getItem("nvfinov_" + id) || "{}") || {}; } catch(e){ return {}; } }
-  function ovSet(id, o){ try { if (Object.keys(o).length) localStorage.setItem("nvfinov_" + id, JSON.stringify(o)); else localStorage.removeItem("nvfinov_" + id); } catch(e){} }
+  /* correcciones de Finanzas: se guardan en la base, así las ven todas en todos los dispositivos */
+  var OV = null, OVH = "";
+  function ovDe(id){ var o = OV && OV[String(id)]; if (o) return JSON.parse(JSON.stringify(o)); try { return JSON.parse(localStorage.getItem("nvfinov_" + id) || "{}") || {}; } catch(e){ return {}; } }
+  function ovSet(id, o){ OV = OV || {}; OV[String(id)] = o; try { localStorage.removeItem("nvfinov_" + id); } catch(e){} SB.from("fin_ajustes").upsert({ id: String(id), datos: o, cambiado: new Date().toISOString(), cambiado_por: (typeof SOY !== "undefined" ? SOY : null) }).then(function(){}, function(){}); }
+  function ovTraer(){ SB.from("fin_ajustes").select("id,datos").then(function(r){ if (!r || r.error) return; var nu = {}; (r.data || []).forEach(function(x){ nu[x.id] = x.datos || {}; }); var hh = JSON.stringify(nu); if (hh === OVH) return; OVH = hh; OV = nu; var a = document.activeElement; if (document.body.classList.contains("nvmov-on") && !(a && a.closest && a.closest(".nvmovp"))) { try { pintar(); } catch(e){} } }, function(){}); }
+  setTimeout(ovTraer, 1500); setInterval(function(){ if (!document.hidden) ovTraer(); }, 15000);
   function finAuto(it){
     var v = it.row, cat = catVenta(v.metodo, v.fact), mon = Number(v.cobrado) || 0;
     return { concepto: ("Venta #" + (v.num || "") + " · " + (v.cliente || "")).toUpperCase(), fecha: v.fecha || "", cat: cat, total: mon, notas: "" };
