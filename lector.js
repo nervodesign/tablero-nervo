@@ -120,6 +120,8 @@
   function catDe(r){
     var cats = CATS || [];
     function cat(prefijo){ return cats.find(function(c){ return c.indexOf(prefijo + " ") === 0; }) || null; }
+    /* etiquetas de Vía Cargo (u otro transporte): 4.2 LOGISTICA - ET. DE TRANSP. */
+    if (r.tipo !== "venta" && r.tipo !== "mayorista" && r.tipo !== "sena" && /etiqueta/i.test(String(r.texto || "") + " " + (r.contraparte || ""))){ if (/v[ií]a\s*cargo/i.test(String(r.texto || "") + " " + (r.contraparte || ""))) r.contraparte = "ETIQUETAS VIA CARGO"; var c42 = cat("4.2"); if (c42) return c42; }
     /* proveedores de reventa: siempre 3.1 COMPRA PRODUCTOS - REVENTA */
     if (r.tipo !== "venta" && r.tipo !== "mayorista" && r.tipo !== "sena"){ var pv = norm((r.contraparte || "") + " " + String(r.texto || "").split(/\n/)[0]).match(/\b(AURORA|LICARI|GRASS|TIKKA|MEKK|ENTRANCE)\b/); if (pv){ r.contraparte = pv[1]; var c31 = cat("3.1"); if (c31) return c31; } }
     if (r.tipo === "sueldo"){
