@@ -13,7 +13,8 @@
   var GRUPOS_FIN = { "1": "1.0 INGRESOS", "2": "2.0 MANO DE OBRA", "3": "3.0 PRODUCCIÓN E INSUMOS", "4": "4.0 LOGÍSTICA Y ENVÍOS", "5": "5.0 GASTOS FIJOS", "6": "6.0 GASTOS VARIABLES OPERATIVOS", "7": "7.0 MOVIMIENTOS FINANCIEROS" };
   function catLimpia(c){ c = String(c || "").trim(); if (!c) return null; var k = c.split(" ")[0]; return CATS.find(function(x){ return x === c; }) || CATS.find(function(x){ return x.split(" ")[0] === k; }) || null; }
   function catCorta(c){ return String(c || "").replace(/^\d+\.\d+\s*/, ""); }
-  var ROWS = [], SOY = null, LISTO = false, ENCURSO = {}, FILTRO = "pend", RECIEN = {};
+  function esBorradorVenta(r){ return r.tipo === "venta" && !/^venta:/.test(r.msg_id || ""); }
+  var ROWS = [], SOY = null, LISTO = false, ENCURSO = {}, FILTRO = "pend", RECIEN = {}, COLAP = (function(){ try { return JSON.parse(localStorage.getItem("nvmov-colap")) || {}; } catch(e){ return {}; } })();
   function h(tag, cls, txt){ var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
   function plata(n){ n = Number(n) || 0; return "$" + Math.round(n).toLocaleString("es-AR"); }
   function tipoDe(k){ return TIPOS.find(function(t){ return t[0] === k; }) || TIPOS[6]; }
@@ -133,7 +134,7 @@
       b.onclick = function(e){ e.stopPropagation(); abrir(); };
       var ref = nav.querySelector("#tab-ven"); if (ref && ref.nextSibling) nav.insertBefore(b, ref.nextSibling); else nav.appendChild(b);
     }
-    var n = ROWS.filter(function(r){ return r.estado === "pendiente" || r.estado === "procesando"; }).length;
+    var n = ROWS.filter(function(r){ return r.estado === "pendiente" || r.estado === "procesando"; }).length + ventasWeb().length;
     var c = b.querySelector(".nvmov-n"), t = n ? String(n) : "";
     if (c.textContent !== t) c.textContent = t;
     var on = document.body.classList.contains("nvmov-on");
@@ -161,12 +162,24 @@
     if (!document.body.classList.contains("nvmov-on")) return;
     var p = panel(); if (!p) return; var y = window.scrollY;
     p.replaceChildren();
-    var vivos = ROWS.filter(function(r){ return r.estado !== "descartado"; });
+    var vivos = ROWS.filter(function(r){ return r.estado !== "descartado" && !esBorradorVenta(r); });
     var pend = vivos.filter(function(r){ return r.estado === "pendiente" || r.estado === "procesando"; });
     var apro = vivos.filter(function(r){ return r.estado === "aprobado"; });
     var cab = h("div", "nvmov-cab");
-    var tt = h("div"); tt.append(h("h1", null, "Movimientos"), h("p", null, "Todo lo que se manda en #movimientos queda acá hasta que lo aprueben."));
+    var tt = h("div"); tt.append(h("h1", null, "Movimientos"), h("p", null, "Las ventas y la plata quedan acá hasta que las aprueben."));
     cab.append(tt); p.append(cab);
+    var vw = ventasTodas(), plataPend = pend.length;
+    function bloque(k, titulo, sub, n){
+      var s = h("section", "nvmov-blq" + (COLAP[k] ? " cerr" : "")); var hd = h("button", "nvmov-blqh"); hd.type = "button";
+      hd.append(h("i", "nvmov-chev", "›"), h("b", null, titulo), h("em", n ? "pen" : "", n ? n + " para revisar" : "al día"), h("small", null, sub));
+      hd.onclick = function(){ COLAP[k] = !COLAP[k]; try { localStorage.setItem("nvmov-colap", JSON.stringify(COLAP)); } catch(e){} pintar(); };
+      var bd = h("div", "nvmov-blqb"); s.append(hd, bd); p.append(s); return bd;
+    }
+    var bv = bloque("ventas", "🛍 Ventas", "Tienda Nube, WhatsApp e Instagram · al aprobar pasan a Ventas minoristas", vw.length);
+    if (!COLAP.ventas) pintarVentas(bv, vw);
+    var bp = bloque("plata", "💵 Movimientos de plata", "Lo que entra y sale de las cuentas · al aprobar pasa a Finanzas de quien corresponda", plataPend);
+    if (COLAP.plata){ window.scrollTo(0, y); return; }
+    p = bp;
     var st = h("div", "nvmov-st");
     [["Total en #movimientos", vivos.length, ""], ["Pendientes", pend.length, "pen"], ["Aprobados", apro.length, "ok"]].forEach(function(x){
       var c = h("div", "nvmov-k " + x[2]); c.append(h("b", null, String(x[1])), h("small", null, x[0])); st.append(c);
@@ -179,6 +192,7 @@
     p.append(seg);
     if (!LISTO){ p.append(h("div", "nvmov-vacio", "Cargando…")); return; }
     var lista = ROWS.filter(function(r){
+      if (esBorradorVenta(r)) return false;
       if (FILTRO === "pend") return r.estado === "pendiente" || r.estado === "procesando" || RECIEN[r.id];
       if (FILTRO === "apro") return r.estado === "aprobado";
       if (FILTRO === "desc") return r.estado === "descartado";
@@ -212,8 +226,9 @@
     var id = "mov" + r.id + "x" + Date.now().toString(36);
     var fecha = r.fecha || diaDe(r.msg_at || r.creado);
     var monto = Math.abs(Number(r.monto) || 0), total = signoDe(r) === "-" ? -monto : monto;
-    var fila = { id: id, concepto: String(r.contraparte || r.concepto || tipoDe(r.tipo)[1]).toUpperCase(), fecha: fecha, cat: r.cat,
-      total: total, cuenta: GRUPOS_FIN[String(r.cat).split(".")[0]] || "", notas: (r.concepto ? r.concepto + " · " : "") + "desde #movimientos" };
+    var esV = /^venta:/.test(r.msg_id || "");
+    var fila = { id: id, concepto: esV ? String(r.contraparte || "") : String(r.contraparte || r.concepto || tipoDe(r.tipo)[1]).toUpperCase(), fecha: fecha, cat: r.cat,
+      total: total, cuenta: GRUPOS_FIN[String(r.cat).split(".")[0]] || "", notas: (r.concepto ? r.concepto + " · " : "") + (esV ? "Creado desde Movimientos (venta aprobada)" : "desde #movimientos") };
     return new Promise(function(ok, mal){
       google.script.run.withSuccessHandler(function(){ ok(id); }).withFailureHandler(mal).baseGuardarVarios(hoja, [fila]);
     });
@@ -281,6 +296,123 @@
     if (r.estado === "procesando") sub.append(h("span", "nvmov-al", "⏳ Leyendo…"));
     if (r.estado === "aprobado") sub.append(h("span", "nvmov-apro", "✓ En Finanzas " + (NOM[r.por] || "") + (r.aprobado_por ? " · aprobó " + (NOM[r.aprobado_por] || r.aprobado_por) : "")));
     w.append(sub);
+    return w;
+  }
+
+  /* ---------- VENTAS: lo que entra de Tienda Nube (Pendiente de revisar) + lo que se manda por chat ---------- */
+  var METODOS = ["PAGO NUBE", "Transferencia / Depósito", "Efectivo", "MERCADO PAGO"];
+  var VCOLS = ["", "N° venta", "Fecha", "Cliente", "Productos", "Total", "Cobrado", "Medio de pago", "Cobró", "Envío", "", ""];
+  function arr(v){ if (Array.isArray(v)) return v; try { var x = JSON.parse(v || "[]"); return Array.isArray(x) ? x : [String(x)]; } catch(e){ return v ? [String(v)] : []; } }
+  function quienDeCobro(v){ var s = arr(v).join(" ").toUpperCase(); return /PAU/.test(s) ? "pau" : /EUGE/.test(s) ? "euge" : null; }
+  function cobroDeQuien(q){ return q === "pau" ? ["PAU"] : q === "euge" ? ["EUGE "] : []; }
+  function catVenta(metodo, fact){
+    var m = arr(metodo).join(" ").toUpperCase(), f = !!String(fact || "").trim();
+    if (/EFECTIVO/.test(m)) return "1.1 VENTA MIN. EFTVO";
+    if (/TRANSF|DEP/.test(m)) return f ? "1.4 VENTA MIN. TRANSFERENCIA FACTURADA" : "1.5 VENTA MIN. TRANSFERENCIA NO FACTURADA";
+    return f ? "1.2 VENTA MIN. TARJETA FACTURADA" : "1.3 VENTA MIN. TARJETA NO FACTURADA";
+  }
+  function baseMin(){ var S = window.__nv && window.__nv.S; return (S && S.bzData && S.bzData.min) || []; }
+  function ventasWeb(){ return baseMin().filter(function(r){ return /REVISAR/i.test(r.env || ""); }); }
+  function ventasTodas(){
+    var w = ventasWeb().map(function(r){ return { src: "web", id: "w" + r.id, row: r }; });
+    var ch = ROWS.filter(function(r){ return esBorradorVenta(r) && (r.estado === "pendiente" || r.estado === "procesando"); }).map(function(m){
+      var v = (m.cliente && m.cliente.venta) || null;
+      if (!v){ v = { num: "", fecha: m.fecha || diaDe(m.msg_at || m.creado), cliente: m.contraparte || "", datos: (m.cliente && m.cliente.datos) || "", prods: "[]", cant: "", obs: "",
+        facturar: m.monto || "", cobrado: m.monto || "", metodo: JSON.stringify(m.medio ? [/transf/i.test(m.medio) ? "Transferencia / Depósito" : /efect/i.test(m.medio) ? "Efectivo" : /mercado/i.test(m.medio) ? "MERCADO PAGO" : m.medio] : []),
+        cobro: JSON.stringify(cobroDeQuien(m.por)), menv: "", tipo: "", suc: "", fact: "" }; }
+      return { src: "chat", id: "c" + m.id, row: v, mov: m };
+    });
+    return w.concat(ch).sort(function(a, b){ return String(b.row.fecha || "").localeCompare(String(a.row.fecha || "")); });
+  }
+  var tVen = {};
+  function guardarVenta(it, campos){
+    Object.assign(it.row, campos);
+    if (it.src === "web"){
+      clearTimeout(tVen[it.id]); tVen[it.id] = setTimeout(function(){
+        var x = Object.assign({ id: it.row.id, cambiado: Date.now(), por: SOY }, campos);
+        try { google.script.run.withFailureHandler(function(e){ toast("No se pudo guardar la venta: " + (e && e.message || e)); }).baseGuardarVarios("base_min", [x]); } catch(e){}
+      }, 400);
+    } else {
+      var cl = Object.assign({}, it.mov.cliente || {}, { venta: it.row }); it.mov.cliente = cl;
+      SB.from("movimientos").update({ cliente: cl, cambiado: new Date().toISOString(), cambiado_por: SOY }).eq("id", it.mov.id).then(function(r){ if (r.error) toast("No se pudo guardar: " + r.error.message); });
+    }
+  }
+  function proxNumWhats(){
+    var mx = 0; baseMin().forEach(function(r){ var m = /WHATS\s*(\d+)/i.exec(r.num || ""); if (m) mx = Math.max(mx, +m[1]); }); return "WHATS " + (mx + 1);
+  }
+  function crearPlata(v){
+    var q = quienDeCobro(v.cobro), monto = Number(String(v.cobrado || v.facturar || "").replace(",", ".")) || null;
+    return SB.from("movimientos").insert({ msg_id: "venta:" + v.id, msg_at: new Date().toISOString(), autor: SOY, texto: "Venta " + (v.num || "") + " · " + (v.cliente || ""), adj: [],
+      tipo: "venta", signo: "ingreso", monto: monto, fecha: v.fecha || null, por: q, cuenta: q, contraparte: "Venta #" + (v.num || "") + " · " + (v.cliente || ""),
+      concepto: null, cat: catVenta(v.metodo, v.fact), falta: [], estado: "pendiente" }).select().then(function(r){
+      if (r.error && !/duplicate|23505/i.test(r.error.message + r.error.code)) throw r.error; if (r.data && r.data[0]) upsertLocal(r.data[0]);
+    });
+  }
+  function aprobarVenta(it){
+    var v = it.row;
+    if (!v.cliente){ toast("Falta el cliente."); return Promise.reject(); }
+    if (!quienDeCobro(v.cobro)){ toast("Elegí quién cobró (Euge o Pau)."); return Promise.reject(); }
+    if (!Number(v.cobrado || v.facturar)){ toast("Falta el total."); return Promise.reject(); }
+    var paso;
+    if (it.src === "web"){
+      paso = new Promise(function(ok, mal){ google.script.run.withSuccessHandler(ok).withFailureHandler(mal).baseGuardarVarios("base_min", [{ id: v.id, env: "PARA HACER", cambiado: Date.now(), por: SOY }]); })
+        .then(function(){ v.env = "PARA HACER"; return crearPlata(v); });
+    } else {
+      var id = "min" + Date.now(), num = v.num || proxNumWhats();
+      var fila = { id: id, num: num, venta: num, env: "PARA HACER", prods: v.prods || "[]", cant: v.cant || "", obs: v.obs || "", fecha: v.fecha || diaDe(Date.now()), cliente: v.cliente, datos: v.datos || "",
+        etq: "[]", suc: v.suc || "", cobrado: v.cobrado || "", facturar: v.facturar || v.cobrado || "", costoEnv: "0", pago: "Finalizado", metodo: v.metodo || "[]", menv: v.menv || "", tipo: v.tipo || "",
+        cobro: v.cobro || "[]", fact: v.fact || "", web: "", creado: Date.now(), cambiado: Date.now(), por: SOY };
+      paso = new Promise(function(ok, mal){ google.script.run.withSuccessHandler(ok).withFailureHandler(mal).baseGuardarVarios("base_min", [fila]); })
+        .then(function(){ baseMin().push(fila); return guardar(it.mov, { estado: "aprobado", aprobado_por: SOY, aprobado_at: new Date().toISOString(), cargado: "base_min:" + id }); })
+        .then(function(){ return crearPlata(Object.assign({}, fila)); });
+    }
+    return paso.then(function(){ toast("Venta aprobada: pasó a Ventas minoristas. La plata quedó para aprobar abajo."); pintar(); });
+  }
+  function pintarVentas(p, lista){
+    if (!lista.length){ var v = h("div", "nvmov-vacio"); v.append(h("b", null, "No hay ventas para revisar 🎉"), h("small", null, "Las de Tienda Nube aparecen solas. Las de WhatsApp o Instagram mandalas a #movimientos, por ejemplo: “Venta Juana Pérez $85.000 transferencia por Pau”.")); p.append(v); return; }
+    var tb = h("div", "nvmov-dia nvmov-vt"); var t = h("div", "nvmov-tb");
+    var th = h("div", "nvmov-tr nvmov-vr nvmov-th"); VCOLS.forEach(function(x){ th.append(h("span", null, x)); }); t.append(th);
+    lista.forEach(function(it){ t.append(filaVenta(it)); });
+    tb.append(t); p.append(tb);
+  }
+  function inp(val, ph, cls, on){ var e = h("input", "nvmov-in " + (cls || "")); e.value = val == null ? "" : val; e.placeholder = ph || ""; e.onchange = function(){ on(e.value.trim()); }; return e; }
+  function filaVenta(it){
+    var v = it.row, w = h("div", "nvmov-it"), f = h("div", "nvmov-tr nvmov-vr");
+    var ck = h("input"); ck.type = "checkbox"; ck.className = "nvmov-ck"; ck.title = "Aprobar venta";
+    ck.onchange = function(){ if (!ck.checked) return; ck.disabled = true; aprobarVenta(it).catch(function(e){ ck.checked = false; ck.disabled = false; if (e) toast("No se pudo aprobar: " + (e.message || e)); }); };
+    var ckw = h("label", "nvmov-ckw"); ckw.append(ck, h("i"));
+    var nu = inp(v.num, it.src === "web" ? "" : "WHATS / INSTA", "up", function(x){ guardarVenta(it, { num: x, venta: x }); });
+    var fe = h("input", "nvmov-in"); fe.type = "date"; fe.value = v.fecha || ""; fe.onchange = function(){ guardarVenta(it, { fecha: fe.value }); };
+    var cl = inp(v.cliente, "Cliente", "fuerte", function(x){ guardarVenta(it, { cliente: x }); });
+    var pr = inp(arr(v.prods).join(" · "), "Productos", "", function(x){ guardarVenta(it, { prods: JSON.stringify(x.split(/\s*·\s*|\n/).filter(Boolean)) }); });
+    pr.title = arr(v.prods).join("\n");
+    var to = inp(v.facturar ? Math.round(Number(v.facturar)).toLocaleString("es-AR") : "", "$ total", "tot in", function(x){ guardarVenta(it, { facturar: String(numAR(x) || "") }); });
+    var co = inp(v.cobrado && Number(v.cobrado) ? Math.round(Number(v.cobrado)).toLocaleString("es-AR") : "", "$ cobrado", "tot", function(x){ guardarVenta(it, { cobrado: String(numAR(x) || "") }); });
+    var me = h("select", "nvmov-in cat"); var mv = arr(v.metodo)[0] || ""; var o0 = h("option", null, "❓ Medio"); o0.value = ""; me.append(o0);
+    METODOS.concat(mv && METODOS.indexOf(mv) < 0 ? [mv] : []).forEach(function(m){ var o = h("option", null, m); o.value = m; me.append(o); }); me.value = mv; me.dataset.g = mv ? "1" : "";
+    me.onchange = function(){ guardarVenta(it, { metodo: JSON.stringify(me.value ? [me.value] : []) }); };
+    var qu = h("select", "nvmov-in quien" + (quienDeCobro(v.cobro) ? "" : " falta")); [["","❓"],["euge","Euge"],["pau","Pau"]].forEach(function(o){ var e = h("option", null, o[1]); e.value = o[0]; qu.append(e); });
+    qu.value = quienDeCobro(v.cobro) || ""; qu.onchange = function(){ guardarVenta(it, { cobro: JSON.stringify(cobroDeQuien(qu.value)) }); pintarSuave(); };
+    var en = inp([v.tipo, v.menv].filter(Boolean).join(" · "), "Envío", "", function(x){ var pz = x.split(/\s*·\s*/); if (pz.length > 1) guardarVenta(it, { tipo: pz[0], menv: pz.slice(1).join(" · ") }); else guardarVenta(it, { menv: x }); });
+    var ab = h("button", "nvmov-mas", "Datos"); ab.type = "button";
+    var x = h("button", "nvmov-x", "✕"); x.type = "button"; x.title = it.src === "web" ? "No se puede descartar una venta de la tienda (se revisa y aprueba)" : "Descartar";
+    if (it.src === "web") x.disabled = true; else x.onclick = function(){ guardar(it.mov, { estado: "descartado" }); };
+    f.append(ckw, nu, fe, cl, pr, to, co, me, qu, en, ab, x); w.append(f);
+    var sub = h("div", "nvmov-sub");
+    sub.append(h("span", "nvmov-who", it.src === "web" ? "🛒 Tienda Nube" : "💬 " + ((NOM[it.mov.autor] || it.mov.autor || "") + " · " + new Date(it.mov.msg_at || it.mov.creado).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }))));
+    if (it.src === "chat") sub.append(h("span", "nvmov-tx", "“" + (it.mov.texto || "") + "”"));
+    if (v.suc) sub.append(h("span", "nvmov-tx", v.suc));
+    if (v.cobrado && v.facturar && Number(v.cobrado) && Math.abs(Number(v.cobrado) - Number(v.facturar)) > 1) sub.append(h("span", "nvmov-al", "Cobrado distinto del total"));
+    if (!Number(v.cobrado)) sub.append(h("span", "nvmov-al", "Todavía sin cobrar"));
+    w.append(sub);
+    var det = h("div", "nvmov-det"); det.hidden = true;
+    function area(lab, val, on){ var l = h("label", "nvmov-f"); var t = h("textarea", "nvmov-in"); t.value = val || ""; t.rows = 3; t.onchange = function(){ on(t.value); }; l.append(h("span", null, lab), t); return l; }
+    det.append(area("Datos del cliente (DNI, mail, celular, dirección)", v.datos, function(x){ guardarVenta(it, { datos: x }); }),
+      area("Cantidades / detalle", v.cant, function(x){ guardarVenta(it, { cant: x }); }),
+      area("Observaciones", v.obs, function(x){ guardarVenta(it, { obs: x }); }),
+      area("Factura", v.fact, function(x){ guardarVenta(it, { fact: x }); }));
+    ab.onclick = function(){ det.hidden = !det.hidden; ab.classList.toggle("on", !det.hidden); };
+    w.append(det);
     return w;
   }
 
