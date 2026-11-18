@@ -402,11 +402,11 @@
   function proxNumWhats(){
     var mx = 0; baseMin().forEach(function(r){ var m = /WHATS\s*(\d+)/i.exec(r.num || ""); if (m) mx = Math.max(mx, +m[1]); }); return "WHATS " + (mx + 1);
   }
-  function crearPlata(v){
-    var q = quienDeCobro(v.cobro), monto = Number(String(v.cobrado || v.facturar || "").replace(",", ".")) || null;
+  function crearPlata(v, f){
+    var q = quienDeCobro(v.cobro), monto = Number(String(v.cobrado || v.facturar || "").replace(",", ".")) || null; f = f || {};
     return SB.from("movimientos").insert({ msg_id: "venta:" + v.id, msg_at: new Date().toISOString(), autor: SOY, texto: "Venta " + (v.num || "") + " · " + (v.cliente || ""), adj: [],
-      tipo: "venta", signo: "ingreso", monto: monto, fecha: v.fecha || null, por: q, cuenta: q, contraparte: "Venta #" + (v.num || "") + " · " + (v.cliente || ""),
-      concepto: null, cat: catVenta(v.metodo, v.fact), falta: [], estado: "pendiente" }).select().then(function(r){
+      tipo: "venta", signo: "ingreso", monto: f.total || monto, fecha: f.fecha || v.fecha || null, por: q, cuenta: q, contraparte: f.concepto || ("Venta #" + (v.num || "") + " · " + (v.cliente || "")),
+      concepto: f.notas || null, cat: f.cat || catVenta(v.metodo, v.fact), falta: [], estado: "pendiente" }).select().then(function(r){
       if (r.error && !/duplicate|23505/i.test(r.error.message + r.error.code)) throw r.error; if (r.data && r.data[0]) upsertLocal(r.data[0]);
     });
   }
@@ -418,7 +418,7 @@
     var paso, conFin = FIN[it.id] !== false;
     if (it.src === "web"){
       paso = new Promise(function(ok, mal){ google.script.run.withSuccessHandler(ok).withFailureHandler(mal).baseGuardarVarios("base_min", [{ id: v.id, env: "PARA HACER", cambiado: Date.now(), por: SOY }]); })
-        .then(function(){ v.env = "PARA HACER"; return conFin ? crearPlata(v) : null; });
+        .then(function(){ v.env = "PARA HACER"; return conFin ? crearPlata(v, finFinal(it)) : null; });
     } else {
       var id = "min" + Date.now(), num = v.num || proxNumWhats();
       var fila = { id: id, num: num, venta: num, env: "PARA HACER", prods: v.prods || "[]", cant: v.cant || "", obs: v.obs || "", fecha: v.fecha || diaDe(Date.now()), cliente: v.cliente, datos: v.datos || "",
@@ -426,7 +426,7 @@
         cobro: v.cobro || "[]", fact: v.fact || "", web: "", creado: Date.now(), cambiado: Date.now(), por: SOY };
       paso = new Promise(function(ok, mal){ google.script.run.withSuccessHandler(ok).withFailureHandler(mal).baseGuardarVarios("base_min", [fila]); })
         .then(function(){ baseMin().push(fila); return guardar(it.mov, { estado: "aprobado", aprobado_por: SOY, aprobado_at: new Date().toISOString(), cargado: "base_min:" + id }); })
-        .then(function(){ return conFin ? crearPlata(Object.assign({}, fila)) : null; });
+        .then(function(){ return conFin ? crearPlata(Object.assign({}, fila), finFinal(it)) : null; });
     }
     return paso.then(function(){ toast(conFin ? "Venta aprobada: pasó a Ventas minoristas. El cobro quedó abajo para aprobarlo en Finanzas." : "Venta aprobada: pasó a Ventas minoristas (sin Finanzas)."); pintar(); });
   }
@@ -486,9 +486,17 @@
     pintarL(); return [cp, cc];
   }
   /* cómo queda en Finanzas */
+  /* lo que va a Finanzas se puede corregir a mano en la venta (se guarda hasta que se aprueba) */
+  function ovDe(id){ try { return JSON.parse(localStorage.getItem("nvfinov_" + id) || "{}") || {}; } catch(e){ return {}; } }
+  function ovSet(id, o){ try { if (Object.keys(o).length) localStorage.setItem("nvfinov_" + id, JSON.stringify(o)); else localStorage.removeItem("nvfinov_" + id); } catch(e){} }
+  function finAuto(it){
+    var v = it.row, cat = catVenta(v.metodo, v.fact), mon = Number(v.cobrado || v.facturar) || 0;
+    return { concepto: ("Venta #" + (v.num || "") + " · " + (v.cliente || "")).toUpperCase(), fecha: v.fecha || "", cat: cat, total: mon, notas: "" };
+  }
+  function finFinal(it){ var a = finAuto(it), o = ovDe(it.id); return { concepto: o.concepto || a.concepto, fecha: o.fecha || a.fecha, cat: o.cat || a.cat, total: o.total != null && o.total !== "" ? Number(o.total) : a.total, notas: o.notas != null ? o.notas : a.notas }; }
   function datosFin(it){
-    var v = it.row, q = quienDeCobro(v.cobro), cat = catVenta(v.metodo, v.fact), mon = Number(v.cobrado || v.facturar) || 0;
-    return { q: q, quien: q === "pau" ? "Pau" : q === "euge" ? "Euge" : "", cols: [["Concepto", ("Venta #" + (v.num || "") + " · " + (v.cliente || "")).toUpperCase()], ["Fecha", v.fecha ? v.fecha.split("-").reverse().join("/") : "—"], ["Categoría", cat], ["Total", mon ? "$ " + Math.round(mon).toLocaleString("es-AR") : "—"], ["Cuenta", GRUPOS_FIN[cat.split(".")[0]] || ""], ["Notas", "Creado desde Movimientos (venta aprobada)"]] };
+    var v = it.row, q = quienDeCobro(v.cobro), f = finFinal(it);
+    return { q: q, quien: q === "pau" ? "Pau" : q === "euge" ? "Euge" : "", f: f, cols: [["Concepto", f.concepto], ["Fecha", f.fecha ? f.fecha.split("-").reverse().join("/") : "—"], ["Categoría", f.cat], ["Total", f.total ? "$ " + Math.round(f.total).toLocaleString("es-AR") : "—"], ["Cuenta", GRUPOS_FIN[String(f.cat).split(".")[0]] || ""], ["Notas", f.notas || "Creado desde Movimientos (venta aprobada)"]] };
   }
   function filaVenta(it){
     var v = it.row, w = h("div", "nvmov-it"), f = h("div", "nvmov-tr nvmov-vr");
@@ -523,6 +531,27 @@
     var fw = h("label", "nvmov-fin"); var fc = h("input"); fc.type = "checkbox"; fc.checked = FIN[it.id] !== false; var ft = h("span");
     fw.title = "Si está tildado, al aprobar también se crea el cobro para Finanzas (queda abajo para aprobarlo)."; fw.append(fc, ft);
     var lf = h("div", "nvmov-lfin"); var fa = h("span", "nvmov-al nvmov-falt");
+    var lfEm = h("em"), lfCon = h("input", "nvmov-in"), lfFe = h("input", "nvmov-in"), lfCat = h("select", "nvmov-in"), lfTot = h("input", "nvmov-in"), lfCta = h("b"), lfNot = h("input", "nvmov-in"), lfVol = h("button", "nvmov-lfvol", "↺"), lfArm = false;
+    lfFe.type = "date"; lfTot.inputMode = "decimal"; lfNot.placeholder = "Notas"; lfVol.type = "button"; lfVol.title = "Volver a lo que sale de la venta";
+    CATS.forEach(function(c){ var op = h("option", null, c); op.value = c; lfCat.append(op); });
+    function lfCelda(lab, el, cls){ var e = h("span", cls || ""); e.append(h("small", null, lab), el); lf.append(e); }
+    function lfGuardar(k, val){ var a = finAuto(it), o = ovDe(it.id); if (val === "" || val == null || String(val) === String(a[k])) delete o[k]; else o[k] = val; ovSet(it.id, o); refrescar(); }
+    lfCon.onchange = function(){ lfGuardar("concepto", lfCon.value.trim().toUpperCase()); };
+    lfFe.onchange = function(){ lfGuardar("fecha", lfFe.value); };
+    lfCat.onchange = function(){ lfGuardar("cat", lfCat.value); };
+    lfTot.onchange = function(){ var n = numAR(lfTot.value); lfGuardar("total", n == null ? "" : Math.abs(n)); };
+    lfNot.onchange = function(){ lfGuardar("notas", lfNot.value.trim()); };
+    lfVol.onclick = function(){ ovSet(it.id, {}); refrescar(); };
+    function pintarLf(d){
+      if (!lfArm){ lfArm = true; lf.append(lfEm); lfCelda("Concepto", lfCon, "w"); lfCelda("Fecha", lfFe); lfCelda("Categoría", lfCat, "w"); lfCelda("Total", lfTot); lfCelda("Cuenta", lfCta); lfCelda("Notas", lfNot); lf.append(lfVol); }
+      var f = d.f, o = ovDe(it.id), a = document.activeElement;
+      lfEm.textContent = "Entra en Finanzas " + (d.quien || "—") + " así:";
+      if (a !== lfCon) lfCon.value = f.concepto; if (a !== lfFe) lfFe.value = f.fecha || ""; if (a !== lfCat) lfCat.value = f.cat;
+      if (a !== lfTot) lfTot.value = f.total ? "$ " + Math.round(f.total).toLocaleString("es-AR") : ""; if (a !== lfNot) lfNot.value = f.notas || "";
+      lfCta.textContent = GRUPOS_FIN[String(f.cat).split(".")[0]] || "";
+      [[lfCon, "concepto"], [lfFe, "fecha"], [lfCat, "cat"], [lfTot, "total"], [lfNot, "notas"]].forEach(function(z){ z[0].classList.toggle("ed", o[z[1]] != null); });
+      lfVol.hidden = !Object.keys(o).length;
+    }
     var bv = h("button", "nvmov-ok", "✓ Aprobar"); bv.type = "button"; bv.onclick = function(){ ck.checked = true; ck.dispatchEvent(new Event("change")); };
     sub.append(fa, fw, lf);
     if (it.src === "chat") sub.append(h("span", "nvmov-tx", "“" + (it.mov.texto || "") + "”"));
@@ -546,8 +575,7 @@
       bv.disabled = !!fl.length; bv.classList.toggle("off", !!fl.length); bv.textContent = fl.length ? "Faltan datos" : "✓ Aprobar";
       ft.textContent = si ? "💰 También a Finanzas " + (d.quien || "(elegí quién cobró)") : "Solo a Ventas minoristas";
       fw.classList.toggle("off", !si);
-      lf.innerHTML = ""; lf.hidden = !si;
-      if (si){ lf.append(h("em", null, "Entra en Finanzas " + (d.quien || "—") + " así:")); d.cols.slice(0, 5).forEach(function(c){ var e = h("span"); e.append(h("small", null, c[0]), h("b", null, c[1])); lf.append(e); }); }
+      lf.hidden = !si; pintarLf(d);
       bv.title = "Pasa a Ventas minoristas" + (si ? " y crea el cobro para Finanzas " + d.quien : "");
       vf.innerHTML = "";
       if (!si){ vf.append(h("b", null, "Esta venta no va a Finanzas"), h("p", null, "Tildá “También a Finanzas” si querés que se cargue.")); return; }

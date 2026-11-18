@@ -398,3 +398,15 @@ html:not(#nv) body:has(main#list .chw) #fab.fab{display:none!important}
   html:not(#nv) .chw .chb.nvmovtop{background:#FBF7F4!important}
   html:not(#nv) .chw .chsq{background:#F6F2EF!important}
 }
+
+/* Finanzas dentro de la venta: editable */
+html:not(#nv) .nvmov-lfin{align-items:stretch!important}
+html:not(#nv) .nvmov-lfin span{min-width:96px}
+html:not(#nv) .nvmov-lfin span.w{min-width:200px}
+html:not(#nv) .nvmov-lfin .nvmov-in{border:0!important;background:transparent!important;box-shadow:none!important;padding:1px 2px!important;min-height:22px!important;font-size:12px!important;color:#3B2418!important;font-weight:400!important;width:100%;border-radius:6px!important}
+html:not(#nv) .nvmov-lfin .nvmov-in:hover{background:#FBF7F4!important}
+html:not(#nv) .nvmov-lfin .nvmov-in:focus{background:#fff!important;box-shadow:0 0 0 1.5px #E2C9BD!important}
+html:not(#nv) .nvmov-lfin .nvmov-in.ed{background:#FFF6E9!important;box-shadow:inset 0 0 0 1px #F0DCC0!important}
+html:not(#nv) .nvmov-lfin select.nvmov-in{appearance:auto}
+html:not(#nv) .nvmov-lfvol{border:0;background:none;color:#9A8274;font-size:14px;cursor:pointer;padding:0 10px}
+html:not(#nv) .nvmov-lfvol:hover{color:#3B2418}
