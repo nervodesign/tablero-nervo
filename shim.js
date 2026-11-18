@@ -47,6 +47,8 @@
       "#nv-login label{display:block;font-size:12px;color:#9B8576;margin:0 0 12px}#nv-login input{display:block;width:100%;box-sizing:border-box;margin-top:5px;border:1.5px solid #F0E6DD;border-radius:14px;padding:12px 14px;font:inherit;font-size:15px;outline:0}#nv-login input:focus{border-color:#DFB9B6}"+
       "#nv-login button.p{width:100%;border:0;border-radius:14px;padding:13px;background:#59392D;color:#fff;font:inherit;font-weight:500;font-size:15px;cursor:pointer;margin-top:4px}"+
       "#nv-login .alt{display:flex;justify-content:space-between;margin-top:14px}#nv-login .alt button{border:0;background:none;color:#6C4D38;font:inherit;font-size:13px;cursor:pointer;padding:0}"+
+      "#nv-login button.g{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid #E8DDD3;border-radius:14px;padding:12px;background:#fff;color:#3A241C;font:inherit;font-weight:500;font-size:15px;cursor:pointer;box-shadow:0 1px 2px rgba(58,36,28,.06)}#nv-login button.g:hover{background:#FDF9F6}"+
+      "#nv-login .or{display:flex;align-items:center;gap:10px;margin:18px 0 14px;color:#B5A397;font-size:12px}#nv-login .or::before,#nv-login .or::after{content:\"\";flex:1;height:1px;background:#F0E6DD}"+
       "#nv-login .m{font-size:13px;margin-top:12px;padding:10px 12px;border-radius:12px;background:#F7ECEC;color:#9A5F5A}#nv-login .m.ok{background:#EEF3EC;color:#5B6E57}";
     document.head.appendChild(st);
     caja = document.createElement("div"); caja.id = "nv-login";
@@ -57,11 +59,13 @@
               crear: ["Crear tu acceso","Usá tu mail (Euge, Pau o Nervo) y elegí una contraseña.","Crear acceso"],
               olvide: ["Recuperar contraseña","Te mandamos un mail para elegir una nueva.","Mandar mail"] }[modo];
     caja.innerHTML = '<div class="c">'+LOGO+'<small>ILUMINACIÓN &amp; DECO</small><h1>'+t[0]+'</h1><p>'+t[1]+'</p>'+
+      (modo==="entrar" ? '<button class="g" id="nv-g"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 2.9-2.2 5.4-4.7 7.1l7.3 5.7c4.3-4 7.2-9.9 7.2-17.3z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.3-5.7c-2 1.4-4.7 2.3-8.6 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>Entrar con Google</button><div class="or"><span>o con tu mail</span></div>' : '')+
       '<label>Mail<input id="nv-m" type="email" autocomplete="email"></label>'+
       (modo!=="olvide" ? '<label>Contraseña<input id="nv-p" type="password" autocomplete="'+(modo==="crear"?"new-password":"current-password")+'"></label>' : '')+
       '<button class="p" id="nv-go">'+t[2]+'</button><div class="alt"><button id="nv-a">'+(modo==="crear"?"Ya tengo acceso":"Es mi primera vez")+'</button>'+
       (modo==="entrar" ? '<button id="nv-o">Olvidé la contraseña</button>' : '<button id="nv-v">Volver</button>')+'</div>'+
       (msg ? '<div class="m'+(ok?' ok':'')+'">'+msg+'</div>' : '')+'</div>';
+    var g = document.getElementById("nv-g"); if (g) g.onclick = function(){ g.disabled = true; SB.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname, queryParams: { prompt: "select_account" } } }).then(function(r){ if (r.error){ g.disabled = false; pintar("No se pudo abrir Google: " + r.error.message); } }); };
     document.getElementById("nv-go").onclick = enviar;
     var p = document.getElementById("nv-p"); if (p) p.onkeydown = function(e){ if (e.key === "Enter") enviar(); };
     document.getElementById("nv-a").onclick = function(){ modo = modo==="crear" ? "entrar" : "crear"; pintar(); };
