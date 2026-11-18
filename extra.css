@@ -275,3 +275,24 @@ html:not(#nv) .nvmov-vr .nvmov-pl{min-height:28px;align-items:center}
 html:not(#nv) .nvmov-vr .nvmov-plc .nvmov-pn{min-height:26px!important}
 html:not(#nv) .nvmov-bus{min-height:26px!important;font-size:12px!important;padding:3px 9px!important;border-radius:8px!important;background:#FBF8F6!important;border:1px dashed #E4D8CF!important;margin-top:2px}
 html:not(#nv) .nvmov-pdel{opacity:.6!important}
+
+/* ventas en Movimientos con el mismo estilo de tabla que Ventas minoristas: celdas con líneas, texto plano, nada flotando */
+html:not(#nv) .nvmov-vt .nvmov-tr.nvmov-vr{gap:0!important;padding:0!important;align-items:stretch!important}
+html:not(#nv) .nvmov-vt .nvmov-tr.nvmov-vr>*{border-right:1px solid #EFE6DF;padding:8px 10px!important;box-sizing:border-box;min-width:0}
+html:not(#nv) .nvmov-vt .nvmov-c>select,html:not(#nv) .nvmov-vt .nvmov-c>.nvmov-in{width:100%}
+html:not(#nv) .nvmov-vt .nvmov-tr.nvmov-vr>*:first-child,html:not(#nv) .nvmov-vt .nvmov-tr.nvmov-vr>*:last-child,html:not(#nv) .nvmov-vt .nvmov-tr.nvmov-vr>*:nth-last-child(2){border-right:0}
+html:not(#nv) .nvmov-vt .nvmov-th.nvmov-vr{background:#FAF6F3!important;border-bottom:1px solid #EFE6DF!important}
+html:not(#nv) .nvmov-vt .nvmov-th.nvmov-vr>span{padding:10px 10px!important;font-size:10.5px!important;color:#9A8274!important}
+html:not(#nv) .nvmov-vt .nvmov-it{border-bottom:1px solid #EFE6DF!important}
+html:not(#nv) .nvmov-vt .nvmov-vr :is(input.nvmov-in,textarea.nvmov-in):not(.nvmov-bus){background:transparent!important;border:0!important;box-shadow:none!important;padding:2px 4px!important;border-radius:6px!important;min-height:24px!important;font-size:13px!important;color:#3B2418!important}
+html:not(#nv) .nvmov-vt .nvmov-vr :is(input.nvmov-in,textarea.nvmov-in):not(.nvmov-bus):hover{background:#FBF7F4!important}
+html:not(#nv) .nvmov-vt .nvmov-vr :is(input.nvmov-in,textarea.nvmov-in):focus{background:#fff!important;box-shadow:0 0 0 1.5px #E2C9BD!important}
+html:not(#nv) .nvmov-vt .nvmov-vr .nvmov-ta{height:auto!important;min-height:48px!important;font-size:12.5px!important}
+html:not(#nv) .nvmov-vt .nvmov-vr .nvmov-in.up{font-weight:600!important;font-size:14px!important}
+html:not(#nv) .nvmov-vt .nvmov-vr .nvmov-num small{padding:0 4px}
+html:not(#nv) .nvmov-vt .nvmov-vr .nvmov-plc{display:flex!important;align-items:center;gap:8px}
+html:not(#nv) .nvmov-vt .nvmov-vr .nvmov-plc::before{content:"";flex:none;width:16px;height:16px;border:1.5px solid #CDBFB5;border-radius:4px;background:#fff}
+html:not(#nv) .nvmov-vt .nvmov-vr .nvmov-chip{font-size:12.5px!important;background:#F5EFEA!important;border:0!important;border-radius:6px!important;padding:3px 9px!important}
+html:not(#nv) .nvmov-vt .nvmov-vr .nvmov-in.falta{background:#FBEDEF!important;box-shadow:none!important}
+html:not(#nv) .nvmov-vt .nvmov-vr>.nvmov-in.falta,html:not(#nv) .nvmov-vt .nvmov-vr select.falta{box-shadow:inset 0 0 0 1px #EBC3CB!important}
+html:not(#nv) .nvmov-vt .nvmov-sub{padding:8px 16px 10px 52px!important;background:#FDFBFA}

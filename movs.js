@@ -482,7 +482,7 @@
     var ab = h("button", "nvmov-mas", "Abrir"); ab.type = "button";
     var x = h("button", "nvmov-x", "✕"); x.type = "button"; x.title = it.src === "web" ? "No se puede descartar una venta de la tienda (se revisa y aprueba)" : "Descartar";
     if (it.src === "web") x.disabled = true; else x.onclick = function(){ guardar(it.mov, { estado: "descartado" }); };
-    f.append(ckw, nu, pc[0], pc[1], fe, cl, dp, ob, su, et, co, to, ce, pa, me, mn, ti, qu, ab, x); w.append(f);
+    [ckw, nu, pc[0], pc[1], fe, cl, dp, ob, su, et, co, to, ce, pa, me, mn, ti, qu, ab, x].forEach(function(e){ var cc = h("div", "nvmov-c"); cc.append(e); f.append(cc); }); w.append(f);
     /* debajo: a Finanzas sí/no + cómo queda + aprobar */
     var sub = h("div", "nvmov-sub");
     var fw = h("label", "nvmov-fin"); var fc = h("input"); fc.type = "checkbox"; fc.checked = FIN[it.id] !== false; var ft = h("span");
