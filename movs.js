@@ -311,7 +311,7 @@
 
   /* ---------- VENTAS: lo que entra de Tienda Nube (Pendiente de revisar) + lo que se manda por chat ---------- */
   var METODOS = ["PAGO NUBE", "Transferencia / Depósito", "Efectivo", "MERCADO PAGO"];
-  var VCOLS = ["", "N° venta", "Fecha", "Cliente", "Productos", "Total", "Cobrado", "Medio de pago", "Cobró", "Envío", "", ""];
+  var VCOLS = ["", "#", "Productos", "Cantidades", "Fecha de compra", "Cliente", "Datos personales", "Observaciones de envío", "Sucursal", "Etiqueta", "Total cobrado", "Total a facturar", "Costo de envío", "Pago", "Método de pago", "Método de envío", "Tipo de envío", "Cobro por", "", ""];
   function arr(v){ if (Array.isArray(v)) return v; try { var x = JSON.parse(v || "[]"); return Array.isArray(x) ? x : [String(x)]; } catch(e){ return v ? [String(v)] : []; } }
   function quienDeCobro(v){ var s = arr(v).join(" ").toUpperCase(); return /PAU/.test(s) ? "pau" : /EUGE/.test(s) ? "euge" : null; }
   function cobroDeQuien(q){ return q === "pau" ? ["PAU"] : q === "euge" ? ["EUGE "] : []; }
@@ -387,90 +387,112 @@
   }
   function inp(val, ph, cls, on){ var e = h("input", "nvmov-in " + (cls || "")); e.value = val == null ? "" : val; e.placeholder = ph || ""; e.onchange = function(){ on(e.value.trim()); }; return e; }
   var FIN = {};
-  /* productos tal cual el tablero de ventas: una línea por producto con su cantidad */
-  function cantDe(linea){ var m = /\]\s*(\d+)/.exec(linea || "") || /^\s*(\d+)/.exec(linea || ""); return m ? m[1] : "1"; }
-  function listaProds(it){
-    var v = it.row, box = h("div", "nvmov-prods");
+  /* ===== Ventas: mismas columnas que el tablero de Ventas minoristas ===== */
+  var PAGOS = ["Finalizado", "Pendiente", "PARCIAL", "FALTA ENVIO"];
+  var MENVS = ["Vía Cargo", "Andreani", "Acordar envío", "Retira depósito cliente", "Retira depósito transporte", "BUSPACK"];
+  var TIPOS = ["Domicilio", "Sucursal"];
+  function sel(val, ops, ph, on){
+    var e = h("select", "nvmov-in cat"); var o0 = h("option", null, ph || "—"); o0.value = ""; e.append(o0);
+    ops.concat(val && ops.indexOf(val) < 0 ? [val] : []).forEach(function(m){ var o = h("option", null, m); o.value = m; e.append(o); });
+    e.value = val || ""; e.dataset.g = val ? "1" : ""; e.onchange = function(){ e.dataset.g = e.value ? "1" : ""; on(e.value); }; return e;
+  }
+  function plata(n){ return n && Number(n) ? Math.round(Number(n)).toLocaleString("es-AR") : ""; }
+  function caja(val, ph, on){ var t = h("textarea", "nvmov-in nvmov-ta"); t.value = val || ""; t.placeholder = ph || ""; t.rows = 2; t.title = val || ""; t.onchange = function(){ t.title = t.value; on(t.value); }; return t; }
+  /* productos y cantidades: dos columnas alineadas, una línea por producto (como en la tabla de ventas) */
+  function partirCant(l){ var m = /^\s*\[(.?)\]\s*/.exec(l || ""); return m ? { ck: m[1], tx: String(l).slice(m[0].length) } : { ck: " ", tx: String(l || "") }; }
+  function prodsYCants(it, alCambiar){
+    var v = it.row, cp = h("div", "nvmov-prods"), cc = h("div", "nvmov-prods");
     var ps = arr(v.prods).slice(), cs = String(v.cant || "").split("\n");
-    function guardarTodo(){
-      var lim = []; var cl = [];
-      ps.forEach(function(p, i){ if (!String(p || "").trim()) return; lim.push(p.trim()); var l = cs[i] || "[ ] 1"; cl.push(l); });
-      ps = lim; cs = cl; guardarVenta(it, { prods: JSON.stringify(ps), cant: cs.join("\n") });
-    }
-    function linea(i){
-      var r = h("div", "nvmov-pl");
-      var q = h("input", "nvmov-in nvmov-q"); q.value = cantDe(cs[i]); q.inputMode = "numeric"; q.title = "Cantidad";
-      q.onchange = function(){ var n = String(q.value).replace(/\D/g, "") || "1"; var l = cs[i] || "[ ] 1"; cs[i] = /\]\s*\d+/.test(l) ? l.replace(/(\]\s*)\d+/, "$1" + n) : "[ ] " + n; guardarTodo(); };
-      var p = h("input", "nvmov-in nvmov-pn"); p.value = ps[i] || ""; p.placeholder = "Producto"; p.title = ps[i] || "";
-      p.onchange = function(){ ps[i] = p.value; p.title = p.value; guardarTodo(); if (!p.value.trim()) pintarLista(); };
-      var del = h("button", "nvmov-pdel", "✕"); del.type = "button"; del.title = "Sacar este producto";
-      del.onclick = function(){ ps.splice(i, 1); cs.splice(i, 1); guardarVenta(it, { prods: JSON.stringify(ps), cant: cs.join("\n") }); pintarLista(); };
-      r.append(q, h("span", "nvmov-x1", "×"), p, del); return r;
-    }
-    function pintarLista(){
-      box.innerHTML = ""; ps.forEach(function(_, i){ box.append(linea(i)); });
+    while (cs.length < ps.length) cs.push("[ ] 1");
+    function guardar2(){ guardarVenta(it, { prods: JSON.stringify(ps), cant: cs.slice(0, ps.length).join("\n") }); if (alCambiar) alCambiar(); }
+    function pintarL(){
+      cp.innerHTML = ""; cc.innerHTML = "";
+      ps.forEach(function(p, i){
+        var r = h("div", "nvmov-pl");
+        var pi = h("input", "nvmov-in nvmov-pn"); pi.value = p || ""; pi.placeholder = "Producto"; pi.title = p || "";
+        pi.onchange = function(){ ps[i] = pi.value.trim(); pi.title = ps[i]; if (!ps[i]){ ps.splice(i, 1); cs.splice(i, 1); pintarL(); } guardar2(); };
+        var del = h("button", "nvmov-pdel", "✕"); del.type = "button"; del.title = "Sacar este producto";
+        del.onclick = function(){ ps.splice(i, 1); cs.splice(i, 1); guardar2(); pintarL(); };
+        r.append(pi, del); cp.append(r);
+        var pc = partirCant(cs[i]);
+        var ci = h("input", "nvmov-in nvmov-pn"); ci.value = pc.tx; ci.placeholder = "1"; ci.title = "Cantidad / detalle";
+        ci.onchange = function(){ cs[i] = "[" + (pc.ck || " ") + "] " + ci.value.trim(); guardar2(); };
+        var rc = h("div", "nvmov-pl nvmov-plc"); rc.append(ci); cc.append(rc);
+      });
       var mas = h("button", "nvmov-pmas", "+ producto"); mas.type = "button";
-      mas.onclick = function(){ ps.push(""); cs.push("[ ] 1"); pintarLista(); var u = box.querySelectorAll(".nvmov-pn"); if (u.length) u[u.length - 1].focus(); };
-      box.append(mas);
+      mas.onclick = function(){ ps.push(""); cs.splice(ps.length - 1, 0, "[ ] 1"); pintarL(); var u = cp.querySelectorAll(".nvmov-pn"); if (u.length) u[u.length - 1].focus(); };
+      cp.append(mas);
     }
-    pintarLista(); return box;
+    pintarL(); return [cp, cc];
+  }
+  /* cómo queda en Finanzas */
+  function datosFin(it){
+    var v = it.row, q = quienDeCobro(v.cobro), cat = catVenta(v.metodo, v.fact), mon = Number(v.cobrado || v.facturar) || 0;
+    return { q: q, quien: q === "pau" ? "Pau" : q === "euge" ? "Euge" : "", cols: [["Concepto", ("Venta #" + (v.num || "") + " · " + (v.cliente || "")).toUpperCase()], ["Fecha", v.fecha ? v.fecha.split("-").reverse().join("/") : "—"], ["Categoría", cat], ["Total", mon ? "$ " + Math.round(mon).toLocaleString("es-AR") : "—"], ["Cuenta", GRUPOS_FIN[cat.split(".")[0]] || ""], ["Notas", "Creado desde Movimientos (venta aprobada)"]] };
   }
   function filaVenta(it){
     var v = it.row, w = h("div", "nvmov-it"), f = h("div", "nvmov-tr nvmov-vr");
     var ck = h("input"); ck.type = "checkbox"; ck.className = "nvmov-ck"; ck.title = "Aprobar venta";
     ck.onchange = function(){ if (!ck.checked) return; ck.disabled = true; aprobarVenta(it).catch(function(e){ ck.checked = false; ck.disabled = false; if (e) toast("No se pudo aprobar: " + (e.message || e)); }); };
     var ckw = h("label", "nvmov-ckw"); ckw.append(ck, h("i"));
-    var nu = inp(v.num, it.src === "web" ? "" : "WHATS / INSTA", "up", function(x){ guardarVenta(it, { num: x, venta: x }); });
-    var fe = h("input", "nvmov-in"); fe.type = "date"; fe.value = v.fecha || ""; fe.onchange = function(){ guardarVenta(it, { fecha: fe.value }); };
-    var cl = inp(v.cliente, "Cliente", "fuerte", function(x){ guardarVenta(it, { cliente: x }); });
-    var pr = listaProds(it);
-    var to = inp(v.facturar ? Math.round(Number(v.facturar)).toLocaleString("es-AR") : "", "$ total", "tot in", function(x){ guardarVenta(it, { facturar: String(numAR(x) || "") }); });
-    var co = inp(v.cobrado && Number(v.cobrado) ? Math.round(Number(v.cobrado)).toLocaleString("es-AR") : "", "$ cobrado", "tot", function(x){ guardarVenta(it, { cobrado: String(numAR(x) || "") }); });
-    var me = h("select", "nvmov-in cat"); var mv = arr(v.metodo)[0] || ""; var o0 = h("option", null, "❓ Medio"); o0.value = ""; me.append(o0);
-    METODOS.concat(mv && METODOS.indexOf(mv) < 0 ? [mv] : []).forEach(function(m){ var o = h("option", null, m); o.value = m; me.append(o); }); me.value = mv; me.dataset.g = mv ? "1" : "";
-    me.onchange = function(){ guardarVenta(it, { metodo: JSON.stringify(me.value ? [me.value] : []) }); };
+    var refrescar = function(){};
+    var nu = h("div", "nvmov-num"); var nui = inp(v.num, it.src === "web" ? "" : "WHATS / INSTA", "up", function(x){ guardarVenta(it, { num: x, venta: x }); refrescar(); });
+    nu.append(nui, h("small", null, it.src === "web" ? "Tienda Nube" : "WhatsApp / IG"));
+    var pc = prodsYCants(it, function(){ refrescar(); });
+    var fe = h("input", "nvmov-in"); fe.type = "date"; fe.value = v.fecha || ""; fe.onchange = function(){ guardarVenta(it, { fecha: fe.value }); refrescar(); };
+    var cl = inp(v.cliente, "Cliente", "fuerte", function(x){ guardarVenta(it, { cliente: x }); refrescar(); });
+    var dp = caja(v.datos, "DNI, mail, celular, dirección", function(x){ guardarVenta(it, { datos: x }); });
+    var ob = caja(v.obs, "Observaciones de envío", function(x){ guardarVenta(it, { obs: x }); });
+    var su = caja(v.suc, "Sucursal", function(x){ guardarVenta(it, { suc: x }); });
+    var et = inp(arr(v.etq).join(", "), "Etiqueta", "", function(x){ guardarVenta(it, { etq: JSON.stringify(x.split(/\s*,\s*/).filter(Boolean)) }); });
+    var co = inp(plata(v.cobrado), "$ cobrado", "tot in", function(x){ guardarVenta(it, { cobrado: String(numAR(x) || "") }); refrescar(); });
+    var to = inp(plata(v.facturar), "$ a facturar", "tot", function(x){ guardarVenta(it, { facturar: String(numAR(x) || "") }); refrescar(); });
+    var ce = inp(plata(v.costoEnv), "$ envío", "tot", function(x){ guardarVenta(it, { costoEnv: String(numAR(x) || "0") }); });
+    var pa = sel(v.pago, PAGOS, "Pago", function(x){ guardarVenta(it, { pago: x }); });
+    var me = sel(arr(v.metodo)[0] || "", METODOS, "❓ Medio", function(x){ guardarVenta(it, { metodo: JSON.stringify(x ? [x] : []) }); refrescar(); });
+    var mn = sel(v.menv, MENVS, "Método de envío", function(x){ guardarVenta(it, { menv: x }); });
+    var ti = sel(v.tipo, TIPOS, "Domicilio / Sucursal", function(x){ guardarVenta(it, { tipo: x }); });
     var qu = h("select", "nvmov-in quien" + (quienDeCobro(v.cobro) ? "" : " falta")); [["","❓"],["euge","Euge"],["pau","Pau"]].forEach(function(o){ var e = h("option", null, o[1]); e.value = o[0]; qu.append(e); });
-    qu.value = quienDeCobro(v.cobro) || ""; qu.onchange = function(){ guardarVenta(it, { cobro: JSON.stringify(cobroDeQuien(qu.value)) }); pintarSuave(); };
-    var en = inp([v.tipo, v.menv].filter(Boolean).join(" · "), "Envío", "", function(x){ var pz = x.split(/\s*·\s*/); if (pz.length > 1) guardarVenta(it, { tipo: pz[0], menv: pz.slice(1).join(" · ") }); else guardarVenta(it, { menv: x }); });
+    qu.value = quienDeCobro(v.cobro) || ""; qu.onchange = function(){ guardarVenta(it, { cobro: JSON.stringify(cobroDeQuien(qu.value)) }); qu.classList.toggle("falta", !qu.value); refrescar(); };
     var ab = h("button", "nvmov-mas", "Abrir"); ab.type = "button";
     var x = h("button", "nvmov-x", "✕"); x.type = "button"; x.title = it.src === "web" ? "No se puede descartar una venta de la tienda (se revisa y aprueba)" : "Descartar";
     if (it.src === "web") x.disabled = true; else x.onclick = function(){ guardar(it.mov, { estado: "descartado" }); };
-    f.append(ckw, nu, fe, cl, pr, to, co, me, qu, en, ab, x); w.append(f);
+    f.append(ckw, nu, pc[0], pc[1], fe, cl, dp, ob, su, et, co, to, ce, pa, me, mn, ti, qu, ab, x); w.append(f);
+    /* debajo: a Finanzas sí/no + cómo queda + aprobar */
     var sub = h("div", "nvmov-sub");
-    sub.append(h("span", "nvmov-who", it.src === "web" ? "🛒 Tienda Nube" : "💬 " + ((NOM[it.mov.autor] || it.mov.autor || "") + " · " + new Date(it.mov.msg_at || it.mov.creado).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }))));
+    var fw = h("label", "nvmov-fin"); var fc = h("input"); fc.type = "checkbox"; fc.checked = FIN[it.id] !== false; var ft = h("span");
+    fw.title = "Si está tildado, al aprobar también se crea el cobro para Finanzas (queda abajo para aprobarlo)."; fw.append(fc, ft);
+    var lf = h("span", "nvmov-lfin");
+    var bv = h("button", "nvmov-ok", "✓ Aprobar"); bv.type = "button"; bv.onclick = function(){ ck.checked = true; ck.dispatchEvent(new Event("change")); };
+    sub.append(fw, lf);
     if (it.src === "chat") sub.append(h("span", "nvmov-tx", "“" + (it.mov.texto || "") + "”"));
-    if (v.suc) sub.append(h("span", "nvmov-tx", v.suc));
-    if (v.cobrado && v.facturar && Number(v.cobrado) && Math.abs(Number(v.cobrado) - Number(v.facturar)) > 1) sub.append(h("span", "nvmov-al", "Cobrado distinto del total"));
     if (!Number(v.cobrado)) sub.append(h("span", "nvmov-al", "Todavía sin cobrar"));
-    var fw = h("label", "nvmov-fin"); var fc = h("input"); fc.type = "checkbox"; fc.checked = FIN[it.id] !== false;
-    var ft = h("span"); function txtFin(){ var q = quienDeCobro(v.cobro); ft.textContent = fc.checked ? "💰 También a Finanzas " + (q === "pau" ? "Pau" : q === "euge" ? "Euge" : "(elegí quién cobró)") : "Solo a Ventas minoristas (sin Finanzas)"; fw.classList.toggle("off", !fc.checked); }
-    fc.onchange = function(){ FIN[it.id] = fc.checked; txtFin(); }; txtFin(); qu.addEventListener("change", txtFin);
-    fw.title = "Al aprobar, la venta pasa a Ventas minoristas. Si está tildado, además se crea el cobro abajo para aprobarlo en Finanzas.";
-    fw.append(fc, ft); sub.prepend(fw);
-    var bv = h("button", "nvmov-ok"); bv.type = "button";
-    function txtBv(){ var q = quienDeCobro(v.cobro); bv.textContent = "✓ Aprobar"; bv.title = "Pasa a Ventas minoristas" + (fc.checked ? " y crea el cobro para Finanzas " + (q === "pau" ? "Pau" : q === "euge" ? "Euge" : "") : ""); }
-    txtBv(); fc.addEventListener("change", txtBv); qu.addEventListener("change", txtBv);
-    bv.onclick = function(){ ck.checked = true; ck.dispatchEvent(new Event("change")); };
-    sub.append(bv);
-    w.append(sub);
+    if (v.cobrado && v.facturar && Number(v.cobrado) && Math.abs(Number(v.cobrado) - Number(v.facturar)) > 1) sub.append(h("span", "nvmov-al", "Cobrado distinto de lo a facturar"));
+    sub.append(bv); w.append(sub);
+    /* al abrir: todo el detalle + cómo queda en Finanzas */
     var det = h("div", "nvmov-det"); det.hidden = true;
-    function area(lab, val, on){ var l = h("label", "nvmov-f"); var t = h("textarea", "nvmov-in"); t.value = val || ""; t.rows = 3; t.onchange = function(){ on(t.value); }; l.append(h("span", null, lab), t); return l; }
-    det.append(area("Datos del cliente (DNI, mail, celular, dirección)", v.datos, function(x){ guardarVenta(it, { datos: x }); }),
-      area("Cantidades / detalle", v.cant, function(x){ guardarVenta(it, { cant: x }); }),
-      area("Observaciones", v.obs, function(x){ guardarVenta(it, { obs: x }); }),
-      area("Factura", v.fact, function(x){ guardarVenta(it, { fact: x }); }));
+    function area(lab, val, on){ var l = h("label", "nvmov-f"); var t = h("textarea", "nvmov-in"); t.value = val || ""; t.rows = 4; t.onchange = function(){ on(t.value); }; l.append(h("span", null, lab), t); return l; }
     var vf = h("div", "nvmov-vfin");
-    function pintarVf(){
-      vf.innerHTML = ""; var q = quienDeCobro(v.cobro), cat = catVenta(v.metodo, v.fact), mon = Number(v.cobrado || v.facturar) || 0;
-      if (FIN[it.id] === false){ vf.append(h("b", null, "Así se carga en Finanzas"), h("p", null, "Esta venta no va a Finanzas (destildaste “También a Finanzas”).")); return; }
-      vf.append(h("b", null, "Así se carga en Finanzas " + (q === "pau" ? "Pau" : q === "euge" ? "Euge" : "(elegí quién cobró)")));
-      var g = h("div", "nvmov-vfg");
-      [["Concepto", ("VENTA #" + (v.num || "") + " · " + (v.cliente || "")).toUpperCase()], ["Fecha", v.fecha || "—"], ["Categoría", cat], ["Total", mon ? "$ " + Math.round(mon).toLocaleString("es-AR") : "—"], ["Cuenta", GRUPOS_FIN[cat.split(".")[0]] || ""], ["Notas", "Creado desde Movimientos (venta aprobada)"]].forEach(function(c){ var d = h("div"); d.append(h("small", null, c[0]), h("span", null, c[1])); g.append(d); });
-      vf.append(g, h("p", null, "Primero queda abajo en “Movimientos de plata” para que lo apruebes; recién ahí entra en Finanzas."));
-    }
-    det.prepend(vf);
-    ab.onclick = function(){ det.hidden = !det.hidden; ab.classList.toggle("on", !det.hidden); if (!det.hidden) pintarVf(); };
+    det.append(vf, area("Datos personales", v.datos, function(x){ guardarVenta(it, { datos: x }); dp.value = x; }),
+      area("Observaciones de envío", v.obs, function(x){ guardarVenta(it, { obs: x }); ob.value = x; }),
+      area("Sucursal", v.suc, function(x){ guardarVenta(it, { suc: x }); su.value = x; }),
+      area("Factura", v.fact, function(x){ guardarVenta(it, { fact: x }); refrescar(); }));
     w.append(det);
+    refrescar = function(){
+      var d = datosFin(it), si = fc.checked;
+      ft.textContent = si ? "💰 También a Finanzas " + (d.quien || "(elegí quién cobró)") : "Solo a Ventas minoristas";
+      fw.classList.toggle("off", !si);
+      lf.textContent = si ? d.cols.slice(0, 5).map(function(c){ return c[1]; }).join("  ·  ") : "";
+      bv.title = "Pasa a Ventas minoristas" + (si ? " y crea el cobro para Finanzas " + d.quien : "");
+      vf.innerHTML = "";
+      if (!si){ vf.append(h("b", null, "Esta venta no va a Finanzas"), h("p", null, "Tildá “También a Finanzas” si querés que se cargue.")); return; }
+      vf.append(h("b", null, "Así se carga en Finanzas " + (d.quien || "(elegí quién cobró)")));
+      var g = h("div", "nvmov-vfg"); d.cols.forEach(function(c){ var e = h("div"); e.append(h("small", null, c[0]), h("span", null, c[1])); g.append(e); });
+      vf.append(g, h("p", null, "Al aprobar la venta, este cobro queda abajo en “Movimientos de plata”; cuando lo aprobás, entra en Finanzas."));
+    };
+    fc.onchange = function(){ FIN[it.id] = fc.checked; refrescar(); };
+    refrescar();
+    ab.onclick = function(){ det.hidden = !det.hidden; ab.classList.toggle("on", !det.hidden); ab.textContent = det.hidden ? "Abrir" : "Cerrar"; };
     return w;
   }
 
