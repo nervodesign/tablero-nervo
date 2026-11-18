@@ -144,3 +144,6 @@ html:not(#nv) nav.tabs .tab,html:not(#nv) nav.tabs .tab:not([aria-selected="true
 html:not(#nv) nav.tabs .tab[aria-selected="true"],html:not(#nv) nav.tabs .tab[aria-selected="true"] .lb{color:#3B2418!important}
 html:not(#nv) .nvpk-h b,html:not(#nv) .nvpk-tk b{color:#3B2418!important}
 html:not(#nv) .nvpk-ch{color:#5A3A2B!important}
+/* menú: letra normal (ni negrita ni finita) */
+html:not(#nv) nav.tabs .tab,html:not(#nv) nav.tabs .tab .lb{font-weight:400!important;-webkit-font-smoothing:antialiased}
+html:not(#nv) nav.tabs .tab[aria-selected="true"],html:not(#nv) nav.tabs .tab[aria-selected="true"] .lb{font-weight:500!important}
