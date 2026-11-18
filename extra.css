@@ -304,3 +304,22 @@ html:not(#nv) .nvmov-vt .nvmov-vr>.nvmov-c:first-child .nvmov-ckw{display:none}
 html:not(#nv) .nvmov-vt .nvmov-vr .nvmov-ok{margin:0!important;width:100%;padding:7px 8px!important;font-size:12.5px!important;font-weight:600!important;color:#2F6B40!important;background:#DCEFE0!important;border:1px solid #B9DCC1!important;border-radius:10px!important;box-shadow:0 1px 2px rgba(47,107,64,.12)!important;opacity:1!important;white-space:nowrap}
 html:not(#nv) .nvmov-vt .nvmov-vr .nvmov-ok:hover{background:#CBE7D1!important}
 html:not(#nv) .nvmov-vt .nvmov-vr .nvmov-ok.off{color:#A0717C!important;background:#FBF1F3!important;border:1px dashed #E7C4CC!important;box-shadow:none!important;font-weight:500!important;cursor:not-allowed}
+
+/* chat: ayuda de cómo cargar en #movimientos */
+html:not(#nv) .chw .nvmov-ayuda{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:8px 16px 0;font-size:11.5px;color:#9A8274;background:#FCFBF9}
+html:not(#nv) .chw .nvmov-ayuda b{font-weight:500;color:#6C4D38;margin-right:2px}
+html:not(#nv) .chw .nvmov-ayuda span{background:#F5EFEA;border-radius:999px;padding:2px 9px;color:#7A6456}
+/* tachito: el "¿seguro?" con lugar, no apretado */
+html:not(#nv) .chw .chlist .chmsg .chh button.chdel.arm{width:auto!important;padding:0 12px!important;border-radius:999px!important;font-size:11.5px!important;white-space:nowrap;background:#FBEDEF!important;color:#8E4E5A!important;z-index:5;opacity:1!important;box-shadow:0 2px 8px rgba(142,78,90,.18)!important}
+/* movimientos de plata: mismo estilo de tabla que ventas + aprobar al principio */
+html:not(#nv) .nvmov-dia:not(.nvmov-vt) .nvmov-tr{grid-template-columns:104px minmax(150px,1.4fr) 118px minmax(180px,1.6fr) 112px minmax(120px,1fr) minmax(130px,1.1fr) 80px 40px 30px!important;gap:0!important;padding:0!important;align-items:stretch!important}
+html:not(#nv) .nvmov-dia:not(.nvmov-vt) .nvmov-tr>*{border-right:1px solid #EFE6DF;padding:8px 10px!important;box-sizing:border-box;min-width:0;display:flex;align-items:center}
+html:not(#nv) .nvmov-dia:not(.nvmov-vt) .nvmov-tr>*:first-child,html:not(#nv) .nvmov-dia:not(.nvmov-vt) .nvmov-tr>*:last-child,html:not(#nv) .nvmov-dia:not(.nvmov-vt) .nvmov-tr>*:nth-last-child(2){border-right:0}
+html:not(#nv) .nvmov-dia:not(.nvmov-vt) .nvmov-th{background:#FAF6F3!important;border-bottom:1px solid #EFE6DF!important}
+html:not(#nv) .nvmov-dia:not(.nvmov-vt) .nvmov-it{border-bottom:1px solid #EFE6DF!important}
+html:not(#nv) .nvmov-dia:not(.nvmov-vt) .nvmov-c>:is(input,select){width:100%}
+html:not(#nv) .nvmov-dia:not(.nvmov-vt) .nvmov-tr input.nvmov-in{background:transparent!important;border:0!important;box-shadow:none!important;padding:2px 4px!important;font-size:13px!important}
+html:not(#nv) .nvmov-dia:not(.nvmov-vt) .nvmov-tr input.nvmov-in:focus{background:#fff!important;box-shadow:0 0 0 1.5px #E2C9BD!important}
+html:not(#nv) .nvmov-dia:not(.nvmov-vt) .nvmov-c:first-child .nvmov-ckw{display:none}
+html:not(#nv) .nvmov-dia:not(.nvmov-vt) .nvmov-ok{margin:0!important;width:100%;padding:7px 8px!important;font-size:12.5px!important;font-weight:600!important;color:#2F6B40!important;background:#DCEFE0!important;border:1px solid #B9DCC1!important;border-radius:10px!important;box-shadow:0 1px 2px rgba(47,107,64,.12)!important}
+html:not(#nv) .nvmov-dia:not(.nvmov-vt) .nvmov-sub{padding:6px 16px 9px 16px!important;background:#FDFBFA}

@@ -115,7 +115,9 @@
     return r.estado === "aprobado" ? ["✓ Aprobado · " + t, "ok"] : ["● Pendiente · " + t, "pen"];
   }
   function decorarChat(){
-    var S = window.__nv && window.__nv.S; if (!S || !S.chat || S.chat.canal !== CANAL) return;
+    var S = window.__nv && window.__nv.S, ay = document.querySelector(".chw .nvmov-ayuda");
+    if (!S || !S.chat || S.chat.canal !== CANAL){ if (ay) ay.remove(); return; }
+    if (!ay){ var fo = document.querySelector(".chw form.chf"); if (fo){ ay = h("div", "nvmov-ayuda"); ay.innerHTML = '<b>Cómo cargar</b><span>“Pagué 200000 a Licari por tela, transferencia”</span><span>“Venta Juana Pérez 85000 transferencia, cobró Pau”</span><span>“Me pagó Pintegral 50000 en efectivo”</span>'; fo.before(ay); } }
     document.querySelectorAll(".chw .chmsg[data-id]").forEach(function(el){
       var r = ROWS.find(function(x){ return x.msg_id === el.dataset.id; }); if (!r) return;
       var e = etiqueta(r), b = el.querySelector(".nvmovchip");
@@ -123,6 +125,38 @@
       if (b.dataset.t !== e[0]){ b.dataset.t = e[0]; b.textContent = e[0]; b.className = "nvmovchip " + e[1]; }
     });
   }
+
+  /* ---------- aprender: si una vez corregiste la categoría de "Licari", la próxima vez la pone sola ---------- */
+  function claveCp(s){ return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim(); }
+  function aprendido(r){
+    var k = claveCp(r.contraparte); if (!k) return null; var best = null;
+    ROWS.forEach(function(x){
+      if (x === r || !x.cat || claveCp(x.contraparte) !== k) return;
+      if (!(x.cliente && x.cliente.catManual) && x.estado !== "aprobado") return;
+      var t = Date.parse(x.cambiado || x.creado || "") || 0; if (!best || t > best.t) best = { cat: x.cat, t: t };
+    });
+    return best && best.cat;
+  }
+  function aplicarAprendido(){
+    ROWS.forEach(function(r){
+      if (r.estado !== "pendiente" || esBorradorVenta(r) || (r.cliente && (r.cliente.catManual || r.cliente.catAprendida))) return;
+      var c = aprendido(r); if (!c) return;
+      var cl = Object.assign({}, r.cliente || {}, { catAprendida: true });
+      if (c !== r.cat){ Object.assign(r, { cat: c, cliente: cl }); SB.from("movimientos").update({ cat: c, cliente: cl }).eq("id", r.id).then(function(){}); }
+      else { r.cliente = cl; }
+    });
+  }
+  /* ---------- borrar un mensaje del chat = borrarlo de Movimientos (si todavía no está en Finanzas) ---------- */
+  document.addEventListener("click", function(e){
+    var d = e.target.closest && e.target.closest(".chw .chmsg .chdel"); if (!d || !d.classList.contains("arm")) return;
+    var el = d.closest(".chmsg"), id = el && el.dataset.id; if (!id) return;
+    var r = ROWS.find(function(x){ return x.msg_id === id; }); if (!r) return;
+    if (r.estado === "aprobado"){ toast("Lo borraste del chat. En Movimientos queda porque ya está cargado en Finanzas."); return; }
+    SB.from("movimientos").delete().eq("id", r.id).then(function(res){
+      if (res.error){ guardar(r, { estado: "descartado" }); return; }
+      var i = ROWS.indexOf(r); if (i >= 0) ROWS.splice(i, 1); pintarSuave();
+    });
+  }, true);
 
   /* ---------- solapa Movimientos ---------- */
   function tabBtn(){
@@ -163,6 +197,7 @@
       fi = Array.prototype.indexOf.call(cs, a); if (fi >= 0 && a.selectionStart != null) { try { fs = [a.selectionStart, a.selectionEnd]; } catch(e){} }
       ab = Array.prototype.map.call(p.querySelectorAll(".nvmov-det"), function(d){ return !d.hidden; });
     }
+    try { aplicarAprendido(); } catch(e){}
     _pintarBase.apply(this, arguments);
     p = document.querySelector(".nvmovp"); if (!p) return;
     Array.prototype.forEach.call(p.querySelectorAll(".nvmov-tb"), function(e, i){ if (sl[i]) e.scrollLeft = sl[i]; });
@@ -287,7 +322,7 @@
     var ca = h("select", "nvmov-in cat" + (r.cat ? "" : " falta")); var o0 = h("option", null, "❓ Categoría"); o0.value = ""; ca.append(o0);
     CATS.forEach(function(c){ var o = h("option", null, c); o.value = c; ca.append(o); }); ca.value = r.cat || "";
     ca.dataset.g = r.cat ? String(r.cat).split(".")[0] : "";
-    ca.onchange = function(){ guardar(r, { cat: ca.value || null }); };
+    ca.onchange = function(){ guardar(r, { cat: ca.value || null, cliente: Object.assign({}, r.cliente || {}, { catManual: true }) }); };
     var s = signoDe(r), mon = Number(r.monto) || 0;
     var to = h("input", "nvmov-in tot " + (s === "+" ? "in" : s === "-" ? "eg" : "")); to.inputMode = "decimal";
     to.value = mon ? "$ " + (s === "-" ? "-" : "") + Math.round(mon).toLocaleString("es-AR") : ""; to.placeholder = "$ -0";
@@ -305,7 +340,7 @@
     var x = h("button", "nvmov-x", r.estado === "descartado" ? "↺" : "✕"); x.type = "button"; x.title = r.estado === "descartado" ? "Recuperar" : "Descartar";
     x.onclick = function(){ guardar(r, { estado: r.estado === "descartado" ? "pendiente" : "descartado" }); };
     if (r.cargado) [co, fe, ca, to, no, qu].forEach(function(e){ e.disabled = true; });
-    f.append(ckw, co, fe, ca, to, cu, no, qu, ad, x);
+    [ckw, co, fe, ca, to, cu, no, qu, ad, x].forEach(function(e){ var cc = h("div", "nvmov-c"); cc.append(e); f.append(cc); });
     w.append(f);
     /* debajo, chiquito: el mensaje original y avisos */
     var sub = h("div", "nvmov-sub");
@@ -320,7 +355,7 @@
       bo.title = r.por ? "Lo carga en Finanzas " + NOM[r.por] : "Primero elegí a quién se carga";
       bo.onclick = function(){ ck.checked = true; ck.dispatchEvent(new Event("change")); };
       qu.addEventListener("change", function(){ bo.title = qu.value ? "Lo carga en Finanzas " + NOM[qu.value] : "Primero elegí a quién se carga"; });
-      sub.append(bo);
+      f.firstChild.append(bo);
     }
     w.append(sub);
     return w;
