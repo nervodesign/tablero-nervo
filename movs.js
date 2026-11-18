@@ -777,7 +777,7 @@
       usados[nom.split(" ")[0].toLowerCase()] = 1;
       if (!card){ cont.append(h("div", "nvmas-g", grupo || "")); card = h("div", "nvmas-c"); cont.append(card); }
       var b = h("button", "nvmas-i"); b.type = "button";
-      var i = h("i", "nvmas-ic " + tono); i.innerHTML = ic ? ic.innerHTML : ""; b.append(i, h("span", "nvmas-t", nom));
+      var i = h("i", "nvmas-ic " + tono); if (ic){ var cl = ic.cloneNode(true); Array.prototype.forEach.call(cl.querySelectorAll(".n"), function(z){ z.remove(); }); var sv = cl.querySelector("svg"); if (sv) i.append(sv); } b.append(i, h("span", "nvmas-t", nom));
       var num = n && n.textContent.trim(); if (num && num !== "0") b.append(h("b", "nvmas-n", num));
       var ch = h("span", "nvmas-ch"); ch.innerHTML = CHEV; b.append(ch);
       b.onclick = function(){ cerrar(); setTimeout(function(){ e.click(); }, 30); };

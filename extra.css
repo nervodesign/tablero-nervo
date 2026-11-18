@@ -561,3 +561,10 @@ html:not(#nv) .nvmov-rgo{border:0;background:#3B2418;color:#fff;border-radius:99
 @media (max-width:760px){
   html:not(#nv) nav.tabs .nvcfg-tab,html:not(#nv) nav.tabs .nvcfg-sec{display:none!important}
 }
+
+/* menú Más celu: íconos de línea (no rellenos) y que se vea hasta el final */
+html:not(#nv) .nvmas-ic svg{fill:none!important;stroke:currentColor!important;stroke-width:1.6!important;stroke-linecap:round;stroke-linejoin:round}
+html:not(#nv) .nvmas-ic svg *{fill:none!important;stroke:currentColor!important}
+html:not(#nv) .nvmas-ic .n{display:none!important}
+html:not(#nv) .scrim:has(.nvmas-sh){z-index:90!important}
+html:not(#nv) .sheet.nvmas-sh{padding-bottom:calc(110px + env(safe-area-inset-bottom))!important;max-height:calc(100vh - 70px)!important}
