@@ -95,3 +95,14 @@ html:not(#nv) body:not(:has(main#list .nvh)) header.top > *{top:0!important}
 html:not(#nv) .nvh-split{margin-top:auto!important;padding-top:10px}
 html:not(#nv) .nvh > .nvpk .nvpk-tk small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 }
+/* Hoy: movimiento suave al pasar el cursor */
+@media (hover:hover){
+html:not(#nv) main#list .nvh-k,html:not(#nv) main#list .nvpk,html:not(#nv) main#list .hp-card,html:not(#nv) main#list .pz-c{transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s cubic-bezier(.2,.8,.2,1)!important}
+html:not(#nv) main#list .nvh-k:hover,html:not(#nv) main#list .nvpk:hover,html:not(#nv) main#list .hp-card:hover,html:not(#nv) main#list .pz-c:hover{transform:translateY(-3px)!important;box-shadow:0 0 0 1px #F2ECE6,0 14px 34px rgba(58,36,28,.09)!important}
+html:not(#nv) main#list .nvh-hero:hover{transform:translateY(-3px) scale(1.005)!important;box-shadow:0 4px 10px rgba(58,36,28,.1),0 26px 50px -18px rgba(89,57,45,.6)!important}
+html:not(#nv) main#list .nvpk-tk:hover{transform:translateY(-2px)!important}
+html:not(#nv) main#list .hp-hoy > .item{transition:background .2s,transform .2s}
+html:not(#nv) main#list .hp-hoy > .item:hover{background:#FBF8F5;transform:translateX(3px)}
+html:not(#nv) main#list .hp-sem [class*="bar"]{transition:filter .2s,transform .2s;transform-origin:bottom}
+html:not(#nv) main#list .hp-sem [class*="bar"]:hover{filter:brightness(.96)}
+}
