@@ -29,7 +29,7 @@
   function guardar(campos){
     if (!YO) return Promise.resolve();
     Object.assign(YO, campos); pintar();
-    return SB.from("miembros").update(campos).eq("email", YO.email).then(function(r){ if (r.error) toast("No se pudo guardar: " + r.error.message); else avisarCambio(); });
+    return SB.from("miembros").update(campos).eq("email", YO.email).then(function(r){ if (r.error){ toast("No se pudo guardar: " + r.error.message); throw r.error; } avisarCambio(); });
   }
 
   /* ---------- en línea y escribiendo ---------- */
@@ -86,22 +86,63 @@
       mb.replaceChildren(avatar(YO));
     }
     decorarChat();
-    var p = document.querySelector(".nvperf"); if (p && p.dataset.abierto) llenar(p);
+    var p = document.querySelector(".nvperf"); if (p && p.dataset.abierto) refrescar(p);
+  }
+  /* actualiza solo cabecera, foto y equipo: no toca lo que estás escribiendo ni el scroll */
+  function refrescar(p){
+    if (!YO) return;
+    var cab = p.querySelector(".nvperf-h"), eq = p.querySelector(".nvperf-q"), fo = p.querySelector(".nvperf-f");
+    if (!cab || !eq || !fo){ llenar(p); return; }
+    cab.replaceWith(cabecera()); eq.replaceWith(equipo()); fo.replaceWith(bloqueFoto());
+  }
+  var FI = null;
+  function elegirFoto(){
+    if (!FI){
+      FI = h("input"); FI.type = "file"; FI.accept = "image/*"; FI.style.display = "none"; FI.onclick = function(e){ e.stopPropagation(); }; document.body.appendChild(FI);
+      FI.onchange = function(){
+        var f = FI.files[0]; if (!f) return;
+        toast("Subiendo foto…");
+        achicar(f, 200).then(function(url){ return guardar({ foto: url }); }).then(function(){ toast("Foto guardada."); }, function(){});
+        FI.value = "";
+      };
+    }
+    FI.click();
+  }
+  function cabecera(){
+    var cab = h("div", "nvperf-h"); var av = avatar(YO, "grande");
+    var bt = h("button", "nvperf-av"); bt.type = "button"; bt.title = "Cambiar foto"; bt.onclick = elegirFoto;
+    bt.append(av, h("span", "nvperf-cam", "📷")); cab.append(bt);
+    var nm = h("div"); nm.append(h("b", null, YO.nombre), h("small", null, ONLINE[YO.email] ? "● En línea" : "Conectando…")); cab.append(nm);
+    return cab;
+  }
+  function bloqueFoto(){
+    var fo = h("div", "nvperf-f");
+    var fb = h("button", null, YO.foto ? "📷 Cambiar foto" : "📷 Poner foto"); fb.type = "button"; fb.onclick = elegirFoto;
+    fo.append(fb);
+    if (YO.foto){ var fq = h("button", null, "Quitar foto"); fq.type = "button"; fq.onclick = function(){ guardar({ foto: null }); }; fo.append(fq); }
+    return fo;
+  }
+  function equipo(){
+    var eq = h("div", "nvperf-q"); eq.append(h("small", null, "EQUIPO"));
+    MIEMBROS.filter(function(m){ return m.email !== YO.email; }).forEach(function(m){
+      var r = h("div", "nvperf-m"); r.append(avatar(m));
+      var t = h("span"); t.append(h("b", null, m.nombre), h("small", null, (ONLINE[m.email] ? "En línea" : "Desconectada") + (vigente(m) ? " · " + lineaEstado(m) : "")));
+      r.append(t); eq.append(r);
+    });
+    return eq;
   }
   function cerrar(){ var p = document.querySelector(".nvperf"); if (p) p.remove(); }
   document.addEventListener("click", function(e){ if (!e.target.closest(".nvperf,.nvyo,.nvyo-m")) cerrar(); });
   function abrir(ancla){
     if (document.querySelector(".nvperf")){ cerrar(); return; }
     var p = h("div", "nvperf"); p.dataset.abierto = 1; document.body.appendChild(p); llenar(p);
-    var r = ancla.getBoundingClientRect();
-    if (window.innerWidth > 800){ p.style.left = Math.max(12, r.left) + "px"; p.style.bottom = (window.innerHeight - r.top + 8) + "px"; }
-    else { p.style.right = "12px"; p.style.top = (r.bottom + 8) + "px"; }
+    var r = ancla.getBoundingClientRect(), H = window.innerHeight;
+    if (window.innerWidth > 800){ p.style.left = Math.max(12, r.left) + "px"; p.style.bottom = Math.max(12, H - r.top + 8) + "px"; p.style.maxHeight = Math.max(240, r.top - 20) + "px"; }
+    else { p.style.right = "12px"; p.style.top = (r.bottom + 8) + "px"; p.style.maxHeight = Math.max(240, H - r.bottom - 20) + "px"; }
   }
   function llenar(p){
     p.replaceChildren(); if (!YO) return;
-    var cab = h("div", "nvperf-h"); var av = avatar(YO, "grande"); cab.append(av);
-    var nm = h("div"); nm.append(h("b", null, YO.nombre), h("small", null, ONLINE[YO.email] ? "● En línea" : "Conectando…")); cab.append(nm);
-    p.append(cab);
+    p.append(cabecera());
     /* estado */
     var fila = h("div", "nvperf-e");
     var emo = h("input", "nvperf-emo"); emo.value = vigente(YO) ? (YO.estado_emoji || "💬") : "💬"; emo.maxLength = 4; emo.title = "Emoji";
@@ -123,23 +164,7 @@
     };
     var bo = h("button", null, "Borrar"); bo.type = "button"; bo.onclick = function(){ txt.value = ""; guardar({ estado: null, estado_emoji: null, estado_hasta: null }); };
     acc.append(dur, ok, bo); p.append(acc);
-    /* foto */
-    var fo = h("div", "nvperf-f");
-    var fb = h("button", null, YO.foto ? "📷 Cambiar foto" : "📷 Poner foto"); fb.type = "button";
-    var fi = h("input"); fi.type = "file"; fi.accept = "image/*"; fi.hidden = true;
-    fb.onclick = function(){ fi.click(); };
-    fi.onchange = function(){ var f = fi.files[0]; if (!f) return; achicar(f, 160).then(function(url){ guardar({ foto: url }).then(function(){ toast("Foto guardada."); }); }); };
-    fo.append(fb, fi);
-    if (YO.foto){ var fq = h("button", null, "Quitar foto"); fq.type = "button"; fq.onclick = function(){ guardar({ foto: null }); }; fo.append(fq); }
-    p.append(fo);
-    /* equipo */
-    var eq = h("div", "nvperf-q"); eq.append(h("small", null, "EQUIPO"));
-    MIEMBROS.filter(function(m){ return m.email !== YO.email; }).forEach(function(m){
-      var r = h("div", "nvperf-m"); r.append(avatar(m));
-      var t = h("span"); t.append(h("b", null, m.nombre), h("small", null, (ONLINE[m.email] ? "En línea" : "Desconectada") + (vigente(m) ? " · " + lineaEstado(m) : "")));
-      r.append(t); eq.append(r);
-    });
-    p.append(eq);
+    p.append(bloqueFoto(), equipo());
     var sal = h("button", "nvperf-s", "Salir de la app"); sal.type = "button";
     sal.onclick = function(){ SB.auth.signOut().then(function(){ location.reload(); }); };
     p.append(sal);

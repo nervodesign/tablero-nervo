@@ -47,3 +47,7 @@ html:not(#nv) .nvdots i{width:5px;height:5px;border-radius:50%;background:#CBB4A
 html:not(#nv) .nvdots i:nth-child(2){animation-delay:.15s}html:not(#nv) .nvdots i:nth-child(3){animation-delay:.3s}
 @keyframes nvDot{0%,60%,100%{transform:none;opacity:.5}30%{transform:translateY(-3px);opacity:1}}
 @media (max-width:800px){html:not(#nv) .chw .nvtyp{padding:4px 12px}}
+html:not(#nv) .nvperf{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+html:not(#nv) .nvperf-av{position:relative;border:0;background:none;padding:0;cursor:pointer;border-radius:50%}
+html:not(#nv) .nvperf-cam{position:absolute;right:-4px;bottom:-4px;width:24px;height:24px;border-radius:50%;background:#fff;border:1px solid #F0E6DD;display:grid;place-items:center;font-size:12px;box-shadow:0 1px 3px rgba(58,36,28,.15)}
+html:not(#nv) .nvperf-av:hover .nvav{filter:brightness(.92)}
