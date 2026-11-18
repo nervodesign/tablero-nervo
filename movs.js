@@ -645,3 +645,18 @@
   new MutationObserver(function(){ if (pend) return; pend = true; requestAnimationFrame(function(){ pend = false; document.querySelectorAll(".nvmov-th:not([data-est])").forEach(function(th){ try { preparar(th); } catch(e){} }); }); })
     .observe(document.documentElement, { childList: true, subtree: true });
 })();
+
+/* ---------- Ventas minoristas: lo "Pendiente de revisar" ya se revisa en Movimientos, así que acá no se muestra ---------- */
+(function(){
+  if (window.__nvOcultarRev) return; window.__nvOcultarRev = 1;
+  function ocultar(){
+    var host = document.querySelector(".bz-host"), r = host && host.shadowRoot; if (!r) return;
+    if (!r.getElementById("nvocu")){ var st = document.createElement("style"); st.id = "nvocu"; st.textContent = "[data-nvocu]{display:none!important}"; r.appendChild(st); }
+    r.querySelectorAll(".gs").forEach(function(g){ var b = g.querySelector(".gsh"); if (b && /PENDIENTE DE REVISAR/i.test(b.textContent) && !g.hasAttribute("data-nvocu")) g.setAttribute("data-nvocu", ""); });
+    r.querySelectorAll("tr").forEach(function(tr){ var p = tr.querySelector(".pill"); if (p && /^PENDIENTE DE REVISAR$/i.test(p.textContent.trim()) && !tr.hasAttribute("data-nvocu")) tr.setAttribute("data-nvocu", ""); });
+    var cand = Array.prototype.filter.call(r.querySelectorAll("div,p,section"), function(e){ return /entraron solas/.test(e.textContent) && e.textContent.length < 400; });
+    cand.sort(function(a, b){ return a.textContent.length - b.textContent.length; });
+    var ban = cand[0]; if (ban){ while (ban.parentElement && ban.parentElement.textContent.length < 400 && /entraron solas/.test(ban.parentElement.textContent) && ban.parentElement.childElementCount <= 3) ban = ban.parentElement; if (!ban.hasAttribute("data-nvocu")) ban.setAttribute("data-nvocu", ""); }
+  }
+  setInterval(function(){ try { ocultar(); } catch(e){} }, 1200);
+})();
