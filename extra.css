@@ -387,3 +387,14 @@ html:not(#nv) body:has(main#list .chw) #fab.fab{display:none!important}
   html:not(#nv) main#list .nvh .kpi.nvh-k>*{margin-left:auto!important;margin-right:auto!important;text-align:center!important;justify-content:center!important;align-self:center!important;position:static!important}
   html:not(#nv) main#list .nvh .kpi.nvh-k>b{margin:2px auto!important;font-size:20px!important;padding:4px 16px!important}
 }
+
+/* chat del celu más blanco y quieto */
+@media (max-width:760px){
+  html:not(#nv),html:not(#nv) body{overscroll-behavior:none!important;max-width:100vw!important;overflow-x:hidden!important}
+  html:not(#nv) main#list .chw,html:not(#nv) main#list .chw>.chc,html:not(#nv) main#list .chw .chmain,html:not(#nv) main#list .chw .chlist{background:#FFFEFD!important}
+  html:not(#nv) main#list .chw{margin-left:0!important;margin-right:0!important;width:100%!important;max-width:100%!important;box-shadow:none!important;border:0!important;touch-action:pan-y}
+  html:not(#nv) main#list .chw>.chc{border-right:0!important;overscroll-behavior:contain!important;touch-action:pan-y}
+  html:not(#nv) main#list .chw .chlist{overscroll-behavior:contain!important}
+  html:not(#nv) .chw .chb.nvmovtop{background:#FBF7F4!important}
+  html:not(#nv) .chw .chsq{background:#F6F2EF!important}
+}
