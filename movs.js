@@ -407,13 +407,13 @@
   /* ===== Ventas: mismas columnas que el tablero de Ventas minoristas ===== */
   var PAGOS = ["Finalizado", "Pendiente", "PARCIAL", "FALTA ENVIO"];
   var MENVS = ["Vía Cargo", "Andreani", "Acordar envío", "Retira depósito cliente", "Retira depósito transporte", "BUSPACK"];
-  var TIPOS = ["Domicilio", "Sucursal"];
+  var TIPOSENV = ["Domicilio", "Sucursal"];
   function sel(val, ops, ph, on){
     var e = h("select", "nvmov-in cat"); var o0 = h("option", null, ph || "—"); o0.value = ""; e.append(o0);
     ops.concat(val && ops.indexOf(val) < 0 ? [val] : []).forEach(function(m){ var o = h("option", null, m); o.value = m; e.append(o); });
     e.value = val || ""; e.dataset.g = val ? "1" : ""; e.onchange = function(){ e.dataset.g = e.value ? "1" : ""; on(e.value); }; return e;
   }
-  function plata(n){ return n && Number(n) ? Math.round(Number(n)).toLocaleString("es-AR") : ""; }
+  function plataN(n){ return n && Number(n) ? Math.round(Number(n)).toLocaleString("es-AR") : ""; }
   function caja(val, ph, on){ var t = h("textarea", "nvmov-in nvmov-ta"); t.value = val || ""; t.placeholder = ph || ""; t.rows = 2; t.title = val || ""; t.onchange = function(){ t.title = t.value; on(t.value); }; return t; }
   /* productos y cantidades: dos columnas alineadas, una línea por producto (como en la tabla de ventas) */
   function partirCant(l){ var m = /^\s*\[(.?)\]\s*/.exec(l || ""); return m ? { ck: m[1], tx: String(l).slice(m[0].length) } : { ck: " ", tx: String(l || "") }; }
@@ -470,13 +470,13 @@
     var ob = caja(v.obs, "Observaciones de envío", function(x){ guardarVenta(it, { obs: x }); });
     var su = caja(v.suc, "Sucursal", function(x){ guardarVenta(it, { suc: x }); });
     var et = inp(arr(v.etq).join(", "), "Etiqueta", "", function(x){ guardarVenta(it, { etq: JSON.stringify(x.split(/\s*,\s*/).filter(Boolean)) }); });
-    var co = inp(plata(v.cobrado), "$ cobrado", "tot in", function(x){ guardarVenta(it, { cobrado: String(numAR(x) || "") }); refrescar(); });
-    var to = inp(plata(v.facturar), "$ a facturar", "tot", function(x){ guardarVenta(it, { facturar: String(numAR(x) || "") }); refrescar(); });
-    var ce = inp(plata(v.costoEnv), "$ envío", "tot", function(x){ guardarVenta(it, { costoEnv: String(numAR(x) || "0") }); });
+    var co = inp(plataN(v.cobrado), "$ cobrado", "tot in", function(x){ guardarVenta(it, { cobrado: String(numAR(x) || "") }); refrescar(); });
+    var to = inp(plataN(v.facturar), "$ a facturar", "tot", function(x){ guardarVenta(it, { facturar: String(numAR(x) || "") }); refrescar(); });
+    var ce = inp(plataN(v.costoEnv), "$ envío", "tot", function(x){ guardarVenta(it, { costoEnv: String(numAR(x) || "0") }); });
     var pa = sel(v.pago, PAGOS, "Pago", function(x){ guardarVenta(it, { pago: x }); refrescar(); });
     var me = sel(arr(v.metodo)[0] || "", METODOS, "❓ Medio", function(x){ guardarVenta(it, { metodo: JSON.stringify(x ? [x] : []) }); refrescar(); });
     var mn = sel(v.menv, MENVS, "Método de envío", function(x){ guardarVenta(it, { menv: x }); refrescar(); });
-    var ti = sel(v.tipo, TIPOS, "Domicilio / Sucursal", function(x){ guardarVenta(it, { tipo: x }); refrescar(); });
+    var ti = sel(v.tipo, TIPOSENV, "Domicilio / Sucursal", function(x){ guardarVenta(it, { tipo: x }); refrescar(); });
     var qu = h("select", "nvmov-in quien" + (quienDeCobro(v.cobro) ? "" : " falta")); [["","❓"],["euge","Euge"],["pau","Pau"]].forEach(function(o){ var e = h("option", null, o[1]); e.value = o[0]; qu.append(e); });
     qu.value = quienDeCobro(v.cobro) || ""; qu.onchange = function(){ guardarVenta(it, { cobro: JSON.stringify(cobroDeQuien(qu.value)) }); qu.classList.toggle("falta", !qu.value); refrescar(); };
     var ab = h("button", "nvmov-mas", "Abrir"); ab.type = "button";
