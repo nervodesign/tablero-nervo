@@ -122,8 +122,8 @@
   var pend = 0;
   function css(id, href){ var l = document.createElement("link"); l.id = id; l.rel = "stylesheet"; l.href = href + "?v=" + V; pend++;
     l.onload = l.onerror = function(){ if (--pend <= 0) destapar(); }; document.head.appendChild(l); }
-  css("nv-tema-l", "tema.css"); css("nv-chat-l", "chat.css"); css("nv-hoy-l", "hoy.css"); css("nv-perfil-l", "perfil.css");
-  function js(){ ["chat-plus.js","hoy-plus.js","perfil.js"].forEach(function(f){ var s = document.createElement("script"); s.src = f + "?v=" + V; document.body.appendChild(s); });
+  css("nv-tema-l", "tema.css"); css("nv-chat-l", "chat.css"); css("nv-hoy-l", "hoy.css"); css("nv-perfil-l", "perfil.css"); css("nv-mov-l", "movs.css");
+  function js(){ ["chat-plus.js","hoy-plus.js","perfil.js","movs.js"].forEach(function(f){ var s = document.createElement("script"); s.src = f + "?v=" + V; document.body.appendChild(s); });
     var b = document.getElementById("themeBtn"); if (b) b.style.display = "none"; }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", js); else js();
 })();
