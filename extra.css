@@ -202,3 +202,16 @@ html:not(#nv) main#list .chw > .chc{background:#F7F4F1!important}
 html:not(#nv) main#list .chw .chlist{background:#F9F6F3!important}
 html:not(#nv) main#list .chw .chmain,html:not(#nv) main#list .chw .chmain > :first-child,html:not(#nv) .chw form.chf{background:#FCFBF9!important}
 html:not(#nv) .chw .chb{background:#FBF9F7!important}
+
+/* columnas estirables + botón aprobar siempre visible + productos más anchos */
+html:not(#nv) .nvmov-tb[style*="--nvcols"] .nvmov-tr{grid-template-columns:var(--nvcols)!important;min-width:max-content!important}
+html:not(#nv) .nvmov-tb[style*="--nvcols"] .nvmov-it{min-width:max-content!important}
+html:not(#nv) .nvmov-vr{grid-template-columns:30px 98px 112px minmax(130px,1.1fr) minmax(240px,2.4fr) 98px 98px 150px 64px minmax(110px,1fr) 52px 26px!important}
+html:not(#nv) .nvmov-th>span{position:relative}
+html:not(#nv) .nvmov-asa{position:absolute;top:-4px;bottom:-4px;right:-5px;width:10px;cursor:col-resize;z-index:3}
+html:not(#nv) .nvmov-asa::after{content:"";position:absolute;top:3px;bottom:3px;left:4px;width:2px;border-radius:2px;background:#E4D8CF;opacity:0;transition:opacity .15s}
+html:not(#nv) .nvmov-th:hover .nvmov-asa::after{opacity:1}
+html:not(#nv) .nvmov-asa:hover::after,html:not(#nv) body.nvmov-estirando .nvmov-asa::after{background:#C48A99;opacity:1}
+html:not(#nv) body.nvmov-estirando{cursor:col-resize!important;user-select:none!important}
+html:not(#nv) .nvmov-ok{position:sticky!important;right:14px;margin-left:12px!important}
+html:not(#nv) .nvmov-sub .nvmov-ok{margin-left:auto!important}

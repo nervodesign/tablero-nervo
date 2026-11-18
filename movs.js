@@ -483,3 +483,35 @@
     .observe(document.documentElement, { childList: true, subtree: true });
   setInterval(function(){ try { asegurarCanal(); procesar(); } catch(e){ console.warn(e); } }, 4000);
 })();
+
+/* ---------- columnas estirables: arrastrá el borde del título de cada columna ---------- */
+(function(){
+  if (window.__nvEstirar) return; window.__nvEstirar = 1;
+  function clave(th){ return th.classList.contains("nvmov-vr") ? "ven" : "pla"; }
+  function leer(k){ try { return JSON.parse(localStorage.getItem("nvcols_" + k) || "null"); } catch(e){ return null; } }
+  function grabar(k, w){ try { localStorage.setItem("nvcols_" + k, JSON.stringify(w)); } catch(e){} }
+  function aplicar(k, w){
+    var tpl = w.map(function(x){ return Math.round(x) + "px"; }).join(" ");
+    document.querySelectorAll(".nvmov-tb").forEach(function(tb){ var th = tb.querySelector(".nvmov-th"); if (th && clave(th) === k) tb.style.setProperty("--nvcols", tpl); });
+  }
+  function preparar(th){
+    if (th.dataset.est) return; th.dataset.est = "1";
+    var k = clave(th), g = leer(k); if (g && g.length === th.children.length) aplicar(k, g);
+    Array.prototype.forEach.call(th.children, function(c, i){
+      if (!c.textContent.trim()) return;
+      var a = document.createElement("i"); a.className = "nvmov-asa"; a.title = "Arrastrá para agrandar o achicar la columna"; c.append(a);
+      a.addEventListener("pointerdown", function(ev){
+        ev.preventDefault(); ev.stopPropagation();
+        var ws = Array.prototype.map.call(th.children, function(x){ return x.getBoundingClientRect().width; });
+        var x0 = ev.clientX, w0 = ws[i]; document.body.classList.add("nvmov-estirando");
+        function mv(e){ ws[i] = Math.max(44, w0 + e.clientX - x0); aplicar(k, ws); }
+        function up(){ document.removeEventListener("pointermove", mv); document.removeEventListener("pointerup", up); document.body.classList.remove("nvmov-estirando"); grabar(k, ws); }
+        document.addEventListener("pointermove", mv); document.addEventListener("pointerup", up);
+      });
+      a.addEventListener("dblclick", function(){ try { localStorage.removeItem("nvcols_" + k); } catch(e){} document.querySelectorAll(".nvmov-tb").forEach(function(tb){ var t2 = tb.querySelector(".nvmov-th"); if (t2 && clave(t2) === k) tb.style.removeProperty("--nvcols"); }); });
+    });
+  }
+  var pend = false;
+  new MutationObserver(function(){ if (pend) return; pend = true; requestAnimationFrame(function(){ pend = false; document.querySelectorAll(".nvmov-th:not([data-est])").forEach(function(th){ try { preparar(th); } catch(e){} }); }); })
+    .observe(document.documentElement, { childList: true, subtree: true });
+})();
