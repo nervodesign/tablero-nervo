@@ -26,7 +26,7 @@
         token().then(function(t){
           return fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ fn: name, args: args, token: t }) });
         }).then(function(r){ return r.json(); }).then(function(j){
-          if (j.ok) { if (ok) ok(j.r); }
+          if (j.ok) { if (/^base(Guardar|Borrar)/.test(name) && window.__nvBaseCambio) { try { window.__nvBaseCambio(); } catch(e){} } if (ok) ok(j.r); }
           else { if (/Sin acceso/.test(j.e)) { SB.auth.signOut(); } if (fail) fail(new Error(j.e)); else console.error(j.e); }
         }).catch(function(e){ if (fail) fail(e); else console.error(e); });
       };

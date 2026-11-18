@@ -952,3 +952,51 @@
   /* al tocar un aviso, abrir donde corresponde */
   try { var ir = new URLSearchParams(location.search).get("ir"); if (ir) { var n = 0, t = setInterval(function(){ var el = document.getElementById(ir === "mov" ? "tab-mov" : "tab-chat"); if (el || ++n > 30){ clearInterval(t); if (el) el.click(); } }, 500); } } catch(e){}
 })();
+
+/* ---------- Ventas y Finanzas al día en todos los dispositivos: si alguien carga algo en otro celu o compu, aparece solo ---------- */
+(function(){
+  if (window.__nvBaseSync) return; window.__nvBaseSync = 1;
+  var SB = window.__sb; if (!SB) return;
+  var VISTO = null, ULT = "", PEND = false, corriendo = false;
+  function editando(){
+    var a = document.activeElement;
+    while (a && a.shadowRoot && a.shadowRoot.activeElement) a = a.shadowRoot.activeElement;
+    if (a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) return true;
+    if (document.querySelector("#sheetHost .scrim, .scrim .sheet, .nvcfg")) return true;
+    return false;
+  }
+  function aplicar(){
+    var nv = window.__nv; if (!nv || !nv.S || !nv.S.bzData) { PEND = false; return; }
+    if (editando()){ PEND = true; return; }
+    PEND = false; ULT = "";
+    var y = window.scrollY;
+    nv.S.bzData = null;
+    try { nv.render(); } catch(e){}
+    var n = 0, t = setInterval(function(){ if (nv.S.bzData || ++n > 60){ clearInterval(t); setTimeout(function(){ window.scrollTo(0, y); }, 60); } }, 250);
+  }
+  /* aviso liviano: cada vez que alguien guarda algo de la Base, queda la hora en "cambios" */
+  window.__nvBaseCambio = function(){ var ahora = new Date().toISOString(); VISTO = ahora; SB.from("cambios").upsert({ id: "base", cuando: ahora }).then(function(){}, function(){}); };
+  function mirar(){
+    if (document.hidden) return;
+    SB.from("cambios").select("cuando").eq("id", "base").maybeSingle().then(function(r){
+      var c = r && r.data && r.data.cuando; if (!c) return;
+      if (VISTO === null){ VISTO = c; return; }
+      if (Date.parse(c) > Date.parse(VISTO)){ VISTO = c; aplicar(); }
+    }, function(){});
+  }
+  /* al volver a la app: revisión completa (por si entró algo solo, como una venta de Tienda Nube) */
+  function completa(){
+    var nv = window.__nv; if (!nv || !nv.S || !nv.S.bzData || corriendo) return; corriendo = true;
+    try {
+      google.script.run.withSuccessHandler(function(d){
+        corriendo = false; var h = ""; try { h = JSON.stringify(d); } catch(e){}
+        if (!h) return; if (!ULT){ ULT = h; return; }
+        if (h !== ULT){ ULT = h; aplicar(); }
+      }).withFailureHandler(function(){ corriendo = false; }).baseLeer();
+    } catch(e){ corriendo = false; }
+  }
+  setTimeout(mirar, 3000); setTimeout(completa, 12000);
+  setInterval(function(){ mirar(); if (PEND && !editando()) aplicar(); }, 12000);
+  var oculto = 0;
+  document.addEventListener("visibilitychange", function(){ if (document.hidden){ oculto = Date.now(); return; } mirar(); if (oculto && Date.now() - oculto > 60000) completa(); });
+})();
