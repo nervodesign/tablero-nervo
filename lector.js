@@ -120,6 +120,8 @@
   function catDe(r){
     var cats = CATS || [];
     function cat(prefijo){ return cats.find(function(c){ return c.indexOf(prefijo + " ") === 0; }) || null; }
+    /* tejedoras: 2.x MO - TEJEDORA <NOMBRE> */
+    if (r.tipo !== "venta" && r.tipo !== "mayorista" && r.tipo !== "sena"){ var tj = norm((r.contraparte || "") + " " + String(r.texto || "").split(/\n/)[0]).match(/\b(LAURA|IRIS|RAQUEL)\b/); if (tj){ r.contraparte = tj[1]; var ct = cats.find(function(c){ return norm(c).indexOf("TEJEDORA " + tj[1]) >= 0; }) || cats.find(function(c){ return /TEJEDORA/.test(norm(c)); }); if (ct) return ct; } }
     /* etiquetas de Vía Cargo (u otro transporte): 4.2 LOGISTICA - ET. DE TRANSP. */
     if (r.tipo !== "venta" && r.tipo !== "mayorista" && r.tipo !== "sena" && /etiqueta/i.test(String(r.texto || "") + " " + (r.contraparte || ""))){ if (/v[ií]a\s*cargo/i.test(String(r.texto || "") + " " + (r.contraparte || ""))) r.contraparte = "ETIQUETAS VIA CARGO"; var c42 = cat("4.2"); if (c42) return c42; }
     /* proveedores de reventa: siempre 3.1 COMPRA PRODUCTOS - REVENTA */
