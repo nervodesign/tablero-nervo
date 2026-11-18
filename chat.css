@@ -141,3 +141,7 @@ html:not(#nv) .nvtoast{position:fixed;left:50%;bottom:24px;transform:translateX(
   html:not(#nv) .chw form.chf .chsend::after{content:"➤";font-size:16px}
   html:not(#nv) .chw .nvpop{grid-template-columns:repeat(8,1fr);left:8px;right:8px;bottom:58px}
 }
+
+/* respetar lista / conversación en el celu */
+html:not(#nv) .chw form.chf .chsend>*{display:none!important}
+@media (max-width:800px){html:not(#nv) .chw.vc .chc{display:none!important}html:not(#nv) .chw.vl .chmain{display:none!important}html:not(#nv) .chw .nvbell:not(.on){font-size:0!important}html:not(#nv) .chw .nvbell:not(.on)::before{content:"🔔";font-size:14px}}
