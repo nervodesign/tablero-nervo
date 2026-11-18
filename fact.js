@@ -1,0 +1,321 @@
+/* ================= Facturación: ventas del mes por cuenta, factura C con vista previa, remito y mail al cliente ================= */
+(function(){
+  if (window.__nvFact) return; window.__nvFact = 1;
+  var SB = window.__sb; if (!SB) return;
+  (function(){ var st = document.createElement("style"); st.id = "nvf-css"; st.textContent = "\n/* ===================== Facturación ===================== */\nhtml:not(#nv) body.nvf-on .wrap > :not(header):not(.nvfp){display:none!important}\nhtml:not(#nv) body.nvf-on header.top #secTitle{display:none!important}\nhtml:not(#nv) .nvfp{display:none}\nhtml:not(#nv) body.nvf-on .nvfp{display:block;margin:0 auto;padding:2px 0 100px;font-family:Outfit,system-ui,sans-serif;color:#3B2418;animation:nvRise .3s cubic-bezier(.2,.8,.2,1) both}\nhtml:not(#nv) .nvf-cab{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:16px}\nhtml:not(#nv) .nvf-cab>div:first-child{flex:1;min-width:220px}\nhtml:not(#nv) .nvf-cab h1{margin:0;font-weight:500;font-size:28px;letter-spacing:-.01em}\nhtml:not(#nv) .nvf-cab p{margin:2px 0 0;color:#9A8274;font-size:13px;font-weight:300}\nhtml:not(#nv) .nvf-mes{display:flex;align-items:center;gap:6px;background:#fff;border-radius:999px;padding:4px;box-shadow:0 1px 3px rgba(58,36,28,.07)}\nhtml:not(#nv) .nvf-mes button{border:0;background:#F5EFEA;width:30px;height:30px;border-radius:50%;cursor:pointer;color:#3B2418;font-size:16px}\nhtml:not(#nv) .nvf-mes span{min-width:120px;text-align:center;font-size:14px;text-transform:capitalize}\nhtml:not(#nv) .nvf-cfgbt,html:not(#nv) .nvf-link{border:0;background:#fff;border-radius:999px;padding:9px 16px;font-family:inherit;font-size:13px;color:#3B2418;cursor:pointer;box-shadow:0 1px 3px rgba(58,36,28,.08)}\nhtml:not(#nv) .nvf-link{background:#F5EFEA;box-shadow:none;margin-top:10px;padding:6px 12px}\nhtml:not(#nv) .nvf-topes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:16px}\nhtml:not(#nv) .nvf-tope{border-radius:22px;padding:16px 18px;box-shadow:0 1px 2px rgba(58,36,28,.04),0 8px 24px rgba(58,36,28,.06)}\nhtml:not(#nv) .nvf-tope.euge{background:linear-gradient(135deg,#FFF6F4,#F8E5E1)}\nhtml:not(#nv) .nvf-tope.pau{background:linear-gradient(135deg,#F3F8FB,#E2EEF5)}\nhtml:not(#nv) .nvf-toph{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}\nhtml:not(#nv) .nvf-toph b{font-size:18px;font-weight:500}\nhtml:not(#nv) .nvf-toph span{font-size:11.5px;color:#7A5E50;background:rgba(255,255,255,.7);border-radius:999px;padding:3px 10px}\nhtml:not(#nv) .nvf-ks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}\nhtml:not(#nv) .nvf-ks>div{background:rgba(255,255,255,.78);border-radius:14px;padding:9px 10px;min-width:0}\nhtml:not(#nv) .nvf-ks small{display:block;font-size:10.5px;color:#9A8274;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\nhtml:not(#nv) .nvf-ks b{display:block;font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\nhtml:not(#nv) .nvf-ks .pe b{color:#A2564C}\nhtml:not(#nv) .nvf-ks .ok b{color:#3E6B47}\nhtml:not(#nv) .nvf-ks .al b{color:#B5462F}\nhtml:not(#nv) .nvf-bar{height:8px;border-radius:8px;background:rgba(255,255,255,.8);margin-top:12px;overflow:hidden}\nhtml:not(#nv) .nvf-bar i{display:block;height:100%;border-radius:8px;background:#8DBB96;transition:width .4s}\nhtml:not(#nv) .nvf-bar.alto i{background:#D9897E}\nhtml:not(#nv) .nvf-aviso{margin:8px 0 0;font-size:12.5px;color:#A2564C}\nhtml:not(#nv) .nvf-fils{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}\nhtml:not(#nv) .nvf-seg{display:inline-flex;background:#F3EEEA;border-radius:14px;padding:3px;gap:2px}\nhtml:not(#nv) .nvf-seg button{border:0;background:transparent;border-radius:11px;padding:7px 12px;font-family:inherit;font-size:13px;color:#7A5E50;cursor:pointer;white-space:nowrap}\nhtml:not(#nv) .nvf-seg button.on{background:#fff;color:#3B2418;box-shadow:0 1px 3px rgba(58,36,28,.08)}\nhtml:not(#nv) .nvf-in{border:1px solid #EDE3DB;background:#FFFDFC;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px;color:#3B2418;min-width:0;box-sizing:border-box}\nhtml:not(#nv) .nvf-in:focus{outline:0;border-color:#D9C2B4;box-shadow:0 0 0 3px rgba(217,194,180,.25)}\nhtml:not(#nv) .nvf-in:disabled{background:#F7F3F0;color:#7A5E50}\nhtml:not(#nv) .nvf-bus{flex:1;min-width:180px}\nhtml:not(#nv) .nvf-tb{background:#fff;border-radius:20px;box-shadow:0 1px 2px rgba(58,36,28,.04),0 8px 24px rgba(58,36,28,.06);overflow:auto}\nhtml:not(#nv) .nvf-tr{display:grid;grid-template-columns:88px 110px minmax(160px,1.4fr) 92px 110px 120px minmax(150px,1fr) 150px;gap:10px;align-items:center;padding:10px 16px;border-top:1px solid #F4EEE9;min-width:980px;font-size:13.5px}\nhtml:not(#nv) .nvf-tr>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}\nhtml:not(#nv) .nvf-th{border-top:0;background:#FBF7F4;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#9A8274}\nhtml:not(#nv) .nvf-tr .m{font-weight:500;text-align:right}\nhtml:not(#nv) .nvf-tr .e{display:flex;gap:4px;flex-wrap:wrap;white-space:normal}\nhtml:not(#nv) .nvf-tr .a{text-align:right}\nhtml:not(#nv) .nvf-sel{padding:5px 8px;width:100%}\nhtml:not(#nv) .nvf-chip{font-style:normal;font-size:11.5px;border-radius:999px;padding:3px 9px;white-space:nowrap}\nhtml:not(#nv) .nvf-chip.pe{background:#F8E2DE;color:#A2564C}\nhtml:not(#nv) .nvf-chip.li{background:#FFF1DC;color:#8A5A1E}\nhtml:not(#nv) .nvf-chip.ok{background:#E3EFE3;color:#3E6B47}\nhtml:not(#nv) .nvf-chip.re{background:#E4EFF5;color:#4F7186}\nhtml:not(#nv) .nvf-bt{border:0;border-radius:999px;padding:10px 16px;font-family:inherit;font-size:13.5px;cursor:pointer;white-space:nowrap}\nhtml:not(#nv) .nvf-bt.pri{background:#3B2418;color:#fff}\nhtml:not(#nv) .nvf-bt.pri:hover{background:#5A3A2A}\nhtml:not(#nv) .nvf-bt.sec{background:#F5EFEA;color:#3B2418}\nhtml:not(#nv) .nvf-bt.ter{background:transparent;color:#7A5E50;text-decoration:underline}\nhtml:not(#nv) .nvf-bt.mini{padding:7px 12px;font-size:12.5px}\nhtml:not(#nv) .nvf-vacio{background:#fff;border-radius:20px;padding:36px;text-align:center;color:#7A5E50;box-shadow:0 1px 2px rgba(58,36,28,.04)}\n/* editor */\nhtml:not(#nv) .nvf-cap{position:fixed;inset:0;z-index:210;background:rgba(40,26,18,.3);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .22s;font-family:Outfit,system-ui,sans-serif;color:#3B2418}\nhtml:not(#nv) .nvf-cap.on{opacity:1}\nhtml:not(#nv) .nvf-ed{background:#FBFAF9;width:min(1160px,96vw);max-height:92vh;display:flex;flex-direction:column;border-radius:26px;box-shadow:0 24px 70px rgba(58,36,28,.22);overflow:hidden}\nhtml:not(#nv) .nvf-edh{display:flex;align-items:center;gap:10px;padding:16px 20px 10px}\nhtml:not(#nv) .nvf-edh h2{flex:1;margin:0;font-size:20px;font-weight:500}\nhtml:not(#nv) .nvf-x{border:0;background:#F3EEEA;width:34px;height:34px;border-radius:50%;cursor:pointer;color:#7A5E50}\nhtml:not(#nv) .nvf-edb{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:18px;padding:0 20px 10px;overflow:auto}\nhtml:not(#nv) .nvf-edl h3{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#A48C7E;font-weight:400;margin:14px 2px 8px}\nhtml:not(#nv) .nvf-cu{display:flex;align-items:center;gap:6px;background:#fff;border-radius:14px;padding:6px;box-shadow:0 1px 2px rgba(58,36,28,.05)}\nhtml:not(#nv) .nvf-cu span{font-size:13px;color:#7A5E50;padding:0 8px}\nhtml:not(#nv) .nvf-cu button{flex:1;border:0;background:#F5EFEA;border-radius:10px;padding:9px;font-family:inherit;font-size:14px;cursor:pointer;color:#7A5E50}\nhtml:not(#nv) .nvf-cu button.on{background:#3B2418;color:#fff}\nhtml:not(#nv) .nvf-g{display:grid;grid-template-columns:1fr 1fr;gap:8px}\nhtml:not(#nv) .nvf-fl{display:flex;flex-direction:column;gap:4px;min-width:0}\nhtml:not(#nv) .nvf-fl>span{font-size:11.5px;color:#9A8274}\nhtml:not(#nv) .nvf-ith,html:not(#nv) .nvf-it{display:grid;grid-template-columns:minmax(0,1fr) 62px 110px 30px;gap:6px;align-items:center}\nhtml:not(#nv) .nvf-ith{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#A48C7E;padding:0 2px 4px}\nhtml:not(#nv) .nvf-its{display:flex;flex-direction:column;gap:6px}\nhtml:not(#nv) .nvf-in.c{text-align:center}\nhtml:not(#nv) .nvf-in.p{text-align:right}\nhtml:not(#nv) .nvf-del{border:0;background:transparent;color:#B49C8E;cursor:pointer;font-size:14px}\nhtml:not(#nv) .nvf-del:hover{color:#A2564C}\nhtml:not(#nv) .nvf-add{border:1px dashed #E2D4CA;background:transparent;border-radius:10px;padding:8px;font-family:inherit;font-size:13px;color:#7A5E50;cursor:pointer}\nhtml:not(#nv) .nvf-env{display:flex;align-items:center;gap:8px;margin-top:10px;background:#fff;border-radius:12px;padding:8px 10px;font-size:13.5px}\nhtml:not(#nv) .nvf-env .nvf-in{margin-left:auto;width:130px}\nhtml:not(#nv) .nvf-tot{display:flex;align-items:center;justify-content:space-between;margin-top:12px;background:#3B2418;color:#fff;border-radius:14px;padding:12px 16px}\nhtml:not(#nv) .nvf-tot b{font-size:20px;font-weight:500}\nhtml:not(#nv) .nvf-nota{font-size:12.5px;color:#9A8274;margin:8px 2px 0;line-height:1.4}\nhtml:not(#nv) .nvf-nota.ok{color:#3E6B47}\nhtml:not(#nv) .nvf-edr{display:flex;flex-direction:column;gap:10px;min-width:0}\nhtml:not(#nv) .nvf-edr .nvf-seg{align-self:flex-start;margin-top:12px}\nhtml:not(#nv) .nvf-prev{background:#EFE8E2;border-radius:18px;padding:14px;overflow:auto}\nhtml:not(#nv) .nvf-acc{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;padding:12px 20px 16px;border-top:1px solid #F0E8E2;background:#FBFAF9}\nhtml:not(#nv) .nvf-cfgc{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:0 20px 20px;overflow:auto}\nhtml:not(#nv) .nvf-cfgb{background:#fff;border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:9px}\nhtml:not(#nv) .nvf-cfgb h3{margin:0 0 4px;font-weight:500;font-size:17px}\nhtml:not(#nv) .nvf-toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);background:#3B2418;color:#fff;border-radius:999px;padding:10px 18px;font-family:Outfit,system-ui,sans-serif;font-size:13.5px;z-index:300;opacity:0;transition:all .25s;max-width:90vw;text-align:center}\nhtml:not(#nv) .nvf-toast.on{opacity:1;transform:translate(-50%,0)}\n@media (max-width:760px){\n  html:not(#nv) body.nvf-on .nvfp{padding:2px 10px 110px}\n  html:not(#nv) .nvf-cab h1{font-size:24px}\n  html:not(#nv) .nvf-topes{grid-template-columns:1fr}\n  html:not(#nv) .nvf-ks{grid-template-columns:1fr 1fr}\n  html:not(#nv) .nvf-fils{flex-direction:column;align-items:stretch}\n  html:not(#nv) .nvf-seg{display:flex;overflow-x:auto}\n  html:not(#nv) .nvf-seg button{flex:1}\n  html:not(#nv) .nvf-tb{background:transparent;box-shadow:none;overflow:visible}\n  html:not(#nv) .nvf-th{display:none}\n  html:not(#nv) .nvf-tr{min-width:0;grid-template-columns:1fr auto;grid-template-areas:\"c m\" \"n e\" \"cu a\";background:#fff;border-radius:18px;margin-bottom:10px;border:0;box-shadow:0 1px 2px rgba(58,36,28,.04),0 6px 16px rgba(58,36,28,.05);padding:12px 14px}\n  html:not(#nv) .nvf-tr .c{grid-area:c;font-weight:500}\n  html:not(#nv) .nvf-tr .m{grid-area:m}\n  html:not(#nv) .nvf-tr .n{grid-area:n;color:#9A8274;font-size:12px}\n  html:not(#nv) .nvf-tr .e{grid-area:e;justify-content:flex-end}\n  html:not(#nv) .nvf-tr .cu{grid-area:cu}\n  html:not(#nv) .nvf-tr .a{grid-area:a}\n  html:not(#nv) .nvf-tr .f,html:not(#nv) .nvf-tr .t{display:none}\n  html:not(#nv) .nvf-cap{align-items:flex-end}\n  html:not(#nv) .nvf-ed{width:100vw;max-height:94vh;border-radius:24px 24px 0 0}\n  html:not(#nv) .nvf-edb{grid-template-columns:1fr;padding:0 14px 10px}\n  html:not(#nv) .nvf-g,html:not(#nv) .nvf-cfgc{grid-template-columns:1fr}\n  html:not(#nv) .nvf-acc{padding:10px 14px calc(14px + env(safe-area-inset-bottom))}\n  html:not(#nv) .nvf-acc .nvf-bt{flex:1}\n}\n"; document.head.appendChild(st); })();
+  var CUENTAS = [["euge", "Euge"], ["pau", "Pau"]];
+  var MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  var NERVO = { mail: "nervodesigncordoba@gmail.com", tel: "+54 9 3518 62-2392", dir: "Córdoba Capital, CP 5000", web: "www.nervodesign.com", lema: "Tu casa, tu refugio." };
+  var F = {}, CFG = {}, CARG = false, ESPERA = 0, MES = mesHoy(), FILTRO = "pend", TIPO = "todas", QUIEN = "todas", BUS = "";
+
+  function h(t, c, x){ var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
+  function plata(n){ n = Number(n) || 0; return "$ " + n.toLocaleString("es-AR", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }); }
+  function num(s){ if (typeof s === "number") return s; s = String(s || "").replace(/[^\d,.\-]/g, ""); if (/,\d{1,2}$/.test(s)) s = s.replace(/\./g, "").replace(",", "."); else s = s.replace(/[.,](?=\d{3}\b)/g, "").replace(",", "."); var n = parseFloat(s); return isNaN(n) ? 0 : n; }
+  function mesHoy(){ var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); }
+  function fechaTx(f){ if (!f) return ""; var p = String(f).slice(0, 10).split("-"); return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : f; }
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function soy(){ try { return window.__nv.S.soy; } catch(e){ return null; } }
+  function toast(t){ var e = h("div", "nvf-toast", t); document.body.append(e); setTimeout(function(){ e.classList.add("on"); }, 10); setTimeout(function(){ e.classList.remove("on"); setTimeout(function(){ e.remove(); }, 300); }, 2600); }
+
+  /* ---------- datos ---------- */
+  function cargar(){
+    return Promise.all([SB.from("facturas").select("*"), SB.from("fact_config").select("*")]).then(function(r){
+      F = {}; (r[0].data || []).forEach(function(x){ F[x.id] = x; });
+      CFG = {}; (r[1].data || []).forEach(function(x){ CFG[x.id] = x.datos || {}; });
+      CARG = true;
+    });
+  }
+  function guardarF(f){ f.cambiado = new Date().toISOString(); f.por = soy(); F[f.id] = f; return SB.from("facturas").upsert(f).then(function(r){ if (r.error) toast("No se pudo guardar: " + r.error.message); return r; }); }
+  function guardarCfg(id, d){ CFG[id] = d; return SB.from("fact_config").upsert({ id: id, datos: d, cambiado: new Date().toISOString(), por: soy() }); }
+
+  function datosCli(txt){
+    var o = {}, s = String(txt || "");
+    s.split(/\n/).forEach(function(l){ var m = l.match(/^\s*([A-Za-zÁÉÍÓÚáéíóúñ ]+)\s*:\s*(.+)$/); if (m) o[m[1].trim().toLowerCase()] = m[2].trim(); });
+    var mail = o.mail || o.email || (s.match(/[\w.+-]+@[\w-]+\.[\w.]+/) || [""])[0];
+    var dni = o.dni || o.cuit || o.cuil || (s.match(/\b\d{7,8}\b|\b\d{2}-?\d{8}-?\d\b/) || [""])[0];
+    return { nombre: o.nombre || "", doc: String(dni || "").replace(/\D/g, ""), email: String(mail || "").toLowerCase(), dir: o["dirección"] || o.direccion || o.domicilio || "", tel: o.celular || o.tel || o["teléfono"] || "" };
+  }
+  function itemsMin(v){
+    var ps = String(v.prods || "").split(/\n|·(?=\s*[A-ZÁÉÍÓÚ])/).map(function(x){ return x.trim(); }).filter(Boolean);
+    var cs = String(v.cant || "").split(/\n/).map(function(x){ return num(x.replace(/\[.?\]/g, "")) || 1; });
+    if (!ps.length) ps = ["Productos Nervo Design"];
+    var tot = num(v.facturar) || num(v.cobrado) || 0;
+    var u = ps.reduce(function(a, _, i){ return a + (cs[i] || 1); }, 0) || 1;
+    var unit = Math.floor((tot / u) * 100) / 100, acc = 0;
+    return ps.map(function(p, i){ var c = cs[i] || 1; var pr = i === ps.length - 1 ? Math.round(((tot - acc) / c) * 100) / 100 : unit; acc += pr * c; return { d: p, c: c, p: pr }; });
+  }
+  function itemsMay(v){
+    var ls = String(v.pedido || "").split(/\n/).map(function(x){ return x.trim(); }).filter(Boolean);
+    var tot = num(v.sena) + num(v.saldo);
+    var it = ls.map(function(l){ var m = l.match(/^\*?\s*(\d+)\s*[x×]?\s*(.+)$/i); return m ? { d: m[2].trim(), c: Number(m[1]), p: 0 } : { d: l.replace(/^\*\s*/, ""), c: 1, p: 0 }; });
+    if (!it.length) it = [{ d: "Pedido mayorista", c: 1, p: 0 }];
+    var u = it.reduce(function(a, x){ return a + x.c; }, 0) || 1, unit = Math.floor((tot / u) * 100) / 100, acc = 0;
+    it.forEach(function(x, i){ x.p = i === it.length - 1 ? Math.round(((tot - acc) / x.c) * 100) / 100 : unit; acc += x.p * x.c; });
+    return it;
+  }
+  function ventas(){
+    var B = window.__nv && window.__nv.S && window.__nv.S.bzData; if (!B) return null;
+    var S = window.__nv.S, out = [];
+    (B.min || []).forEach(function(v){
+      if (!v.fecha || String(v.fecha).slice(0, 7) !== MES) return;
+      if (/PENDIENTE DE REVISAR|CANCELAD/i.test(v.env || "")) return;
+      var c = datosCli(v.datos), cu = /PAU/i.test(v.cobro || "") ? "pau" : /EUGE/i.test(v.cobro || "") ? "euge" : "";
+      out.push({ id: "min:" + v.id, origen: "min", v: v, num: v.num || v.venta || "", fecha: v.fecha, cliente: v.cliente || c.nombre, cuenta: cu, monto: num(v.facturar) || num(v.cobrado), envio: num(v.costoEnv), cli: c, items: itemsMin });
+    });
+    (B.may || []).forEach(function(v){
+      if (!v.fecha || String(v.fecha).slice(0, 7) !== MES) return;
+      if (/CANCELAD/i.test(v.estado || "")) return;
+      var mc = (S.mayclientes || []).find(function(x){ return x.nombre && v.cliente && x.nombre.trim().toLowerCase() === String(v.cliente).trim().toLowerCase(); }) || {};
+      out.push({ id: "may:" + v.id, origen: "may", v: v, num: "MAY", fecha: v.fecha, cliente: v.cliente || "", cuenta: "", monto: num(v.sena) + num(v.saldo), envio: 0, cli: { nombre: v.cliente || "", doc: "", email: (mc.email || "").toLowerCase(), dir: mc.ciu || "", tel: mc.tel || "" }, items: itemsMay });
+    });
+    out.sort(function(a, b){ return String(b.fecha).localeCompare(String(a.fecha)); });
+    return out;
+  }
+  function filaF(x){
+    var f = F[x.id];
+    if (!f){
+      f = { id: x.id, origen: x.origen, venta_id: x.v.id, mes: MES, cuenta: x.cuenta || "", estado: "borrador",
+        datos: { fecha: x.fecha, num: x.num, cliente: { nombre: x.cliente || x.cli.nombre, doc: x.cli.doc, email: x.cli.email, dir: x.cli.dir, cond: "Consumidor Final" }, items: x.items(x.v), envio: x.envio > 0 ? x.envio : 0, conEnvio: x.envio > 0 } };
+    }
+    return f;
+  }
+  function totalDe(f){ var d = f.datos || {}; var t = (d.items || []).reduce(function(a, i){ return a + (Number(i.c) || 0) * (Number(i.p) || 0); }, 0); if (d.conEnvio) t += Number(d.envio) || 0; return Math.round(t * 100) / 100; }
+  function emitidasAnio(cu){ var y = new Date().getFullYear() + "-"; var t = 0; Object.keys(F).forEach(function(k){ var f = F[k]; if (f.cuenta === cu && f.estado === "emitida" && String(f.emitida_at || "").slice(0, 5) === y) t += Number(f.total) || 0; }); return t; }
+  function emitidasMes(cu){ var t = 0; Object.keys(F).forEach(function(k){ var f = F[k]; if (f.cuenta === cu && f.estado === "emitida" && f.mes === MES) t += Number(f.total) || 0; }); return t; }
+
+  /* ---------- documento (factura / remito) ---------- */
+  function docHTML(f, tipo, paraMail){
+    var d = f.datos || {}, c = d.cliente || {}, cfg = CFG[f.cuenta] || {}, esFac = tipo === "factura";
+    var nro = esFac ? (f.nro ? String(cfg.ptoVta || 1).padStart(5, "0") + "-" + String(f.nro).padStart(8, "0") : "Se asigna al emitir") : (f.remito_nro ? "R-" + String(f.remito_nro).padStart(6, "0") : "R-" + String(siguienteRemito()).padStart(6, "0"));
+    var logo = paraMail ? '<div style="font-family:Georgia,serif;font-size:30px;color:#3B2418;line-height:1">n.</div>' : '<img src="' + ((document.querySelector("img.logo") || {}).src || "") + '" style="width:54px;height:54px;object-fit:contain">';
+    var filas = (d.items || []).map(function(i){ return '<tr><td style="padding:8px 6px;border-bottom:1px solid #F0E8E2">' + esc(i.d) + '</td><td style="padding:8px 6px;border-bottom:1px solid #F0E8E2;text-align:center">' + esc(i.c) + '</td>' + (esFac || true ? '<td style="padding:8px 6px;border-bottom:1px solid #F0E8E2;text-align:right">' + plata(i.p) + '</td><td style="padding:8px 6px;border-bottom:1px solid #F0E8E2;text-align:right">' + plata((Number(i.c) || 0) * (Number(i.p) || 0)) + '</td>' : '') + '</tr>'; }).join("");
+    if (d.conEnvio && Number(d.envio)) filas += '<tr><td style="padding:8px 6px;border-bottom:1px solid #F0E8E2">Envío</td><td style="padding:8px 6px;border-bottom:1px solid #F0E8E2;text-align:center">1</td><td style="padding:8px 6px;border-bottom:1px solid #F0E8E2;text-align:right">' + plata(d.envio) + '</td><td style="padding:8px 6px;border-bottom:1px solid #F0E8E2;text-align:right">' + plata(d.envio) + '</td></tr>';
+    var emisor = esFac
+      ? '<b style="font-size:14px">' + esc(cfg.razon || "Razón social (completar en Configuración)") + '</b><br>CUIT ' + esc(cfg.cuit || "—") + ' · Responsable Monotributo<br>' + esc(cfg.dom || NERVO.dir) + (cfg.iibb ? '<br>IIBB ' + esc(cfg.iibb) : '') + (cfg.inicio ? '<br>Inicio de actividades ' + esc(fechaTx(cfg.inicio)) : '')
+      : '<b style="font-size:14px">Nervo Design</b><br>' + NERVO.mail + '<br>' + NERVO.tel + '<br>' + NERVO.dir;
+    var prueba = esFac && f.estado !== "emitida" ? '<div style="margin:0 0 14px;padding:8px 12px;border-radius:10px;background:#FFF4E5;color:#8A5A1E;font-size:12px;text-align:center">Vista previa · todavía no es una factura válida</div>' : "";
+    return '<div style="font-family:Outfit,Helvetica,Arial,sans-serif;color:#3B2418;max-width:640px;margin:0 auto;background:#fff;border-radius:18px;padding:26px 26px 20px;border:1px solid #EFE6DF">' + prueba +
+      '<table style="width:100%;border-collapse:collapse"><tr><td style="vertical-align:top">' + logo + '<div style="font-size:11px;color:#9A8274;margin-top:6px;letter-spacing:.08em">ILUMINACIÓN &amp; DECO</div></td>' +
+      '<td style="vertical-align:top;text-align:right"><div style="font-size:22px;letter-spacing:.06em">' + (esFac ? "FACTURA" : "REMITO") + '</div>' + (esFac ? '<div style="display:inline-block;margin:6px 0;border:1.5px solid #3B2418;border-radius:8px;width:34px;height:34px;line-height:34px;text-align:center;font-size:20px">C</div>' : '') +
+      '<div style="font-size:12px;color:#7A5E50">N° ' + esc(nro) + '<br>Fecha ' + esc(fechaTx(esFac && f.emitida_at ? f.emitida_at : d.fecha)) + '</div></td></tr></table>' +
+      '<table style="width:100%;border-collapse:collapse;margin-top:16px;font-size:12.5px;line-height:1.5"><tr><td style="vertical-align:top;width:50%;padding:12px;background:#FBF7F4;border-radius:12px 0 0 12px">' + emisor + '</td>' +
+      '<td style="vertical-align:top;padding:12px;background:#FBF7F4;border-radius:0 12px 12px 0"><span style="color:#9A8274;font-size:11px;letter-spacing:.08em">CLIENTE</span><br><b style="font-size:14px">' + esc(c.nombre || "—") + '</b><br>' + (c.doc ? (String(c.doc).length > 8 ? "CUIT " : "DNI ") + esc(c.doc) + '<br>' : '') + esc(c.cond || "Consumidor Final") + (c.dir ? '<br>' + esc(c.dir) : '') + '</td></tr></table>' +
+      '<table style="width:100%;border-collapse:collapse;margin-top:16px;font-size:13px"><tr style="color:#9A8274;font-size:11px;letter-spacing:.06em;text-align:left"><th style="padding:6px;font-weight:400">DETALLE</th><th style="padding:6px;font-weight:400;text-align:center">CANT.</th><th style="padding:6px;font-weight:400;text-align:right">PRECIO</th><th style="padding:6px;font-weight:400;text-align:right">SUBTOTAL</th></tr>' + filas + '</table>' +
+      '<div style="text-align:right;margin-top:14px;font-size:18px">Total <b>' + plata(totalDe(f)) + '</b></div>' +
+      (esFac ? '<div style="margin-top:14px;font-size:11.5px;color:#7A5E50">' + (f.cae ? 'CAE ' + esc(f.cae) + ' · Vto. ' + esc(fechaTx(f.cae_vto)) : 'El CAE de ARCA aparece cuando se emite la factura.') + '</div>' : '<div style="margin-top:14px;font-size:11.5px;color:#9A8274">Documento no válido como factura.</div>') +
+      '<div style="margin-top:18px;padding-top:12px;border-top:1px solid #F0E8E2;font-size:11.5px;color:#9A8274;text-align:center">Nervo Design · ' + NERVO.web + ' · ' + NERVO.lema + '</div></div>';
+  }
+  function siguienteRemito(){ var m = 0; Object.keys(F).forEach(function(k){ m = Math.max(m, Number(F[k].remito_nro) || 0); }); return m + 1; }
+  function mailHTML(f, tipo){
+    var c = (f.datos || {}).cliente || {}, nom = String(c.nombre || "").split(" ")[0] || "";
+    var intro = tipo === "factura" ? "Te enviamos la factura de tu compra." : "Te enviamos el remito de tu compra.";
+    return '<div style="background:#F7F2EE;padding:24px 12px;font-family:Helvetica,Arial,sans-serif;color:#3B2418"><div style="max-width:640px;margin:0 auto 16px;font-size:15px;line-height:1.6">Hola ' + esc(nom) + '! Gracias por elegirnos 🤎<br>' + intro + '<br>Cualquier cosa que necesites, respondé este mail o escribinos al ' + NERVO.tel + '.</div>' + docHTML(f, tipo, true) + '</div>';
+  }
+  function mandar(f, tipo){
+    var c = (f.datos || {}).cliente || {};
+    if (!/@/.test(c.email || "")) { toast("Falta el mail del cliente"); return Promise.reject(); }
+    var asunto = tipo === "factura" ? "Tu factura · Nervo Design" : "Tu compra en Nervo Design · Remito";
+    var texto = "Hola " + (String(c.nombre || "").split(" ")[0] || "") + "! Gracias por elegirnos. " + (tipo === "factura" ? "Te enviamos la factura de tu compra." : "Te enviamos el remito de tu compra.");
+    return new Promise(function(ok, ko){
+      google.script.run.withSuccessHandler(function(r){ if (r && (r.ok || []).length){ ok(r); } else ko(r); }).withFailureHandler(ko)
+        .mandarMails(JSON.stringify({ asunto: asunto, fotos: [], para: [{ id: f.id, email: c.email, html: mailHTML(f, tipo), texto: texto }] }));
+    });
+  }
+  function imprimir(f, tipo){
+    var w = window.open("", "_blank"); if (!w) { toast("Permití ventanas emergentes para descargar el PDF"); return; }
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + (tipo === "factura" ? "Factura" : "Remito") + ' Nervo Design</title><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&display=swap" rel="stylesheet"><style>body{margin:0;padding:24px;background:#fff}@media print{body{padding:0}}</style></head><body>' + docHTML(f, tipo, false) + '<script>setTimeout(function(){print()},600)<\/script></body></html>');
+    w.document.close();
+  }
+
+  /* ---------- editor de una venta ---------- */
+  function editor(x){
+    var f = JSON.parse(JSON.stringify(filaF(x))), d = f.datos;
+    var cap = h("div", "nvf-cap"), p = h("div", "nvf-ed"); cap.append(p);
+    function cerrar(){ cap.classList.remove("on"); setTimeout(function(){ cap.remove(); }, 220); }
+    cap.onclick = function(e){ if (e.target === cap) cerrar(); };
+    var emitida = f.estado === "emitida";
+    function campo(lab, val, set, tipo){ var w = h("label", "nvf-fl"); w.append(h("span", null, lab)); var i = h("input", "nvf-in"); i.type = tipo || "text"; i.value = val == null ? "" : val; i.disabled = emitida; i.oninput = function(){ set(i.value); pintarPrev(); }; w.append(i); return w; }
+    var prev = h("div", "nvf-prev"), tg = h("div", "nvf-seg");
+    var vista = "factura";
+    [["factura", "Factura"], ["remito", "Remito"]].forEach(function(o){ var b = h("button", o[0] === vista ? "on" : "", o[1]); b.type = "button"; b.onclick = function(){ vista = o[0]; tg.querySelectorAll("button").forEach(function(z){ z.classList.toggle("on", z === b); }); pintarPrev(); }; tg.append(b); });
+    function pintarPrev(){ prev.innerHTML = docHTML(f, vista, false); tot.textContent = plata(totalDe(f)); }
+    var cab = h("div", "nvf-edh"); cab.append(h("h2", null, (x.num || "Venta") + " · " + (x.cliente || "")), h("button", "nvf-x", "✕")); cab.lastChild.onclick = cerrar;
+    var izq = h("div", "nvf-edl"), der = h("div", "nvf-edr");
+    /* cuenta */
+    var cu = h("div", "nvf-cu"); cu.append(h("span", null, "Factura"));
+    CUENTAS.forEach(function(o){ var b = h("button", f.cuenta === o[0] ? "on" : "", o[1]); b.type = "button"; b.disabled = emitida; b.onclick = function(){ f.cuenta = o[0]; cu.querySelectorAll("button").forEach(function(z){ z.classList.toggle("on", z === b); }); pintarPrev(); }; cu.append(b); });
+    izq.append(cu);
+    izq.append(h("h3", null, "Cliente"));
+    var g = h("div", "nvf-g");
+    g.append(campo("Nombre y apellido", d.cliente.nombre, function(v){ d.cliente.nombre = v; }), campo("DNI / CUIT", d.cliente.doc, function(v){ d.cliente.doc = v.replace(/\D/g, ""); }), campo("Mail", d.cliente.email, function(v){ d.cliente.email = v.trim(); }, "email"), campo("Domicilio", d.cliente.dir, function(v){ d.cliente.dir = v; }));
+    izq.append(g);
+    izq.append(h("h3", null, "Productos"));
+    var lis = h("div", "nvf-its");
+    function pintarItems(){
+      lis.innerHTML = "";
+      d.items.forEach(function(it, i){
+        var r = h("div", "nvf-it");
+        var a = h("input", "nvf-in"); a.value = it.d; a.placeholder = "Producto"; a.disabled = emitida; a.oninput = function(){ it.d = a.value; pintarPrev(); };
+        var b = h("input", "nvf-in c"); b.type = "number"; b.min = "1"; b.value = it.c; b.disabled = emitida; b.oninput = function(){ it.c = Number(b.value) || 0; pintarPrev(); };
+        var c = h("input", "nvf-in p"); c.inputMode = "decimal"; c.value = it.p; c.disabled = emitida; c.oninput = function(){ it.p = num(c.value); pintarPrev(); };
+        var z = h("button", "nvf-del", "✕"); z.type = "button"; z.disabled = emitida; z.title = "Quitar"; z.onclick = function(){ d.items.splice(i, 1); pintarItems(); pintarPrev(); };
+        r.append(a, b, c, z); lis.append(r);
+      });
+      if (!emitida){ var ad = h("button", "nvf-add", "+ Agregar producto"); ad.type = "button"; ad.onclick = function(){ d.items.push({ d: "", c: 1, p: 0 }); pintarItems(); }; lis.append(ad); }
+    }
+    pintarItems(); izq.append(h("div", "nvf-ith", null)); izq.lastChild.innerHTML = "<span>Producto</span><span>Cant.</span><span>Precio</span><span></span>"; izq.append(lis);
+    var env = h("label", "nvf-env"); var ck = h("input"); ck.type = "checkbox"; ck.checked = !!d.conEnvio; ck.disabled = emitida; var ei = h("input", "nvf-in p"); ei.inputMode = "decimal"; ei.value = d.envio || ""; ei.placeholder = "Monto"; ei.disabled = emitida;
+    ck.onchange = function(){ d.conEnvio = ck.checked; pintarPrev(); }; ei.oninput = function(){ d.envio = num(ei.value); if (d.envio) { d.conEnvio = true; ck.checked = true; } pintarPrev(); };
+    env.append(ck, h("span", null, "Pagó envío"), ei); izq.append(env);
+    var tt = h("div", "nvf-tot"); tt.append(h("span", null, "Total a facturar")); var tot = h("b"); tt.append(tot); izq.append(tt);
+    if (x.monto && Math.abs(x.monto - totalDe(f)) > 1 && !emitida) izq.append(h("p", "nvf-nota", "En la venta figura " + plata(x.monto) + " como monto a facturar."));
+    /* acciones */
+    var acc = h("div", "nvf-acc");
+    function boton(t, cls, fn){ var b = h("button", "nvf-bt " + (cls || ""), t); b.type = "button"; b.onclick = fn; acc.append(b); return b; }
+    if (!emitida) boton("Guardar cambios", "sec", function(){ f.total = totalDe(f); guardarF(f).then(function(){ toast("Guardado ✓"); pintar(); }); });
+    var cfg = CFG[f.cuenta] || {};
+    if (!emitida){
+      var be = boton("Facturar", "pri", function(){
+        if (!f.cuenta){ toast("Elegí si factura Euge o Pau"); return; }
+        var c2 = CFG[f.cuenta] || {};
+        if (!c2.conectado){ toast("Falta conectar ARCA para " + (f.cuenta === "pau" ? "Pau" : "Euge") + " (certificado). Mientras, quedó guardada para facturar."); f.total = totalDe(f); f.estado = "lista"; guardarF(f).then(pintar); return; }
+        toast("Emitiendo…");
+      });
+    }
+    boton("Enviar remito", "sec", function(){
+      if (!f.remito_nro) f.remito_nro = siguienteRemito();
+      f.total = totalDe(f);
+      guardarF(f).then(function(){ return mandar(f, "remito"); }).then(function(){ f.remito_at = new Date().toISOString(); return guardarF(f); }).then(function(){ toast("Remito enviado a " + d.cliente.email + " ✓"); pintar(); }, function(e){ if (e) toast("No se pudo mandar el mail"); });
+    });
+    if (emitida) boton("Enviar factura", "pri", function(){ mandar(f, "factura").then(function(){ f.factura_mail_at = new Date().toISOString(); return guardarF(f); }).then(function(){ toast("Factura enviada ✓"); pintar(); }, function(e){ if (e) toast("No se pudo mandar el mail"); }); });
+    boton("Descargar PDF", "ter", function(){ imprimir(f, vista); });
+    der.append(tg, prev);
+    p.append(cab); var cuerpo = h("div", "nvf-edb"); cuerpo.append(izq, der); p.append(cuerpo, acc);
+    document.body.append(cap); requestAnimationFrame(function(){ cap.classList.add("on"); });
+    pintarPrev();
+  }
+
+  /* ---------- configuración de cada cuenta ---------- */
+  function config(){
+    var cap = h("div", "nvf-cap"), p = h("div", "nvf-ed nvf-cfg"); cap.append(p);
+    function cerrar(){ cap.classList.remove("on"); setTimeout(function(){ cap.remove(); }, 220); pintar(); }
+    cap.onclick = function(e){ if (e.target === cap) cerrar(); };
+    var cab = h("div", "nvf-edh"); cab.append(h("h2", null, "Datos para facturar"), h("button", "nvf-x", "✕")); cab.lastChild.onclick = cerrar; p.append(cab);
+    var cols = h("div", "nvf-cfgc");
+    CUENTAS.forEach(function(o){
+      var d = Object.assign({}, CFG[o[0]] || {}), box = h("section", "nvf-cfgb");
+      box.append(h("h3", null, o[1]));
+      function c(lab, k, ph, tipo){ var w = h("label", "nvf-fl"); w.append(h("span", null, lab)); var i = h("input", "nvf-in"); i.type = tipo || "text"; i.placeholder = ph || ""; i.value = d[k] == null ? "" : d[k]; i.onchange = function(){ d[k] = tipo === "money" ? num(i.value) : i.value.trim(); if (tipo === "money") i.value = d[k] ? plata(d[k]) : ""; guardarCfg(o[0], d).then(function(){ toast("Guardado ✓"); }); }; if (tipo === "money"){ i.type = "text"; i.inputMode = "decimal"; i.value = d[k] ? plata(d[k]) : ""; } w.append(i); box.append(w); }
+      c("Tope de facturación", "tope", "Ej: $ 30.000.000", "money");
+      c("Ya facturado este año fuera de la app", "previo", "Lo que facturaste antes por ARCA", "money");
+      c("Razón social / Nombre", "razon", "Como figura en ARCA");
+      c("CUIT", "cuit", "20-12345678-9");
+      c("Domicilio comercial", "dom", "Calle, número, ciudad");
+      c("Ingresos Brutos", "iibb", "N° o 'Exento'");
+      c("Inicio de actividades", "inicio", "", "date");
+      c("Punto de venta (web service)", "ptoVta", "Ej: 3");
+      var est = h("p", "nvf-nota " + (d.conectado ? "ok" : ""), d.conectado ? "ARCA conectado ✓" : "ARCA todavía no está conectado: falta el certificado. Mientras tanto se puede revisar, ver la vista previa y mandar remitos.");
+      box.append(est); cols.append(box);
+    });
+    p.append(cols);
+    document.body.append(cap); requestAnimationFrame(function(){ cap.classList.add("on"); });
+  }
+
+  /* ---------- pantalla ---------- */
+  function panel(){ var w = document.querySelector(".wrap"); if (!w) return null; var p = w.querySelector(".nvfp"); if (!p){ p = h("section", "nvfp"); w.appendChild(p); } return p; }
+  function pintar(){
+    var p = panel(); if (!p || !document.body.classList.contains("nvf-on")) return;
+    var sy = window.scrollY; p.innerHTML = "";
+    var mm = MES.split("-"), nomMes = MESES[Number(mm[1]) - 1] + " " + mm[0];
+    var cab = h("div", "nvf-cab"), tt = h("div"); tt.append(h("h1", null, "Facturación"), h("p", null, "Ventas de " + nomMes + " · minoristas y mayoristas · nada se factura solo"));
+    var nav = h("div", "nvf-mes"); var a = h("button", null, "‹"), b = h("button", null, "›"); a.type = b.type = "button";
+    function mover(n){ var d = new Date(Number(mm[0]), Number(mm[1]) - 1 + n, 1); MES = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); pintar(); }
+    a.onclick = function(){ mover(-1); }; b.onclick = function(){ mover(1); }; nav.append(a, h("span", null, nomMes), b);
+    var cf = h("button", "nvf-cfgbt", "Datos y topes"); cf.type = "button"; cf.onclick = config;
+    cab.append(tt, nav, cf); p.append(cab);
+    var V = ventas();
+    if (!CARG || !V){
+      p.append(h("div", "nvf-vacio", "Cargando ventas…"));
+      if (!CARG) cargar().then(pintar);
+      else if (!V){
+        ESPERA++;
+        if (ESPERA === 3){ /* las ventas se leen al abrir Nervo 2026: lo abrimos un instante y volvemos */
+          var tb0 = document.getElementById("tab-base"); if (tb0){ document.body.classList.remove("nvf-on"); tb0.click(); var n0 = 0, t0 = setInterval(function(){ if ((window.__nv.S.bzData) || ++n0 > 60){ clearInterval(t0); abrir(); } }, 300); return; }
+        }
+        setTimeout(pintar, 1000);
+      }
+      return;
+    }
+    ESPERA = 0;
+    /* topes por cuenta */
+    var tps = h("div", "nvf-topes");
+    CUENTAS.forEach(function(o){
+      var cu = o[0], cfg = CFG[cu] || {}, tope = Number(cfg.tope) || 0, anio = emitidasAnio(cu) + (Number(cfg.previo) || 0), mes = emitidasMes(cu);
+      var pend = V.filter(function(x){ var f = F[x.id]; var c = (f && f.cuenta) || x.cuenta; return c === cu && !(f && f.estado === "emitida"); }).reduce(function(s, x){ var f = F[x.id]; return s + (f ? totalDe(f) : x.monto); }, 0);
+      var c = h("div", "nvf-tope " + cu);
+      var hd = h("div", "nvf-toph"); hd.append(h("b", null, o[1]), h("span", null, cfg.conectado ? "ARCA conectado" : "ARCA sin conectar"));
+      var pct = tope ? Math.min(100, Math.round(anio / tope * 100)) : 0;
+      var bar = h("div", "nvf-bar"); var fill = h("i"); fill.style.width = pct + "%"; if (pct >= 90) bar.classList.add("alto"); bar.append(fill);
+      var ks = h("div", "nvf-ks");
+      function k(l, v, cls){ var e = h("div", cls || ""); e.append(h("small", null, l), h("b", null, v)); ks.append(e); }
+      k("Facturado en " + MESES[Number(mm[1]) - 1], plata(mes)); k("Para facturar", plata(pend), "pe"); k("En el año", plata(anio));
+      k(tope ? "Te queda hasta el tope" : "Tope", tope ? plata(Math.max(0, tope - anio)) : "Sin definir", tope && tope - anio < tope * .1 ? "al" : "ok");
+      c.append(hd, ks, bar);
+      if (!tope){ var bt = h("button", "nvf-link", "Poner tope"); bt.type = "button"; bt.onclick = config; c.append(bt); }
+      else if (pct >= 90) c.append(h("p", "nvf-aviso", "Atención: estás cerca del tope de facturación."));
+      tps.append(c);
+    });
+    p.append(tps);
+    /* filtros */
+    var fl = h("div", "nvf-fils");
+    function seg(ops, val, set){ var s = h("div", "nvf-seg"); ops.forEach(function(o){ var b2 = h("button", o[0] === val ? "on" : "", o[1]); b2.type = "button"; b2.onclick = function(){ set(o[0]); pintar(); }; s.append(b2); }); return s; }
+    fl.append(seg([["pend", "Para facturar"], ["fact", "Facturadas"], ["todas", "Todas"]], FILTRO, function(v){ FILTRO = v; }),
+      seg([["todas", "Todas"], ["min", "Minoristas"], ["may", "Mayoristas"]], TIPO, function(v){ TIPO = v; }),
+      seg([["todas", "Las dos"], ["euge", "Euge"], ["pau", "Pau"]], QUIEN, function(v){ QUIEN = v; }));
+    var bs = h("input", "nvf-in nvf-bus"); bs.placeholder = "Buscar cliente o venta"; bs.value = BUS; bs.oninput = function(){ BUS = bs.value; var pos = bs.selectionStart; pintar(); var nb = document.querySelector(".nvf-bus"); if (nb){ nb.focus(); nb.setSelectionRange(pos, pos); } };
+    fl.append(bs); p.append(fl);
+    /* lista */
+    var lista = V.filter(function(x){
+      var f = F[x.id], est = f ? f.estado : "borrador", cu = (f && f.cuenta) || x.cuenta;
+      if (FILTRO === "pend" && est === "emitida") return false;
+      if (FILTRO === "fact" && est !== "emitida") return false;
+      if (TIPO !== "todas" && x.origen !== TIPO) return false;
+      if (QUIEN !== "todas" && cu !== QUIEN) return false;
+      if (BUS && (x.cliente + " " + x.num).toLowerCase().indexOf(BUS.toLowerCase()) < 0) return false;
+      return true;
+    });
+    if (!lista.length){ p.append(h("div", "nvf-vacio", FILTRO === "pend" ? "No hay ventas para facturar en " + nomMes + " 🎉" : "No hay ventas con este filtro.")); window.scrollTo(0, sy); return; }
+    var tb = h("div", "nvf-tb"); var th = h("div", "nvf-tr nvf-th"); ["Fecha", "Venta", "Cliente", "Tipo", "Factura", "Monto", "Estado", ""].forEach(function(t){ th.append(h("span", null, t)); }); tb.append(th);
+    lista.forEach(function(x){
+      var f = F[x.id], est = f ? f.estado : "borrador", cu = (f && f.cuenta) || x.cuenta;
+      var r = h("div", "nvf-tr");
+      r.append(h("span", "f", fechaTx(x.fecha)), h("span", "n", x.origen === "may" ? "Mayorista" : (x.num || "")), h("span", "c", x.cliente || "—"), h("span", "t", x.origen === "may" ? "Mayorista" : "Minorista"));
+      var sc = h("select", "nvf-in nvf-sel"); [["", "Elegir"], ["euge", "Euge"], ["pau", "Pau"]].forEach(function(o){ var op = h("option", null, o[1]); op.value = o[0]; sc.append(op); }); sc.value = cu || ""; sc.disabled = est === "emitida";
+      sc.onchange = function(){ var ff = filaF(x); ff.cuenta = sc.value; ff.total = totalDe(ff); guardarF(ff).then(pintar); };
+      var scw = h("span", "cu"); scw.append(sc); r.append(scw);
+      r.append(h("span", "m", plata(f ? totalDe(f) : x.monto)));
+      var chip = est === "emitida" ? ["Facturada", "ok"] : est === "lista" ? ["Lista para emitir", "li"] : ["Para facturar", "pe"];
+      var ec = h("span", "e"); ec.append(h("em", "nvf-chip " + chip[1], chip[0])); if (f && f.remito_at) ec.append(h("em", "nvf-chip re", "Remito enviado")); r.append(ec);
+      var ab = h("button", "nvf-bt pri mini", est === "emitida" ? "Ver" : "Revisar y facturar"); ab.type = "button"; ab.onclick = function(){ editor(x); };
+      var aw = h("span", "a"); aw.append(ab); r.append(aw);
+      tb.append(r);
+    });
+    p.append(tb);
+    window.scrollTo(0, sy);
+  }
+  function abrir(){ document.body.classList.add("nvf-on"); if (document.body.classList.contains("nvmov-on")) { var mb = document.querySelector(".nvmov-tab"); document.body.classList.remove("nvmov-on"); if (mb) mb.setAttribute("aria-selected", "false"); } cargar().then(pintar); pintar(); window.scrollTo(0, 0); marcar(); }
+  function cerrarPanel(){ document.body.classList.remove("nvf-on"); var b = document.getElementById("tab-fact"); if (b) b.setAttribute("aria-selected", "false"); }
+  function marcar(){ var nav = document.querySelector("nav.tabs"); if (!nav) return; var b = document.getElementById("tab-fact"); nav.querySelectorAll(".tab").forEach(function(x){ x.setAttribute("aria-selected", x === b ? "true" : "false"); }); }
+  document.addEventListener("click", function(e){ var t = e.target.closest && e.target.closest("nav.tabs .tab, .bnav button, .mnav button"); if (t && t.id !== "tab-fact" && document.body.classList.contains("nvf-on")) cerrarPanel(); }, true);
+  function tabBtn(){
+    var nav = document.querySelector("nav.tabs"); if (!nav || document.getElementById("tab-fact")) return;
+    var b = h("button", "tab desk nvf-tab"); b.type = "button"; b.id = "tab-fact";
+    b.innerHTML = '<span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"></path><path d="M14 3v5h5"></path><path d="M9 12h6M9 15.5h6M9 19h4"></path></svg></span><span class="lb">Facturación</span>';
+    b.onclick = function(e){ e.stopPropagation(); abrir(); };
+    var ref = document.getElementById("tab-mov"); if (ref && ref.nextSibling) nav.insertBefore(b, ref.nextSibling); else nav.appendChild(b);
+  }
+  setInterval(function(){ try { tabBtn(); if (document.body.classList.contains("nvf-on")) marcar(); } catch(e){} }, 1200);
+  /* cuando cambia la Base (otra persona) o las facturas, repintar si no estás escribiendo */
+  setInterval(function(){ if (!document.body.classList.contains("nvf-on") || document.hidden || document.querySelector(".nvf-cap")) return; var a = document.activeElement; if (a && /INPUT|SELECT|TEXTAREA/.test(a.tagName)) return; cargar().then(pintar); }, 20000);
+  window.__nvFactAbrir = abrir;
+})();

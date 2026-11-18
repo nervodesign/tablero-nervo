@@ -1015,3 +1015,6 @@
   document.addEventListener("pointermove", function(e){ if (e.buttons && document.body.classList.contains("nvmov-on")) alinear(); }, true);
   window.addEventListener("resize", alinear);
 })();
+
+/* ---------- Facturación (archivo aparte) ---------- */
+(function(){ if (window.__nvFactCarga) return; window.__nvFactCarga = 1; var cs = document.currentScript, v = cs && /[?&]v=(\d+)/.exec(cs.src); var sc = document.createElement("script"); sc.src = "fact.js" + (v ? "?v=" + v[1] : "?t=" + Date.now()); document.head.appendChild(sc); })();
