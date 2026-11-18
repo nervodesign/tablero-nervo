@@ -660,3 +660,226 @@
   }
   setInterval(function(){ try { ocultar(); } catch(e){} }, 1200);
 })();
+
+/* ---------- Configuración: qué avisos recibir, horarios, por persona (se guarda en la cuenta de cada una) ---------- */
+(function(){
+  if (window.__nvCfg) return; window.__nvCfg = 1;
+  var DEF = { mov: true, ventas: true, chat: true, canales: {}, tareas: true, tareasHora: "09:00", vencidas: true, pagos: true, pagosDias: 2, silencio: false, silDesde: "22:00", silHasta: "08:00" };
+  var AJ = Object.assign({}, DEF), CARGADO = false;
+  function sb(){ return window.__sb; }
+  function h(t, c, x){ var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
+  function aplicar(){ document.body.classList.toggle("nvcfg-sinmov", !AJ.mov && !AJ.ventas); window.__nvAjustes = AJ; }
+  function cargar(){
+    if (!sb()) return Promise.resolve();
+    return sb().auth.getUser().then(function(r){
+      var u = r && r.data && r.data.user, a = u && u.user_metadata && u.user_metadata.ajustes;
+      AJ = Object.assign({}, DEF, a || {}); AJ.canales = Object.assign({}, (a && a.canales) || {}); CARGADO = true; aplicar();
+    }).catch(function(){});
+  }
+  var tG = null;
+  function guardar(){
+    aplicar(); clearTimeout(tG);
+    tG = setTimeout(function(){ if (sb()) sb().auth.updateUser({ data: { ajustes: AJ } }).then(function(r){ marcar(r && r.error ? "No se pudo guardar" : "Guardado ✓"); }); }, 500);
+  }
+  var est = null; function marcar(t){ if (est){ est.textContent = t; est.classList.add("on"); setTimeout(function(){ est.classList.remove("on"); }, 1600); } }
+  function sw(on, f){ var l = h("label", "nvcfg-sw"); var i = h("input"); i.type = "checkbox"; i.checked = !!on; i.onchange = function(){ f(i.checked); }; l.append(i, h("i")); return l; }
+  function fila(tit, sub, ctrl){ var r = h("div", "nvcfg-f"); var t = h("div"); t.append(h("b", null, tit)); if (sub) t.append(h("small", null, sub)); r.append(t, ctrl); return r; }
+  function hora(v, f){ var i = h("input", "nvcfg-in"); i.type = "time"; i.value = v || ""; i.onchange = function(){ f(i.value); }; return i; }
+  function canales(){ try { var c = window.__nv && window.__nv.getCH && window.__nv.getCH(); return Array.isArray(c) ? c : []; } catch(e){ return []; } }
+  var caja = null;
+  function abrir(){
+    if (caja) return; caja = h("div", "nvcfg"); var p = h("div", "nvcfg-p"); caja.append(p);
+    caja.onclick = function(e){ if (e.target === caja) cerrar(); };
+    var cab = h("div", "nvcfg-cab"); cab.append(h("h2", null, "Configuración")); est = h("span", "nvcfg-est"); var x = h("button", "nvcfg-x", "✕"); x.type = "button"; x.onclick = cerrar; cab.append(est, x); p.append(cab);
+    function pintar(){
+      while (p.children.length > 1) p.removeChild(p.lastChild);
+      /* al celu */
+      var s0 = h("section", "nvcfg-s"); s0.append(h("h3", null, "Avisos al celu"));
+      var perm = ("Notification" in window) ? Notification.permission : "no";
+      var txt = perm === "granted" ? "Este dispositivo tiene permiso para avisos ✓" : perm === "denied" ? "Este dispositivo bloqueó los avisos (se cambia en los ajustes del navegador)" : "Todavía no le diste permiso a este dispositivo";
+      var bt = h("button", "nvcfg-bt", perm === "granted" ? "Probar un aviso" : "Activar avisos en este dispositivo"); bt.type = "button";
+      bt.onclick = function(){
+        if (!("Notification" in window)){ marcar("Este navegador no permite avisos"); return; }
+        if (Notification.permission === "granted"){ try { new Notification("Nervo Design", { body: "Así te van a llegar los avisos 🌿" }); } catch(e){ marcar("Probalo desde la app instalada en el celu"); } return; }
+        Notification.requestPermission().then(function(){ pintar(); });
+      };
+      s0.append(fila("Este dispositivo", txt, bt));
+      s0.append(h("p", "nvcfg-nota", "Para que lleguen con la app cerrada en el iPhone: abrí la app en Safari → Compartir → “Agregar a inicio”, entrá desde ese ícono y tocá “Activar avisos”."));
+      p.append(s0);
+      /* qué avisos */
+      var s1 = h("section", "nvcfg-s"); s1.append(h("h3", null, "Qué quiero recibir"));
+      s1.append(fila("Movimientos para revisar", "Cuando alguien carga un pago o cobro en #movimientos", sw(AJ.mov, function(v){ AJ.mov = v; guardar(); })));
+      s1.append(fila("Ventas nuevas", "Cuando entra una venta de Tienda Nube o por WhatsApp / IG", sw(AJ.ventas, function(v){ AJ.ventas = v; guardar(); })));
+      s1.append(fila("Mensajes del chat", "Mensajes nuevos de los canales que elijas abajo", sw(AJ.chat, function(v){ AJ.chat = v; guardar(); pintar(); })));
+      if (AJ.chat){
+        var lc = h("div", "nvcfg-can");
+        canales().forEach(function(c){ var id = c[0], nom = c[1]; var on = AJ.canales[id] !== false; var b = h("button", "nvcfg-chip" + (on ? " on" : ""), (c[3] ? c[3] + " " : "") + nom); b.type = "button"; b.onclick = function(){ AJ.canales[id] = !on; guardar(); pintar(); }; lc.append(b); });
+        s1.append(lc);
+      }
+      p.append(s1);
+      /* tareas */
+      var s2 = h("section", "nvcfg-s"); s2.append(h("h3", null, "Tareas"));
+      s2.append(fila("Resumen de tareas del día", "Un aviso con lo que tenés para hoy", sw(AJ.tareas, function(v){ AJ.tareas = v; guardar(); pintar(); })));
+      if (AJ.tareas) s2.append(fila("¿A qué hora?", null, hora(AJ.tareasHora, function(v){ AJ.tareasHora = v; guardar(); })));
+      s2.append(fila("Tareas vencidas", "Te avisa si quedó algo sin hacer", sw(AJ.vencidas, function(v){ AJ.vencidas = v; guardar(); })));
+      p.append(s2);
+      /* pagos */
+      var s3 = h("section", "nvcfg-s"); s3.append(h("h3", null, "Pagos a proveedores"));
+      s3.append(fila("Avisarme de vencimientos", "Lo que hay que pagar en “A pagar”", sw(AJ.pagos, function(v){ AJ.pagos = v; guardar(); pintar(); })));
+      if (AJ.pagos){ var d = h("select", "nvcfg-in"); [[0, "El mismo día"], [1, "1 día antes"], [2, "2 días antes"], [3, "3 días antes"], [7, "Una semana antes"]].forEach(function(o){ var op = h("option", null, o[1]); op.value = o[0]; d.append(op); }); d.value = AJ.pagosDias; d.onchange = function(){ AJ.pagosDias = Number(d.value); guardar(); }; s3.append(fila("¿Cuándo?", null, d)); }
+      p.append(s3);
+      /* silencio */
+      var s4 = h("section", "nvcfg-s"); s4.append(h("h3", null, "Horario de silencio"));
+      s4.append(fila("No molestar", "En este horario no te llega ningún aviso", sw(AJ.silencio, function(v){ AJ.silencio = v; guardar(); pintar(); })));
+      if (AJ.silencio){ var hh = h("div", "nvcfg-hh"); hh.append(h("span", null, "de"), hora(AJ.silDesde, function(v){ AJ.silDesde = v; guardar(); }), h("span", null, "a"), hora(AJ.silHasta, function(v){ AJ.silHasta = v; guardar(); })); s4.append(fila("Horario", null, hh)); }
+      p.append(s4);
+      p.append(h("p", "nvcfg-nota", "Cada una tiene su propia configuración: lo que elijas acá no cambia lo de Pau (o lo de Euge)."));
+    }
+    (CARGADO ? Promise.resolve() : cargar()).then(pintar);
+    document.body.append(caja); requestAnimationFrame(function(){ caja.classList.add("on"); });
+  }
+  function cerrar(){ if (!caja) return; var c = caja; caja = null; c.classList.remove("on"); setTimeout(function(){ c.remove(); }, 250); }
+  window.__nvAbrirCfg = abrir;
+  /* botón ⚙ arriba, al lado del perfil */
+  function boton(){
+    var top = document.querySelector("header.top"); if (!top || top.querySelector(".nvcfg-btn")) return;
+    var b = h("button", "nvcfg-btn"); b.type = "button"; b.title = "Configuración";
+    b.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+    b.onclick = abrir;
+    var ref = top.querySelector(".nvyo, .av, [class*=avatar]");
+    var srch = Array.prototype.find.call(top.querySelectorAll("button"), function(x){ return /buscar|⌘K/i.test(x.textContent) || x.querySelector("svg circle"); });
+    if (srch && srch.parentNode) srch.parentNode.insertBefore(b, srch.nextSibling); else top.append(b);
+  }
+  setInterval(function(){ try { boton(); } catch(e){} }, 1500);
+  setTimeout(cargar, 3000);
+})();
+
+/* ---------- Celu: menú "Más" nuevo (mismo orden y grupos que el menú de la compu, sin repetir lo que ya está abajo) ---------- */
+(function(){
+  if (window.__nvMas) return; window.__nvMas = 1;
+  var NUNCA = { "tab-env": 1, "tab-ven": 1, "tab-tej": 1, "tab-promo": 1, "tab-mas": 1 };
+  var TONO = { "Día a día": "cel", "Ventas": "ros", "Gestión": "ver", "Contenido": "are" };
+  function h(t, c, x){ var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
+  var CHEV = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+  var GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.4M12 18.8v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.8 12h2.4M18.8 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>';
+  function rehacer(sh){
+    if (sh.__nvMas) return; sh.__nvMas = 1;
+    var menu = sh.querySelector(".menu"), cerrarBt = sh.querySelector(".btn.ghost"); if (!menu) return;
+    var nav = document.querySelector("nav.tabs"); if (!nav) return;
+    function cerrar(){ if (cerrarBt) cerrarBt.click(); else { var s = sh.closest(".scrim"); if (s) s.remove(); } }
+    var usados = {}, cont = h("div", "nvmas"), grupo = null, card = null, tono = "cel";
+    Array.prototype.forEach.call(nav.children, function(e){
+      if (e.classList.contains("navsec")){ grupo = e.textContent.trim(); tono = TONO[grupo] || "cel"; card = null; return; }
+      if (!e.classList.contains("tab") || NUNCA[e.id]) return;
+      if (getComputedStyle(e).display !== "none") return; /* ya está en el menú de abajo */
+      var lb = e.querySelector(".lb"), ic = e.querySelector(".ic"), n = e.querySelector(".n");
+      var nom = (lb ? lb.textContent : e.textContent).trim(); if (!nom) return;
+      usados[nom.split(" ")[0].toLowerCase()] = 1;
+      if (!card){ cont.append(h("div", "nvmas-g", grupo || "")); card = h("div", "nvmas-c"); cont.append(card); }
+      var b = h("button", "nvmas-i"); b.type = "button";
+      var i = h("i", "nvmas-ic " + tono); i.innerHTML = ic ? ic.innerHTML : ""; b.append(i, h("span", "nvmas-t", nom));
+      var num = n && n.textContent.trim(); if (num && num !== "0") b.append(h("b", "nvmas-n", num));
+      var ch = h("span", "nvmas-ch"); ch.innerHTML = CHEV; b.append(ch);
+      b.onclick = function(){ cerrar(); setTimeout(function(){ e.click(); }, 30); };
+      card.append(b);
+    });
+    /* lo que el menú viejo tenía y no está en la barra (ej. archivo de tareas) */
+    var todos = {}; Array.prototype.forEach.call(nav.querySelectorAll(".tab"), function(t){ var l = t.querySelector(".lb"); (l ? l.textContent : t.textContent).trim().split(/\s+/).forEach(function(w){ todos[w.toLowerCase()] = 1; }); });
+    var extra = Array.prototype.filter.call(menu.querySelectorAll("button"), function(b){ var t = (b.querySelector("span") || b).textContent.trim().split(" ")[0].toLowerCase(); return t && !todos[t]; });
+    var otros = h("div", "nvmas-c");
+    extra.forEach(function(b){ b.className = "nvmas-i"; var sv = b.querySelector("svg"); var i = h("i", "nvmas-ic are"); if (sv) i.append(sv); b.prepend(i); var sp = b.querySelector("span"); if (sp) sp.className = "nvmas-t"; var sm = b.querySelector("small"); if (sm) sm.className = "nvmas-n"; var ch = h("span", "nvmas-ch"); ch.innerHTML = CHEV; b.append(ch); otros.append(b); });
+    var cf = h("button", "nvmas-i"); cf.type = "button"; var ci = h("i", "nvmas-ic cho"); ci.innerHTML = GEAR; cf.append(ci, h("span", "nvmas-t", "Configuración")); var cc = h("span", "nvmas-ch"); cc.innerHTML = CHEV; cf.append(cc);
+    cf.onclick = function(){ cerrar(); setTimeout(function(){ if (window.__nvAbrirCfg) window.__nvAbrirCfg(); }, 60); };
+    otros.append(cf);
+    cont.append(h("div", "nvmas-g", "Más"), otros);
+    menu.replaceWith(cont);
+    sh.classList.add("nvmas-sh");
+    var tt = sh.querySelector("h2"); if (tt) tt.textContent = "Todo lo demás";
+  }
+  new MutationObserver(function(){
+    document.querySelectorAll(".scrim .sheet").forEach(function(sh){ var t = sh.querySelector("h2"); if (t && /Más secciones/.test(t.textContent)) rehacer(sh); });
+  }).observe(document.body, { childList: true, subtree: true });
+})();
+
+/* ---------- Tienda web: más clara y más proactiva ---------- */
+(function(){
+  if (window.__nvWeb) return; window.__nvWeb = 1;
+  function h(t, c, x){ var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
+  function dias(card){ var c = Array.prototype.find.call(card.querySelectorAll(".web-chip"), function(x){ return /^hace /.test(x.textContent.trim()); }); if (!c) return 0; var m = c.textContent.match(/(\d+)\s*d/); return m ? Number(m[1]) : 0; }
+  var WA = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 11.6a8.5 8.5 0 0 1-12.6 7.4L3.5 20.5l1.5-4.3a8.5 8.5 0 1 1 15.5-4.6z"/><path d="M9 8.6c.2 2.9 2.6 5.5 5.6 6l1.2-1.3-1.7-1-1 .7a4.3 4.3 0 0 1-2.4-2.4l.7-1-1-1.7z"/></svg>';
+  function mejorar(){
+    var m = document.querySelector("main#list"); if (!m || !m.querySelector(".web-top")) return;
+    m.classList.add("nvweb");
+    var cards = m.querySelectorAll(".web-card.web-v");
+    var help = m.querySelector(".web-help");
+    var ban = m.querySelector(".nvweb-ban");
+    if (cards.length){
+      if (help && /PENDIENTE DE REVISAR/.test(help.textContent)) help.hidden = true;
+      var max = 0; Array.prototype.forEach.call(cards, function(c){ var d = dias(c); if (d > max) max = d; });
+      if (!ban){
+        ban = h("div", "nvweb-ban"); var tx = h("div", "nvweb-bt"); var b1 = h("b"), s1 = h("span"); tx.append(b1, s1);
+        var go = h("button", "nvweb-go", "Revisar en Movimientos →"); go.type = "button"; go.onclick = function(){ var t = document.getElementById("tab-mov"); if (t) t.click(); };
+        ban.append(h("i", "nvweb-dot"), tx, go); m.querySelector(".web-top").after(ban);
+      }
+      ban.querySelector("b").textContent = cards.length === 1 ? "1 venta web esperando aprobación" : cards.length + " ventas web esperando aprobación";
+      ban.querySelector("span").textContent = (max >= 1 ? "La más vieja entró hace " + max + (max === 1 ? " día" : " días") + ". " : "") + "Se aprueban en Movimientos, junto con lo que va a Finanzas.";
+      ban.classList.toggle("tarde", max >= 2);
+    } else if (ban) ban.remove();
+    Array.prototype.forEach.call(cards, function(c){
+      if (c.__nv) return; c.__nv = 1;
+      var d = dias(c); if (d >= 2) c.classList.add("nvweb-tarde");
+      Array.prototype.forEach.call(c.querySelectorAll(".web-chip"), function(x){ if (/^hace /.test(x.textContent.trim()) && d >= 2) x.classList.add("nvweb-urg"); });
+      Array.prototype.forEach.call(c.querySelectorAll(".web-items li"), function(li){ if (/^\s*\d+\s*$/.test(li.textContent)) { li.classList.add("nvweb-sin"); li.append(h("small", null, " · producto sin nombre en la tienda")); } });
+      var tel = c.querySelector(".web-tel"), ct = c.querySelector(".web-contact");
+      var dig = tel ? tel.textContent.replace(/\D/g, "") : "";
+      if (ct && dig.length >= 10 && !ct.querySelector(".nvweb-wa")){
+        var a = h("a", "nvweb-wa"); a.href = "https://wa.me/" + dig; a.target = "_blank"; a.rel = "noopener"; a.innerHTML = WA; a.append(document.createTextNode(" WhatsApp")); ct.append(a);
+      }
+    });
+    var k = m.querySelector(".web-kpi"); if (k){ var n = k.querySelector(".web-kn"); k.classList.toggle("nvweb-ok", !!n && n.textContent.trim() === "0"); }
+  }
+  setInterval(function(){ try { mejorar(); } catch(e){} }, 800);
+})();
+
+/* ---------- Canal #movimientos: resumen arriba (cuántos hay, en qué estado, y si falta pasar algún mensaje) ---------- */
+(function(){
+  if (window.__nvMovRes) return; window.__nvMovRes = 1;
+  function h(t, c, x){ var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
+  var DATA = null, ULT = 0, CARG = false;
+  function traer(){
+    if (CARG || !window.__sb) return; CARG = true;
+    window.__sb.from("movimientos").select("msg_id,estado,signo,monto,tipo").then(function(r){ CARG = false; if (r && !r.error){ DATA = r.data || []; ULT = Date.now(); pintar(); } }, function(){ CARG = false; });
+  }
+  function f2(n){ return String(n).padStart(2, "0"); }
+  function pintar(){
+    var ay = document.querySelector(".chw .nvmov-ayuda"); var w = document.querySelector(".chw");
+    var box = w && w.querySelector(".nvmov-res");
+    if (!ay){ if (box) box.remove(); return; }
+    if (!box){ box = h("div", "nvmov-res"); var lst = w.querySelector(".chlist"); (lst || ay).parentNode.insertBefore(box, lst || ay); }
+    if (!DATA){ box.textContent = "Cargando resumen…"; return; }
+    var rows = DATA.filter(function(r){ return !/^venta:/.test(r.msg_id || ""); });
+    var pend = rows.filter(function(r){ return r.estado === "pendiente"; }).length;
+    var apr = rows.filter(function(r){ return r.estado === "aprobado"; }).length;
+    var ids = {}; DATA.forEach(function(r){ ids[r.msg_id] = 1; });
+    var msgs = Array.prototype.map.call(w.querySelectorAll(".chmsg[data-id]"), function(m){ return m.getAttribute("data-id"); });
+    var falt = msgs.filter(function(id){ return !ids[id]; }).length;
+    var d = new Date(ULT);
+    box.innerHTML = "";
+    var t = h("div", "nvmov-rt"); t.append(h("b", null, "Resumen de movimientos"), h("small", null, "Actualizado al " + f2(d.getDate()) + "/" + f2(d.getMonth() + 1) + " · " + f2(d.getHours()) + ":" + f2(d.getMinutes())));
+    var k = h("div", "nvmov-rk");
+    function kp(n, l, c){ var e = h("span", "nvmov-kp " + (c || "")); e.append(h("b", null, String(n)), h("small", null, l)); k.append(e); }
+    kp(rows.length, rows.length === 1 ? "cargado" : "cargados");
+    kp(pend, pend === 1 ? "pendiente" : "pendientes", pend ? "pe" : "");
+    kp(apr, apr === 1 ? "aprobado" : "aprobados", "ok");
+    var ok = h("span", "nvmov-chk " + (falt ? "mal" : "bien"), falt ? (falt === 1 ? "1 mensaje del canal no pasó a Movimientos" : falt + " mensajes del canal no pasaron a Movimientos") : "✓ Todos los mensajes del canal están en Movimientos");
+    box.append(t, k, ok);
+    if (pend){ var go = h("button", "nvmov-rgo", "Revisar →"); go.type = "button"; go.onclick = function(){ var x = document.getElementById("tab-mov"); if (x) x.click(); }; box.append(go); }
+  }
+  setInterval(function(){
+    try {
+      var ay = document.querySelector(".chw .nvmov-ayuda");
+      if (ay && Date.now() - ULT > 20000) traer();
+      pintar();
+    } catch(e){}
+  }, 1500);
+})();
