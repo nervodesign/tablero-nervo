@@ -110,3 +110,10 @@ html:not(#nv) .nvh-split small{color:rgba(255,248,240,.78)!important;opacity:1!i
 html:not(#nv) .nvh-split b{color:#fff!important;font-weight:400!important;font-size:21px!important;letter-spacing:-.02em}
 html:not(#nv) .nvh-bar{height:6px!important;background:rgba(40,22,14,.28)!important;box-shadow:inset 1px 1px 2px rgba(30,15,10,.4)}
 html:not(#nv) .nvh-bar em{box-shadow:0 0 8px rgba(255,255,255,.35)}
+/* tarjeta marrón más clara y liviana; el facturado sin sombra */
+html:not(#nv) .nvh-hero{background:linear-gradient(155deg,#C7AA94 0%,#B39279 55%,#A2826B 100%)!important;box-shadow:-6px -6px 16px rgba(255,255,255,.85),8px 12px 26px rgba(120,85,65,.25),inset 1px 1px 0 rgba(255,255,255,.3)!important}
+html:not(#nv) .nvh-big{background:none!important;box-shadow:none!important;padding:0!important;margin-top:10px!important}
+html:not(#nv) .nvh-split>div{background:rgba(255,255,255,.12)!important;box-shadow:inset 2px 2px 5px rgba(90,60,45,.18),inset -1px -1px 3px rgba(255,255,255,.18)!important}
+html:not(#nv) .nvh-sp{background:rgba(255,255,255,.08)!important;box-shadow:inset 2px 2px 5px rgba(90,60,45,.15)!important}
+html:not(#nv) .nvh-bar{background:rgba(90,60,45,.2)!important}
+html:not(#nv) .nvh-hero .nvh-split b,html:not(#nv) .nvh-hero .nvh-big{color:#fff!important}
