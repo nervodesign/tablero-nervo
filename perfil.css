@@ -1,0 +1,49 @@
+/* ===== Perfil y estado ===== */
+html:not(#nv) .nvav{width:36px;height:36px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font-weight:600;font-size:14px;flex:none;position:relative;background-size:cover;background-position:center}
+html:not(#nv) .nvav.foto{color:transparent}
+html:not(#nv) .nvav.on::after{content:"";position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;background:#8DBB7C;border:2px solid #fff}
+html:not(#nv) .nvav.grande{width:52px;height:52px;font-size:19px}
+html:not(#nv) nav.tabs .nvyo{margin-top:auto;display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid #F0E6DD;background:#fff;border-radius:16px;padding:10px 12px;font:inherit;cursor:pointer;box-shadow:0 1px 2px rgba(58,36,28,.04);position:sticky;bottom:10px}
+html:not(#nv) nav.tabs .nvyo:hover{border-color:#E6D7C3}
+html:not(#nv) nav.tabs .nvyo-t{flex:1;min-width:0}
+html:not(#nv) nav.tabs .nvyo-t b{display:block;font-size:14px;color:#3A241C}
+html:not(#nv) nav.tabs .nvyo-t small{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html:not(#nv) nav.tabs .nvyo-t small.sin{color:#B88A80}
+html:not(#nv) nav.tabs .nvyo-t small.con{color:#6C4D38}
+html:not(#nv) nav.tabs .nvyo-x{color:#A08B7D;font-size:16px}
+html:not(#nv) .nvyo-m{display:none;border:0;background:none;padding:0;margin-left:6px;cursor:pointer}
+html:not(#nv) .nvyo-m .nvav{width:32px;height:32px;font-size:13px}
+@media (max-width:800px){html:not(#nv) nav.tabs .nvyo{display:none}html:not(#nv) .nvyo-m{display:inline-flex}}
+/* ventana */
+html:not(#nv) .nvperf{position:fixed;z-index:9999;width:330px;max-width:calc(100vw - 24px);max-height:80vh;overflow-y:auto;background:#fff;border:1px solid #F0E6DD;border-radius:22px;box-shadow:0 2px 6px rgba(58,36,28,.06),0 24px 60px rgba(58,36,28,.22);padding:16px;font-family:Outfit,system-ui,sans-serif;color:#3A241C;animation:nvRise .25s cubic-bezier(.2,.8,.2,1) both}
+html:not(#nv) .nvperf-h{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+html:not(#nv) .nvperf-h b{display:block;font-size:16px}
+html:not(#nv) .nvperf-h small{color:#5B6E57;font-size:12.5px}
+html:not(#nv) .nvperf-e{display:flex;gap:8px}
+html:not(#nv) .nvperf-emo{width:48px;text-align:center;font-size:18px;border:1.5px solid #E6D7C3;border-radius:12px;padding:8px 0}
+html:not(#nv) .nvperf-tx{flex:1;border:1.5px solid #E6D7C3;border-radius:12px;padding:9px 12px;font:inherit;font-size:14px}
+html:not(#nv) .nvperf-p{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+html:not(#nv) .nvperf-p button{border:1px solid #F0E6DD;background:#FFFDFB;border-radius:20px;padding:5px 10px;font:inherit;font-size:12.5px;color:#6C4D38;cursor:pointer}
+html:not(#nv) .nvperf-p button:hover{border-color:#DFB9B6}
+html:not(#nv) .nvperf-a{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+html:not(#nv) .nvperf-d{flex:1 1 100%;border:1px solid #F0E6DD;border-radius:10px;padding:7px 10px;font:inherit;font-size:13px;color:#6C4D38;background:#fff}
+html:not(#nv) .nvperf-a button,html:not(#nv) .nvperf-f button{border:1px solid #F0E6DD;background:#fff;border-radius:12px;padding:8px 12px;font:inherit;font-size:13px;color:#6C4D38;cursor:pointer}
+html:not(#nv) .nvperf-a button.pri{background:#59392D;color:#fff;border-color:#59392D;flex:1}
+html:not(#nv) .nvperf-f{display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid #F6EFE9}
+html:not(#nv) .nvperf-q{margin-top:12px;padding-top:12px;border-top:1px solid #F6EFE9}
+html:not(#nv) .nvperf-q>small{font-size:10px;letter-spacing:.2em;color:#BBA898}
+html:not(#nv) .nvperf-m{display:flex;align-items:center;gap:10px;padding:7px 0}
+html:not(#nv) .nvperf-m b{display:block;font-size:14px}
+html:not(#nv) .nvperf-m small{font-size:12px;color:#A08B7D}
+html:not(#nv) .nvperf-s{width:100%;margin-top:10px;border:0;background:#F9EEEC;color:#9A5F5A;border-radius:12px;padding:10px;font:inherit;font-size:13.5px;cursor:pointer}
+/* chat: fotos, en línea, escribiendo */
+html:not(#nv) .chw .chmsg .chav.nvfoto{color:transparent!important;background-size:cover!important;background-position:center!important}
+html:not(#nv) .chw .chmsg .chav.nvon::after{content:"";position:absolute;right:-1px;bottom:-1px;width:10px;height:10px;border-radius:50%;background:#8DBB7C;border:2px solid #fff}
+html:not(#nv) .chw .chdmt~.chb.nvon .chi{box-shadow:0 0 0 2px #fff,0 0 0 4px #8DBB7C!important}
+html:not(#nv) .chw .nvdmst{display:block;font-size:12px;color:#A08B7D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html:not(#nv) .chw .nvtyp{font-size:12.5px;color:#A08B7D;padding:4px 22px 4px 68px;display:flex;align-items:center;gap:6px}
+html:not(#nv) .nvdots{display:inline-flex;gap:3px}
+html:not(#nv) .nvdots i{width:5px;height:5px;border-radius:50%;background:#CBB4A0;animation:nvDot 1.2s infinite}
+html:not(#nv) .nvdots i:nth-child(2){animation-delay:.15s}html:not(#nv) .nvdots i:nth-child(3){animation-delay:.3s}
+@keyframes nvDot{0%,60%,100%{transform:none;opacity:.5}30%{transform:translateY(-3px);opacity:1}}
+@media (max-width:800px){html:not(#nv) .chw .nvtyp{padding:4px 12px}}
