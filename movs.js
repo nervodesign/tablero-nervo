@@ -1000,3 +1000,18 @@
   var oculto = 0;
   document.addEventListener("visibilitychange", function(){ if (document.hidden){ oculto = Date.now(); return; } mirar(); if (oculto && Date.now() - oculto > 60000) completa(); });
 })();
+
+/* ---------- Movimientos: las filas siempre alineadas con los títulos de columna (también al estirar) ---------- */
+(function(){
+  if (window.__nvAlinear) return; window.__nvAlinear = 1;
+  function alinear(){
+    document.querySelectorAll(".nvmov-tb").forEach(function(tb){
+      var th = tb.querySelector(".nvmov-th"); if (!th) return;
+      var g = getComputedStyle(th).gridTemplateColumns; if (!g || g === "none") return;
+      tb.querySelectorAll(".nvmov-tr").forEach(function(r){ if (r.style.getPropertyValue("grid-template-columns") !== g) r.style.setProperty("grid-template-columns", g, "important"); });
+    });
+  }
+  setInterval(function(){ if (document.body.classList.contains("nvmov-on")) alinear(); }, 300);
+  document.addEventListener("pointermove", function(e){ if (e.buttons && document.body.classList.contains("nvmov-on")) alinear(); }, true);
+  window.addEventListener("resize", alinear);
+})();

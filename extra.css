@@ -591,3 +591,7 @@ html:not(#nv) .nvmovp>section.nvmov-blq:nth-of-type(2)>.nvmov-blqh b{color:#2F5E
 html:not(#nv) .nvmovp>section.nvmov-blq .nvmov-st .nvmov-k{background:rgba(255,255,255,.75)!important}
 html:not(#nv) .nvmovp>section.nvmov-blq .nvmov-st .nvmov-k.pen{background:#F6D6D0!important}
 html:not(#nv) .nvmovp>section.nvmov-blq .nvmov-st .nvmov-k.ok{background:#D3E8D6!important}
+
+/* Movimientos: cada celda respeta el ancho de su columna */
+html:not(#nv) .nvmov-tb .nvmov-tr>.nvmov-c,html:not(#nv) .nvmov-tb .nvmov-th>*{min-width:0!important;box-sizing:border-box}
+html:not(#nv) .nvmov-tb .nvmov-tr>.nvmov-c{overflow:hidden}
