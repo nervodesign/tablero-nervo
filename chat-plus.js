@@ -280,3 +280,20 @@
   }).observe(document.documentElement, { childList: true, subtree: true });
   if (document.readyState !== "loading") pasar(); else document.addEventListener("DOMContentLoaded", pasar);
 })();
+
+/* ---------- Movimientos arriba de todo, solo y destacado ---------- */
+(function(){
+  if (window.__nvMovTop) return; window.__nvMovTop = 1;
+  function poner(){
+    var chc = document.querySelector(".chw .chc"); if (!chc) return;
+    var b = Array.prototype.slice.call(chc.querySelectorAll(".chb")).find(function(x){ var l = x.querySelector(".chl1"); return l && /^\s*movimientos\s*$/i.test(l.textContent); });
+    if (!b) return;
+    b.dataset.nvg = "top"; b.classList.add("nvmovtop");
+    var ancla = chc.querySelector(".chsq");
+    var destino = ancla ? ancla.nextSibling : chc.firstChild;
+    if (b.parentNode !== chc || b.previousElementSibling !== (ancla || null)) chc.insertBefore(b, destino);
+  }
+  var pend = false;
+  new MutationObserver(function(){ if (pend) return; pend = true; requestAnimationFrame(function(){ pend = false; try { poner(); } catch(e){} }); })
+    .observe(document.documentElement, { childList: true, subtree: true });
+})();

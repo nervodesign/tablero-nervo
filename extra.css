@@ -86,3 +86,16 @@ html:root body #list .nvh .kpi.nvh-k.hp-lila>b{background:linear-gradient(160deg
 html:root body #list .nvh .kpi.nvh-k.hp-rosa>b{background:linear-gradient(160deg,#A3BED6 0%,#7F9FBD 100%)!important;box-shadow:-4px -4px 10px rgba(255,255,255,.95),5px 6px 14px rgba(70,105,140,.25),inset 1px 1px 1px rgba(255,255,255,.35),inset -1px -2px 3px rgba(50,80,110,.15)!important}
 html:root body #list .nvh .kpi.nvh-k .hp-kt [class*=ic],html:root body #list .nvh .kpi.nvh-k .hp-kt > span:first-child{width:34px!important;height:34px!important;border-radius:50%!important;background:rgba(255,255,255,.7)!important;box-shadow:inset 2px 2px 5px rgba(120,90,70,.12),inset -2px -2px 5px rgba(255,255,255,.9)!important;display:grid!important;place-items:center!important}
 html:root body #list .nvh .kpi.nvh-k .hp-kt{letter-spacing:.14em!important;color:#8A7466!important}
+/* chat: Movimientos solo arriba; grupos como títulos simples (sin pastilla); canales livianos */
+html:not(#nv) .chw .chb.nvmovtop{display:flex!important;align-items:center;gap:12px;margin:4px 0 16px!important;padding:12px 14px!important;border-radius:18px!important;background:linear-gradient(160deg,#FFFDFB,#F4ECE6)!important;box-shadow:-4px -4px 10px rgba(255,255,255,.95),5px 6px 14px rgba(120,90,70,.16)!important;border:0!important}
+html:not(#nv) .chw .chb.nvmovtop::before{content:"💰";width:36px;height:36px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:17px;background:linear-gradient(160deg,#A3BED6,#7F9FBD);box-shadow:inset 1px 1px 1px rgba(255,255,255,.4),2px 3px 8px rgba(70,105,140,.25)}
+html:not(#nv) .chw .chb.nvmovtop .chi{display:none!important}
+html:not(#nv) .chw .chb.nvmovtop .chl1{font-size:15px!important;font-weight:600!important;color:#3B2418!important}
+html:not(#nv) .chw .chb.nvmovtop.on{background:linear-gradient(160deg,#F6EDE8,#EFE4DD)!important;box-shadow:inset 3px 3px 7px rgba(120,90,70,.14),inset -3px -3px 7px rgba(255,255,255,.9)!important}
+html:not(#nv) .chw .nvg{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:12px 6px 4px!important;margin-top:6px!important;font-size:10.5px!important;font-weight:600!important;letter-spacing:.16em!important;text-transform:uppercase!important;color:#9A8274!important;border-top:1px solid #E8E0D9!important}
+html:not(#nv) .chw .nvg .nvgi{font-size:12px;filter:saturate(.7)}
+html:not(#nv) .chw .nvg .nvgb{background:#F8E4E7!important;color:#8E4E5A!important;letter-spacing:0;text-transform:none}
+html:not(#nv) .chw .nvgl .chb,html:not(#nv) .chw .chb:not(.nvmovtop){background:transparent!important;box-shadow:none!important;border:0!important;border-radius:12px!important;margin:1px 0!important}
+html:not(#nv) .chw .nvgl .chb:hover,html:not(#nv) .chw .chb:not(.nvmovtop):hover{background:rgba(255,255,255,.6)!important}
+html:not(#nv) .chw .nvgl .chb.on,html:not(#nv) .chw .chb:not(.nvmovtop).on{background:#FBF6F3!important;box-shadow:-2px -2px 6px rgba(255,255,255,.9),3px 3px 8px rgba(120,95,80,.12)!important}
+html:not(#nv) .chw .nvg:has(+ .nvgl:empty){display:none!important}
