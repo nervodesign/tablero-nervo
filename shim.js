@@ -92,6 +92,21 @@
 (function(){
   var cs = document.currentScript, m = cs && /[?&]v=(\d+)/.exec(cs.src), V = m ? m[1] : String(Date.now());
   var h = document.documentElement;
+  /* quién soy, según el mail con el que entré */
+  var QUIEN = { "eugeabdon@gmail.com": "euge", "mpauabdon@gmail.com": "pau" };
+  function fijarYo(email){
+    var k = QUIEN[String(email || "").toLowerCase()]; if (!k) return;
+    try { var me = JSON.parse(localStorage.getItem("nervo-me") || "{}"); if (me.soy !== k){ me.soy = k; if (!me.visto) me.visto = Date.now(); localStorage.setItem("nervo-me", JSON.stringify(me)); }
+      var S = window.__nv && window.__nv.S; if (S && S.soy !== k){ S.soy = k; try { window.__nv.render(); } catch(e){} } } catch(e){}
+  }
+  try { var ses = JSON.parse(localStorage.getItem("nervo-sesion") || "null"); fijarYo(ses && ses.user && ses.user.email); } catch(e){}
+  try { window.__sb.auth.onAuthStateChange(function(ev, s){ if (s && s.user) fijarYo(s.user.email); }); } catch(e){}
+  /* si hay una versión más nueva publicada, abrirla (una sola vez) */
+  try { fetch("version.txt?z=" + Date.now(), { cache: "no-store" }).then(function(r){ return r.ok ? r.text() : ""; }).then(function(t){
+    t = String(t || "").trim(); if (!/^\d+$/.test(t) || !m || t === V || +t < +V) return;
+    var k = "nv-rl-" + t; if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, "1");
+    location.replace(location.pathname + "?v=" + t + location.hash);
+  }).catch(function(){}); } catch(e){}
   try{ localStorage.setItem("hub_theme","light"); }catch(e){}
   function L(){ if (h.getAttribute("data-theme") !== "light") h.setAttribute("data-theme","light"); }
   L(); new MutationObserver(L).observe(h, { attributes: true, attributeFilter: ["data-theme"] });
