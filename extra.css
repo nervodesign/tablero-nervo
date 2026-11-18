@@ -323,3 +323,57 @@ html:not(#nv) .nvmov-dia:not(.nvmov-vt) .nvmov-tr input.nvmov-in:focus{backgroun
 html:not(#nv) .nvmov-dia:not(.nvmov-vt) .nvmov-c:first-child .nvmov-ckw{display:none}
 html:not(#nv) .nvmov-dia:not(.nvmov-vt) .nvmov-ok{margin:0!important;width:100%;padding:7px 8px!important;font-size:12.5px!important;font-weight:600!important;color:#2F6B40!important;background:#DCEFE0!important;border:1px solid #B9DCC1!important;border-radius:10px!important;box-shadow:0 1px 2px rgba(47,107,64,.12)!important}
 html:not(#nv) .nvmov-dia:not(.nvmov-vt) .nvmov-sub{padding:6px 16px 9px 16px!important;background:#FDFBFA}
+
+/* ===================== CELULAR: todo en su lugar ===================== */
+@media (max-width:760px){
+  html:not(#nv) nav.tabs{display:grid!important;grid-auto-flow:column!important;grid-template-columns:none!important;grid-auto-columns:minmax(0,1fr)!important;gap:2px!important;padding:6px 6px calc(6px + env(safe-area-inset-bottom))!important;height:auto!important;min-height:0!important;align-items:stretch!important;background:rgba(251,250,249,.96)!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid #EFE8E2!important;box-shadow:0 -6px 20px rgba(58,36,28,.06)!important;z-index:60!important}
+  html:not(#nv) nav.tabs .tab{min-width:0!important;padding:6px 2px!important;margin:0!important;flex-direction:column!important;gap:3px!important;border-radius:14px!important;height:auto!important}
+  html:not(#nv) nav.tabs .tab .lb{font-size:10px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;max-width:100%!important;letter-spacing:0!important}
+  html:not(#nv) nav.tabs .tab .ic svg{width:20px!important;height:20px!important}
+  html:not(#nv) nav.tabs .tab .n{font-size:9.5px!important;min-width:16px!important;height:16px!important;line-height:16px!important;padding:0 4px!important;top:-4px!important}
+  html:not(#nv) nav.tabs .tab::before,html:not(#nv) nav.tabs .tab::after{display:none!important}
+  html:not(#nv) body{padding-bottom:calc(84px + env(safe-area-inset-bottom))!important}
+  html:not(#nv) nav.tabs #tab-chat{display:flex!important}
+  html:not(#nv) nav.tabs #tab-pagos{display:none!important}
+  html:not(#nv) #fab.fab{bottom:calc(82px + env(safe-area-inset-bottom))!important;right:14px!important;width:52px!important;height:52px!important;min-width:0!important;padding:0!important;border-radius:50%!important;font-size:0!important;display:grid!important;place-items:center!important}
+  html:not(#nv) #fab.fab::before{content:"+";font-size:26px;line-height:1;color:#fff;font-weight:300}
+  html:not(#nv) #fab.fab *{display:none!important}
+  html:not(#nv) .nvaviso{left:10px!important;right:10px!important;width:auto!important;max-width:none!important;transform:none!important;bottom:calc(82px + env(safe-area-inset-bottom))!important;padding:8px 10px 8px 12px!important;gap:8px!important;border-radius:16px!important;font-size:13px!important;z-index:70!important}
+  html:not(#nv) .nvaviso *{font-size:13px!important;line-height:1.25!important}
+  html:not(#nv) .nvaviso button{padding:6px 12px!important;white-space:nowrap!important}
+  html:not(#nv) main#list .pz-wx{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;gap:12px!important;white-space:nowrap!important;font-size:12.5px!important;scrollbar-width:none}
+  html:not(#nv) main#list .pz-wx::-webkit-scrollbar{display:none}
+  html:not(#nv) main#list .pz-wx *{white-space:nowrap!important}
+  html:not(#nv) main#list .nvh{gap:10px!important}
+  html:not(#nv) main#list .nvh .kpi.nvh-k{padding:12px 12px!important;min-height:0!important;flex-direction:row!important;align-items:center!important;gap:8px!important;flex-wrap:wrap!important}
+  html:not(#nv) main#list .nvh .kpi.nvh-k *{letter-spacing:.06em!important}
+  html:not(#nv) main#list .nvh .kpi.nvh-k span,html:not(#nv) main#list .nvh .kpi.nvh-k small{font-size:10.5px!important}
+  html:not(#nv) main#list .nvh .kpi.nvh-k>b{font-size:17px!important;padding:3px 10px!important;margin-left:auto!important}
+  html:not(#nv) main#list .nvh .kpi.nvh-k i,html:not(#nv) main#list .nvh .kpi.nvh-k .ic{width:30px!important;height:30px!important;flex:none}
+  html:not(#nv) main#list .nvh-hero{padding:18px!important;border-radius:24px!important}
+  html:not(#nv) main#list .nvh-hero .nvh-big{font-size:40px!important}
+  html:not(#nv) .ob2-sum{display:flex!important;grid-template-columns:none!important;overflow-x:auto!important;gap:10px!important;scroll-snap-type:x mandatory;padding-bottom:4px;scrollbar-width:none}
+  html:not(#nv) .ob2-sum::-webkit-scrollbar,html:not(#nv) .ob2-objs::-webkit-scrollbar{display:none}
+  html:not(#nv) .ob2-sum>*{flex:0 0 auto!important;width:auto!important;min-width:150px!important;max-width:220px!important;scroll-snap-align:start;padding:12px 14px!important;grid-column:auto!important}
+  html:not(#nv) .ob2-sum>.ob2-sm1{min-width:230px!important}
+  html:not(#nv) .ob2-objs{display:flex!important;grid-template-columns:none!important;overflow-x:auto!important;gap:12px!important;scroll-snap-type:x mandatory;padding:2px 2px 8px;scrollbar-width:none}
+  html:not(#nv) .ob2-objs>*{flex:0 0 72%!important;max-width:280px!important;scroll-snap-align:start}
+  html:not(#nv) body.nvmov-on .nvmovp{padding-left:0!important;padding-right:0!important}
+  html:not(#nv) .nvmov-cab h1{font-size:22px!important}
+  html:not(#nv) .nvmov-blqh{flex-wrap:wrap!important;gap:6px!important}
+  html:not(#nv) .nvmov-tb{overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  html:not(#nv) .nvmov-vt .nvmov-sub,html:not(#nv) .nvmov-vt .nvmov-det,html:not(#nv) .nvmov-dia .nvmov-sub{position:sticky!important;left:0!important;max-width:calc(100vw - 34px)!important;padding-left:12px!important;box-sizing:border-box}
+  html:not(#nv) .nvmov-sub>*{white-space:nowrap!important;flex:none}
+  html:not(#nv) .nvmov-sub{flex-wrap:wrap!important;gap:6px!important}
+  html:not(#nv) .nvmov-lfin{overflow-x:auto!important;max-width:100%!important}
+  html:not(#nv) .nvmov-vt .nvmov-det{grid-template-columns:1fr!important}
+  html:not(#nv) .nvmov-vfg{grid-template-columns:1fr 1fr!important}
+  html:not(#nv) main#list .chw{border-radius:0!important;border-left:0!important;border-right:0!important}
+  html:not(#nv) .chw .chlist .chmsg{max-width:86%!important}
+  html:not(#nv) .chw .chlist .chmsg .chh button{position:static!important;transform:none!important;opacity:.75!important;width:24px!important;height:24px!important;box-shadow:none!important;background:rgba(255,255,255,.7)!important}
+  html:not(#nv) .chw .chlist .chmsg .chh>b{margin-right:auto}
+  html:not(#nv) .chw .chlist .chmsg::after{display:none!important}
+  html:not(#nv) .chw .nvmov-ayuda span:nth-child(n+3){display:none}
+  html:not(#nv) body,html:not(#nv) main#list{overflow-x:hidden!important}
+}
+html:not(#nv) body.nvmov-on header.top #secTitle{display:none!important}
