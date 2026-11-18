@@ -153,6 +153,23 @@
   function cerrarPanel(){ document.body.classList.remove("nvmov-on"); var b = document.querySelector(".nvmov-tab"); if (b) b.setAttribute("aria-selected", "false"); }
 
   var tSuave = null;
+  /* al repintar, no perder dónde estabas: scroll de la página, scroll de cada tabla y el casillero en el que estabas parada */
+  var _pintarBase = pintar;
+  pintar = function(){
+    var p = document.querySelector(".nvmovp"), sy = window.scrollY, sl = [], fi = -1, fs = null, ab = [];
+    if (p){
+      sl = Array.prototype.map.call(p.querySelectorAll(".nvmov-tb"), function(e){ return e.scrollLeft; });
+      var cs = p.querySelectorAll("input,select,textarea"), a = document.activeElement;
+      fi = Array.prototype.indexOf.call(cs, a); if (fi >= 0 && a.selectionStart != null) { try { fs = [a.selectionStart, a.selectionEnd]; } catch(e){} }
+      ab = Array.prototype.map.call(p.querySelectorAll(".nvmov-det"), function(d){ return !d.hidden; });
+    }
+    _pintarBase.apply(this, arguments);
+    p = document.querySelector(".nvmovp"); if (!p) return;
+    Array.prototype.forEach.call(p.querySelectorAll(".nvmov-tb"), function(e, i){ if (sl[i]) e.scrollLeft = sl[i]; });
+    Array.prototype.forEach.call(p.querySelectorAll(".nvmov-det"), function(d, i){ if (ab[i]){ d.hidden = false; var b = d.parentNode && d.parentNode.querySelector(".nvmov-mas"); if (b){ b.classList.add("on"); b.textContent = "Cerrar"; } } });
+    if (fi >= 0){ var n = p.querySelectorAll("input,select,textarea")[fi]; if (n){ try { n.focus({ preventScroll: true }); if (fs && n.setSelectionRange) n.setSelectionRange(fs[0], fs[1]); } catch(e){} } }
+    if (Math.abs(window.scrollY - sy) > 2) window.scrollTo(0, sy);
+  };
   function pintarSuave(){ clearTimeout(tSuave); tSuave = setTimeout(function(){
     var a = document.activeElement; if (a && a.closest && a.closest(".nvmovp") && /INPUT|SELECT|TEXTAREA/.test(a.tagName)){ tabBtn(); decorarChat(); return; }
     pintar();
@@ -462,7 +479,7 @@
     var sub = h("div", "nvmov-sub");
     var fw = h("label", "nvmov-fin"); var fc = h("input"); fc.type = "checkbox"; fc.checked = FIN[it.id] !== false; var ft = h("span");
     fw.title = "Si está tildado, al aprobar también se crea el cobro para Finanzas (queda abajo para aprobarlo)."; fw.append(fc, ft);
-    var lf = h("span", "nvmov-lfin"); var fa = h("span", "nvmov-al nvmov-falt");
+    var lf = h("div", "nvmov-lfin"); var fa = h("span", "nvmov-al nvmov-falt");
     var bv = h("button", "nvmov-ok", "✓ Aprobar"); bv.type = "button"; bv.onclick = function(){ ck.checked = true; ck.dispatchEvent(new Event("change")); };
     sub.append(fa, fw, lf);
     if (it.src === "chat") sub.append(h("span", "nvmov-tx", "“" + (it.mov.texto || "") + "”"));
@@ -486,7 +503,8 @@
       bv.disabled = !!fl.length; bv.classList.toggle("off", !!fl.length);
       ft.textContent = si ? "💰 También a Finanzas " + (d.quien || "(elegí quién cobró)") : "Solo a Ventas minoristas";
       fw.classList.toggle("off", !si);
-      lf.textContent = si ? d.cols.slice(0, 5).map(function(c){ return c[1]; }).join("  ·  ") : "";
+      lf.innerHTML = ""; lf.hidden = !si;
+      if (si){ lf.append(h("em", null, "Entra en Finanzas " + (d.quien || "—") + " así:")); d.cols.slice(0, 5).forEach(function(c){ var e = h("span"); e.append(h("small", null, c[0]), h("b", null, c[1])); lf.append(e); }); }
       bv.title = "Pasa a Ventas minoristas" + (si ? " y crea el cobro para Finanzas " + d.quien : "");
       vf.innerHTML = "";
       if (!si){ vf.append(h("b", null, "Esta venta no va a Finanzas"), h("p", null, "Tildá “También a Finanzas” si querés que se cargue.")); return; }
