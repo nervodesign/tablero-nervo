@@ -1,60 +1,143 @@
+/* ===== Chat Nervo: Slack en la compu, WhatsApp en el celu ===== */
+html:not(#nv) .chw.nvchat{--esp:#59392D;--ink:#3A241C;--ink2:#6C4D38;--mut:#A08B7D;--ln:#F0E6DD;--lat:#E6D7C3;--ros:#DFB9B6;--ros-s:#F9EEEC;
+  background:#fff!important;border:0!important;border-radius:26px!important;overflow:hidden!important;
+  box-shadow:0 1px 3px rgba(58,36,28,.05),0 18px 44px -18px rgba(58,36,28,.22)!important;
+  grid-template-columns:300px minmax(0,1fr)!important}
+html:not(#nv) .chw.nvchat .chrp{display:none!important}
+html:not(#nv) .chw.nvchat.nvrp{grid-template-columns:300px minmax(0,1fr) 290px!important}
+html:not(#nv) .chw.nvchat.nvrp .chrp{display:block!important;border-left:1px solid var(--ln)!important;background:#FFFDFB!important}
+html:not(#nv) .chw .nvhide{display:none!important}
 
-/* ===== Chat tipo Slack ===== */
-html:not(#nv) .chw{border-radius:24px!important;box-shadow:0 1px 2px rgba(58,36,28,.04),0 8px 24px rgba(58,36,28,.06)!important;border:0!important;overflow:hidden}
-/* lista de canales */
-html:not(#nv) .chw .chc{background:#F8F2EC!important;border-right:1px solid #F0E6DD!important}
-html:not(#nv) .chw .cht{font-size:10px!important;letter-spacing:.2em!important;color:#B7A293!important;font-weight:500!important}
-html:not(#nv) .chw .chb{border-radius:10px!important;padding:7px 10px!important;margin:1px 0!important;background:transparent!important;transition:background .15s!important}
-html:not(#nv) .chw .chb:hover{background:rgba(255,255,255,.75)!important}
-html:not(#nv) .chw .chb.on{background:#59392D!important;box-shadow:0 6px 14px -8px rgba(89,57,45,.6)!important}
-html:not(#nv) .chw .chb.on *{color:#fff!important}
-html:not(#nv) .chw .chb.on .chp{color:rgba(255,255,255,.75)!important}
-html:not(#nv) .chw .chb .chl1{font-weight:500!important}
-html:not(#nv) .chw .chb .chl1::before{content:"# ";opacity:.45;font-weight:400}
-html:not(#nv) .chw .chdmt~.chb .chl1::before{content:none}
-html:not(#nv) .chw .chb .chn{background:#9A5F5A!important;color:#fff!important;border-radius:10px!important;font-weight:600!important}
-html:not(#nv) .chw .chb .chi{border-radius:4px!important;width:9px!important;height:9px!important}
-html:not(#nv) .chw .chsq{border-radius:10px!important;background:#fff!important;border:1px solid #F0E6DD!important}
-/* encabezado del canal */
-html:not(#nv) .chw .chtt{border-bottom:1px solid #F0E6DD!important;padding:14px 20px!important;display:flex;align-items:center;gap:8px;font-size:16px}
-html:not(#nv) .chw .chtt b::before{content:"# ";color:#C7B6A8;font-weight:400}
-html:not(#nv) .nvbell{margin-left:auto;font:inherit;font-size:12.5px;border:1px solid #F0E6DD;background:#fff;color:#6C4D38;border-radius:20px;padding:5px 12px;cursor:pointer}
-html:not(#nv) .nvbell.on{background:#EEF3EC;border-color:#EEF3EC;color:#5B6E57}
-/* mensajes */
-html:not(#nv) .chw .chlist{padding:8px 0!important}
-html:not(#nv) .chw .chmsg{position:relative;padding:6px 22px 6px 66px!important;margin:0!important;border-radius:0!important;transition:background .12s}
-html:not(#nv) .chw .chmsg:hover{background:#FAF5F0!important}
-html:not(#nv) .chw .chmsg .chav{position:absolute;left:20px;top:8px;width:36px!important;height:36px!important;border-radius:10px!important;font-size:14px!important}
+/* ---- panel de canales ---- */
+html:not(#nv) .chw .chc{background:#FFFDFB!important;border-right:1px solid var(--ln)!important;padding:16px 14px!important;display:flex!important;flex-direction:column!important;gap:6px!important;overflow-y:auto!important}
+html:not(#nv) .chw .chsq{border-radius:12px!important;background:#fff!important;border:1px solid var(--ln)!important;padding:9px 12px!important;font-size:14px!important;margin-bottom:4px!important}
+html:not(#nv) .chw .nvg{display:flex;align-items:center;gap:8px;width:100%;border:0;border-left:3px solid;border-radius:12px;padding:9px 12px;font:inherit;font-size:14px;font-weight:600;text-align:left;cursor:pointer;margin-top:4px;transition:filter .15s}
+html:not(#nv) .chw .nvg:hover{filter:brightness(.98)}
+html:not(#nv) .chw .nvg .nvgb{background:#fff;border-radius:10px;padding:0 7px;font-size:11.5px;font-weight:600}
+html:not(#nv) .chw .nvg .nvgb:empty{display:none}
+html:not(#nv) .chw .nvg .nvga{margin-left:auto;font-size:10px;opacity:.55;transition:transform .2s}
+html:not(#nv) .chw .nvg.cerr .nvga{transform:rotate(-90deg)}
+html:not(#nv) .chw .nvg.g1{background:#FBF3EA;color:#8A6447;border-color:#CBB4A0}
+html:not(#nv) .chw .nvg.g2{background:#EEF3F7;color:#4F6B80;border-color:#B7CBDA}
+html:not(#nv) .chw .nvg.g3{background:#F9EEEC;color:#9A5F5A;border-color:#DFB9B6}
+html:not(#nv) .chw .nvg.g4{background:#EEF3EC;color:#5B6E57;border-color:#B5C4B1}
+html:not(#nv) .chw .nvgl{display:flex;flex-direction:column;gap:1px;padding:2px 0 2px}
+html:not(#nv) .chw .nvgl.cerr{display:none}
+html:not(#nv) .chw .chb{border-radius:10px!important;padding:7px 12px!important;margin:0!important;background:transparent!important;border:1px solid transparent!important;box-shadow:none!important;transition:background .15s!important}
+html:not(#nv) .chw .chb:hover{background:#F8F2EC!important}
+html:not(#nv) .chw .chb.on{background:#fff!important;border-color:var(--ln)!important;box-shadow:0 2px 8px rgba(58,36,28,.06)!important}
+html:not(#nv) .chw .chb.on *{color:inherit!important}
+html:not(#nv) .chw .chb .chl1{font-weight:500!important;font-size:14.5px!important;color:var(--ink)!important}
+html:not(#nv) .chw .chb .chl1::before{content:none!important}
+html:not(#nv) .chw .chb .chp{display:none!important}
+html:not(#nv) .chw .chb .chtm{display:none!important}
+html:not(#nv) .chw .chb .chi{width:8px!important;height:8px!important;border-radius:50%!important;flex:none}
+html:not(#nv) .chw .chb .chi::after{content:none}
+html:not(#nv) .chw .chb .chn{background:#9A5F5A!important;color:#fff!important;border-radius:10px!important;font-weight:600!important;font-size:11px!important}
+html:not(#nv) .chw .chb .chtk{display:none!important}
+html:not(#nv) .chw .chdmt{font-size:13.5px!important;font-weight:600!important;letter-spacing:0!important;text-transform:none!important;color:var(--ink2)!important;padding:14px 6px 4px!important}
+html:not(#nv) .chw .chdmt~.chb .chi{width:28px!important;height:28px!important;border-radius:50%!important}
+html:not(#nv) .chw .nvdmh{font-size:12.5px;color:var(--mut);padding:4px 8px}
+
+/* ---- encabezado del canal ---- */
+html:not(#nv) .chw .chtt{display:flex!important;align-items:center!important;gap:10px!important;padding:14px 20px!important;border-bottom:1px solid var(--ln)!important;background:#fff!important;font-size:17px!important}
+html:not(#nv) .chw .chtt>.chi{width:12px!important;height:12px!important;border-radius:50%!important;box-shadow:0 0 0 4px #F6EFE8}
+html:not(#nv) .chw .chtt>b::before{content:"# ";color:#C7B6A8;font-weight:400}
+html:not(#nv) .chw .nvacts{margin-left:auto;display:flex;gap:8px;align-items:center}
+html:not(#nv) .chw .nvib{font:inherit;font-size:13px;min-width:34px;height:34px;padding:0 11px;border:1px solid var(--ln)!important;background:#fff!important;color:var(--ink2)!important;border-radius:20px!important;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}
+html:not(#nv) .chw .nvib:hover{border-color:var(--lat)!important}
+html:not(#nv) .chw.nvrp .nvtkb{background:var(--esp)!important;color:#fff!important;border-color:var(--esp)!important}
+html:not(#nv) .chw .nvbell.on{background:#EEF3EC!important;border-color:#EEF3EC!important}
+html:not(#nv) .chw.nvpinsoff .chpins{display:none!important}
+html:not(#nv) .chw .chpins{background:#FFFDFB!important;border-bottom:1px solid var(--ln)!important}
+
+/* ---- mensajes (compu: estilo Slack) ---- */
+html:not(#nv) .chw .chlist{padding:8px 0!important;background:#fff!important}
+html:not(#nv) .chw .chmsg{position:relative;padding:6px 22px 6px 68px!important;margin:0!important;border-radius:0!important;background:transparent!important;transition:background .12s}
+html:not(#nv) .chw .chmsg:hover{background:#FBF7F3!important}
+html:not(#nv) .chw .chmsg .chav{position:absolute;left:20px;top:8px;width:36px!important;height:36px!important;border-radius:50%!important;font-size:14px!important}
 html:not(#nv) .chw .chmsg .chh{display:flex;align-items:baseline;gap:8px}
-html:not(#nv) .chw .chmsg .chh b{color:#3A241C!important;font-weight:700!important;font-size:15px}
-html:not(#nv) .chw .chmsg .chh>span:not(.chav){color:#A8968A!important;font-size:12px!important}
-html:not(#nv) .chw .chmsg .chh button{position:absolute;top:-12px;opacity:0;pointer-events:none;background:#fff!important;border:1px solid #F0E6DD!important;border-radius:8px!important;box-shadow:0 4px 12px rgba(58,36,28,.1)!important;padding:3px 9px!important;font-size:12.5px!important;transition:opacity .12s!important;z-index:2}
-html:not(#nv) .chw .chmsg .chh .chpkb{right:118px}
+html:not(#nv) .chw .chmsg .chh b{color:var(--ink)!important;font-weight:700!important;font-size:15px}
+html:not(#nv) .chw .chmsg .chh>span:not(.chav){color:var(--mut)!important;font-size:12px!important}
+html:not(#nv) .chw .chmsg .chh button{position:absolute;top:-13px;opacity:0;pointer-events:none;background:#fff!important;border:1px solid var(--ln)!important;border-radius:9px!important;box-shadow:0 6px 16px rgba(58,36,28,.1)!important;padding:3px 9px!important;font-size:12.5px!important;color:var(--ink2)!important;transition:opacity .12s!important;z-index:2}
+html:not(#nv) .chw .chmsg .chh .chpkb{right:196px}
+html:not(#nv) .chw .chmsg .chh .nvcit{right:112px}
 html:not(#nv) .chw .chmsg .chh .chhilo{right:20px}
-html:not(#nv) .chw .chmsg:hover .chh button{opacity:1;pointer-events:auto}
-html:not(#nv) .chw .chx{font-size:15px!important;line-height:1.5!important;color:#3A241C!important;white-space:pre-wrap}
-/* mensajes seguidos del mismo autor sin avatar repetido se ven igual: Slack compacto */
+html:not(#nv) .chw .chmsg:hover .chh button,html:not(#nv) .chw .chmsg.nvsel .chh button{opacity:1;pointer-events:auto}
+html:not(#nv) .chw .chx{font-size:15px!important;line-height:1.5!important;color:var(--ink)!important;white-space:pre-wrap}
 html:not(#nv) .chw .nvf b{font-weight:700}
-html:not(#nv) .chw .nvc{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#F6EFE8;color:#9A5F5A;border:1px solid #F0E6DD;border-radius:5px;padding:1px 5px}
+html:not(#nv) .chw .nvc{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#F6EFE8;color:#9A5F5A;border:1px solid var(--ln);border-radius:5px;padding:1px 5px}
 html:not(#nv) .chw .nvh{display:block;font-size:17px;font-weight:700;margin:2px 0}
 html:not(#nv) .chw .nvli{display:block;padding-left:18px;position:relative}
 html:not(#nv) .chw .nvli::before{content:"•";position:absolute;left:4px;color:#9B6F53}
 html:not(#nv) .chw .nvol::before{content:attr(data-n);left:0;font-size:13px}
-html:not(#nv) .chw .nvq{display:block;border-left:3px solid #E6D7C3;padding-left:12px;color:#6C4D38}
+html:not(#nv) .chw .nvq{display:block;border-left:3px solid var(--ros);background:var(--ros-s);border-radius:0 10px 10px 0;padding:5px 10px;margin:2px 0 4px;font-size:13px;color:var(--ink2);max-width:460px;white-space:normal}
+html:not(#nv) .chw .nvq b{display:block;font-size:12px;color:#9A5F5A;font-weight:600}
 html:not(#nv) .chw .nvf a{color:#4F6B80;text-decoration:underline}
-/* fijados: destacados */
-html:not(#nv) .chw .chpins{background:#FBF4EC!important;border-bottom:1px solid #F0E6DD!important}
-/* caja para escribir */
-html:not(#nv) .chw form.chf{margin:8px 18px 16px!important;border:1.5px solid #E6D7C3!important;border-radius:14px!important;background:#fff!important;padding:6px 8px!important;display:flex!important;flex-wrap:wrap!important;align-items:center;gap:4px;box-shadow:none!important;transition:border-color .2s,box-shadow .2s}
-html:not(#nv) .chw form.chf:focus-within{border-color:#CBB4A0!important;box-shadow:0 0 0 4px #F6EFE8!important}
-html:not(#nv) .chw form.chf .nvtb{flex-basis:100%;display:flex;gap:2px;align-items:center;padding:2px 2px 6px;border-bottom:1px solid #F6EFE9;margin-bottom:2px}
-html:not(#nv) .chw .nvtb button{min-width:30px;height:28px;border:0;background:transparent;border-radius:7px;color:#6C4D38;font:inherit;font-size:14px;cursor:pointer}
+html:not(#nv) .chw .chvt{font-size:11.5px!important;color:var(--mut)!important;padding:0 22px 4px 68px!important}
+html:not(#nv) .chw .chvt.ok{color:#6E9CC2!important}
+
+/* ---- caja para escribir ---- */
+html:not(#nv) .chw form.chf{margin:0!important;border:0!important;border-top:1px solid var(--ln)!important;border-radius:0!important;background:#fff!important;padding:8px 18px 16px!important;display:flex!important;flex-wrap:wrap!important;align-items:center;gap:8px;box-shadow:none!important;position:relative}
+html:not(#nv) .chw form.chf .nvtb{order:0;flex-basis:100%;display:flex;gap:2px;align-items:center;padding:2px 4px 4px;color:var(--ink2)}
+html:not(#nv) .chw .nvtb button{min-width:32px;height:28px;border:0;background:transparent;border-radius:7px;color:var(--ink2);font:inherit;font-size:14.5px;cursor:pointer}
 html:not(#nv) .chw .nvtb button:hover{background:#F6EFE8}
-html:not(#nv) .chw .nvtb .nvsep{width:1px;height:16px;background:#F0E6DD;margin:0 4px}
-html:not(#nv) .chw form.chf textarea{flex:1;border:0!important;box-shadow:none!important;background:transparent!important;min-height:40px;padding:8px 6px!important;font-size:15px!important;order:3}
-html:not(#nv) .chw form.chf .chatt{order:2}
-html:not(#nv) .chw form.chf .chsend{order:4;background:#59392D!important;border-radius:10px!important}
-/* aviso dentro de la app, tipo WhatsApp */
+html:not(#nv) .chw .nvtb .nvsep{width:1px;height:16px;background:var(--ln);margin:0 6px}
+html:not(#nv) .chw form.chf .nvr,html:not(#nv) .chw form.chf .chatt{width:42px!important;height:42px!important;flex:none;border:1px solid var(--ln)!important;border-radius:50%!important;background:#fff!important;color:var(--ink2)!important;font:inherit;font-size:16px!important;display:grid!important;place-items:center;cursor:pointer;padding:0!important}
+html:not(#nv) .chw form.chf .nvemo{order:1}html:not(#nv) .chw form.chf .nvat{order:2}
+html:not(#nv) .chw form.chf .chatt:not(.chmic){order:3}
+html:not(#nv) .chw form.chf textarea{order:4;flex:1;min-width:0;border:1.5px solid var(--lat)!important;border-radius:22px!important;background:#fff!important;box-shadow:none!important;min-height:44px;max-height:180px;padding:11px 16px!important;font-size:15px!important;line-height:1.4!important;resize:none}
+html:not(#nv) .chw form.chf textarea:focus{border-color:#CBB4A0!important;box-shadow:0 0 0 4px #F8F1EA!important}
+html:not(#nv) .chw form.chf .chmic{order:5}
+html:not(#nv) .chw form.chf .chsend{order:6;height:44px!important;min-width:44px;border-radius:22px!important;background:var(--esp)!important;color:#fff!important;border:0!important;padding:0 20px!important;font-size:0!important;cursor:pointer}
+html:not(#nv) .chw form.chf .chsend::after{content:"Enviar";font-size:15px;font-weight:500}
+html:not(#nv) .chw .nvpop{position:absolute;bottom:64px;left:18px;z-index:20;background:#fff;border:1px solid var(--ln);border-radius:16px;box-shadow:0 14px 40px rgba(58,36,28,.18);padding:8px;display:grid;grid-template-columns:repeat(8,34px);gap:2px}
+html:not(#nv) .chw .nvpop button{width:34px;height:34px;border:0;background:transparent;border-radius:8px;font-size:19px;cursor:pointer}
+html:not(#nv) .chw .nvpop button:hover{background:#F6EFE8}
+
+/* ---- avisos ---- */
 html:not(#nv) .chnot{background:#fff!important;border:0!important;border-radius:18px!important;box-shadow:0 2px 6px rgba(58,36,28,.08),0 20px 50px rgba(58,36,28,.2)!important;color:#3A241C!important}
 html:not(#nv) .nvtoast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#3A241C;color:#fff;padding:12px 18px;border-radius:14px;font-size:14px;z-index:99999;max-width:90vw}
-html:not(#nv) .chw .chb.on .chn,html:not(#nv) .chw .chb.on .chtk{background:#fff!important;color:#59392D!important}
+
+/* ===== Celu: estilo WhatsApp ===== */
+@media (max-width:800px){
+  html:not(#nv) .chw.nvchat{border-radius:22px!important;grid-template-columns:1fr!important;box-shadow:0 1px 3px rgba(58,36,28,.05),0 10px 30px -14px rgba(58,36,28,.2)!important}
+  html:not(#nv) .chw.nvchat.nvrp{grid-template-columns:1fr!important}
+  html:not(#nv) .chw .chc{border-right:0!important;padding:14px 12px!important}
+  html:not(#nv) .chw .chb{padding:9px 10px!important;display:flex!important;align-items:center!important;gap:12px!important}
+  html:not(#nv) .chw .chb .chi{width:42px!important;height:42px!important;border-radius:14px!important;position:relative;display:grid!important;place-items:center}
+  html:not(#nv) .chw .chb .chi::after{content:attr(data-l)!important;color:#fff;font-weight:600;font-size:16px}
+  html:not(#nv) .chw .chb .chp{display:block!important;font-size:12.5px!important;color:var(--mut)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  html:not(#nv) .chw .chb .chtm{display:inline!important;font-size:11.5px!important;color:var(--mut)!important}
+  html:not(#nv) .chw .chb .chl1{font-size:15px!important}
+  html:not(#nv) .chw .chdmt~.chb .chi{width:42px!important;height:42px!important}
+  html:not(#nv) .chw .nvacts .nvtkb{display:none}
+  html:not(#nv) .chw .chtt{padding:10px 12px!important}
+  html:not(#nv) .chw .chtt .chback{font-size:24px!important;padding:0 6px!important}
+  html:not(#nv) .chw .chlist{background:#FFFDFB!important;padding:8px 10px!important}
+  html:not(#nv) .chw .chmsg{padding:0!important;margin:3px 0 3px!important;max-width:82%;width:fit-content;background:transparent!important}
+  html:not(#nv) .chw .chmsg:hover{background:transparent!important}
+  html:not(#nv) .chw .chmsg .chav{display:none!important}
+  html:not(#nv) .chw .chmsg .chh,html:not(#nv) .chw .chmsg .chx{background:#F7F2EE}
+  html:not(#nv) .chw .chmsg .chh{padding:7px 12px 0;border-radius:16px 16px 0 0;gap:6px}
+  html:not(#nv) .chw .chmsg .chh b{font-size:12.5px!important}
+  html:not(#nv) .chw .chmsg .chx{padding:2px 12px 8px;border-radius:0 0 16px 5px;font-size:14.5px!important}
+  html:not(#nv) .chw .chmsg.nvme{margin-left:auto!important}
+  html:not(#nv) .chw .chmsg.nvme .chh,html:not(#nv) .chw .chmsg.nvme .chx{background:#EADBCB}
+  html:not(#nv) .chw .chmsg.nvme .chh b{display:none}
+  html:not(#nv) .chw .chmsg.nvme .chh{justify-content:flex-end}
+  html:not(#nv) .chw .chmsg.nvme .chx{border-radius:0 0 5px 16px}
+  html:not(#nv) .chw .chmsg .chh button{position:static;display:none;opacity:1;pointer-events:auto;margin:0;box-shadow:none!important}
+  html:not(#nv) .chw .chmsg.nvsel .chh{flex-wrap:wrap}
+  html:not(#nv) .chw .chmsg.nvsel .chh button{display:inline-block}
+  html:not(#nv) .chw .chvt{padding:0 4px 4px!important;text-align:right}
+  html:not(#nv) .chw form.chf{padding:6px 8px 10px!important;gap:6px}
+  html:not(#nv) .chw form.chf .nvtb{display:none}
+  html:not(#nv) .chw form.chf:focus-within .nvtb{display:flex;overflow-x:auto}
+  html:not(#nv) .chw form.chf .nvat{display:none!important}
+  html:not(#nv) .chw form.chf .nvr,html:not(#nv) .chw form.chf .chatt{width:38px!important;height:38px!important;border:0!important}
+  html:not(#nv) .chw form.chf .chmic{background:var(--esp)!important;color:#fff!important}
+  html:not(#nv) .chw form.chf .chsend{padding:0 14px!important}
+  html:not(#nv) .chw form.chf .chsend::after{content:"➤";font-size:16px}
+  html:not(#nv) .chw .nvpop{grid-template-columns:repeat(8,1fr);left:8px;right:8px;bottom:58px}
+}
