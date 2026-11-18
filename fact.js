@@ -39,7 +39,8 @@
     var ps = (Array.isArray(v.prods) ? v.prods : String(v.prods || "").split(/\n/)).map(function(x){ return String(x).replace(/\s*·\s*/, " · "); }).map(function(x){ return x.trim(); }).filter(Boolean);
     var cs = (Array.isArray(v.cant) ? v.cant : String(v.cant || "").split(/\n/)).map(function(x){ return num(String(x).replace(/\[.?\]/g, "")) || 1; });
     if (!ps.length) ps = ["Productos Nervo Design"];
-    var tot = num(v.facturar) || num(v.cobrado) || 0;
+    /* el envío ya está sumado en el monto a facturar: se descuenta de los productos y va en su propia línea */
+    var tot = (num(v.facturar) || num(v.cobrado) || 0) - (num(v.costoEnv) > 0 ? num(v.costoEnv) : 0);
     var u = ps.reduce(function(a, _, i){ return a + (cs[i] || 1); }, 0) || 1;
     var unit = Math.floor((tot / u) * 100) / 100, acc = 0;
     return ps.map(function(p, i){ var c = cs[i] || 1; var pr = i === ps.length - 1 ? Math.round(((tot - acc) / c) * 100) / 100 : unit; acc += pr * c; return { d: p, c: c, p: pr }; });
@@ -165,7 +166,11 @@
     }
     pintarItems(); izq.append(h("div", "nvf-ith", null)); izq.lastChild.innerHTML = "<span>Producto</span><span>Cant.</span><span>Precio</span><span></span>"; izq.append(lis);
     var env = h("label", "nvf-env"); var ck = h("input"); ck.type = "checkbox"; ck.checked = !!d.conEnvio; ck.disabled = emitida; var ei = h("input", "nvf-in p"); ei.inputMode = "decimal"; ei.value = d.envio || ""; ei.placeholder = "Monto"; ei.disabled = emitida;
-    ck.onchange = function(){ d.conEnvio = ck.checked; pintarPrev(); }; ei.oninput = function(){ d.envio = num(ei.value); if (d.envio) { d.conEnvio = true; ck.checked = true; } pintarPrev(); };
+    /* si se escribe el envío, se descuenta de los productos para que el total siga igual */
+    function ajEnv(antes, ahora){ var dif = ahora - antes; if (!dif || !d.items.length) return; var it = d.items[d.items.length - 1], c = Number(it.c) || 1; it.p = Math.round(((Number(it.p) || 0) - dif / c) * 100) / 100; pintarItems(); }
+    var envAct = d.conEnvio ? (Number(d.envio) || 0) : 0;
+    ck.onchange = function(){ d.conEnvio = ck.checked; var n = d.conEnvio ? (Number(d.envio) || 0) : 0; ajEnv(envAct, n); envAct = n; pintarPrev(); };
+    ei.onchange = function(){ d.envio = num(ei.value); if (d.envio) { d.conEnvio = true; ck.checked = true; } var n = d.conEnvio ? (Number(d.envio) || 0) : 0; ajEnv(envAct, n); envAct = n; pintarPrev(); };
     env.append(ck, h("span", null, "Pagó envío"), ei); izq.append(env);
     var tt = h("div", "nvf-tot"); tt.append(h("span", null, "Total a facturar")); var tot = h("b"); tt.append(tot); izq.append(tt);
     if (x.monto && Math.abs(x.monto - totalDe(f)) > 1 && !emitida) izq.append(h("p", "nvf-nota", "En la venta figura " + plata(x.monto) + " como monto a facturar."));
