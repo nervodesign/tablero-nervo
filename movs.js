@@ -448,10 +448,10 @@
     var co = inp(plata(v.cobrado), "$ cobrado", "tot in", function(x){ guardarVenta(it, { cobrado: String(numAR(x) || "") }); refrescar(); });
     var to = inp(plata(v.facturar), "$ a facturar", "tot", function(x){ guardarVenta(it, { facturar: String(numAR(x) || "") }); refrescar(); });
     var ce = inp(plata(v.costoEnv), "$ envío", "tot", function(x){ guardarVenta(it, { costoEnv: String(numAR(x) || "0") }); });
-    var pa = sel(v.pago, PAGOS, "Pago", function(x){ guardarVenta(it, { pago: x }); });
+    var pa = sel(v.pago, PAGOS, "Pago", function(x){ guardarVenta(it, { pago: x }); refrescar(); });
     var me = sel(arr(v.metodo)[0] || "", METODOS, "❓ Medio", function(x){ guardarVenta(it, { metodo: JSON.stringify(x ? [x] : []) }); refrescar(); });
-    var mn = sel(v.menv, MENVS, "Método de envío", function(x){ guardarVenta(it, { menv: x }); });
-    var ti = sel(v.tipo, TIPOS, "Domicilio / Sucursal", function(x){ guardarVenta(it, { tipo: x }); });
+    var mn = sel(v.menv, MENVS, "Método de envío", function(x){ guardarVenta(it, { menv: x }); refrescar(); });
+    var ti = sel(v.tipo, TIPOS, "Domicilio / Sucursal", function(x){ guardarVenta(it, { tipo: x }); refrescar(); });
     var qu = h("select", "nvmov-in quien" + (quienDeCobro(v.cobro) ? "" : " falta")); [["","❓"],["euge","Euge"],["pau","Pau"]].forEach(function(o){ var e = h("option", null, o[1]); e.value = o[0]; qu.append(e); });
     qu.value = quienDeCobro(v.cobro) || ""; qu.onchange = function(){ guardarVenta(it, { cobro: JSON.stringify(cobroDeQuien(qu.value)) }); qu.classList.toggle("falta", !qu.value); refrescar(); };
     var ab = h("button", "nvmov-mas", "Abrir"); ab.type = "button";
@@ -462,11 +462,10 @@
     var sub = h("div", "nvmov-sub");
     var fw = h("label", "nvmov-fin"); var fc = h("input"); fc.type = "checkbox"; fc.checked = FIN[it.id] !== false; var ft = h("span");
     fw.title = "Si está tildado, al aprobar también se crea el cobro para Finanzas (queda abajo para aprobarlo)."; fw.append(fc, ft);
-    var lf = h("span", "nvmov-lfin");
+    var lf = h("span", "nvmov-lfin"); var fa = h("span", "nvmov-al nvmov-falt");
     var bv = h("button", "nvmov-ok", "✓ Aprobar"); bv.type = "button"; bv.onclick = function(){ ck.checked = true; ck.dispatchEvent(new Event("change")); };
-    sub.append(fw, lf);
+    sub.append(fa, fw, lf);
     if (it.src === "chat") sub.append(h("span", "nvmov-tx", "“" + (it.mov.texto || "") + "”"));
-    if (!Number(v.cobrado)) sub.append(h("span", "nvmov-al", "Todavía sin cobrar"));
     if (v.cobrado && v.facturar && Number(v.cobrado) && Math.abs(Number(v.cobrado) - Number(v.facturar)) > 1) sub.append(h("span", "nvmov-al", "Cobrado distinto de lo a facturar"));
     sub.append(bv); w.append(sub);
     /* al abrir: todo el detalle + cómo queda en Finanzas */
@@ -480,6 +479,11 @@
     w.append(det);
     refrescar = function(){
       var d = datosFin(it), si = fc.checked;
+      var falt = [[!v.cliente, "Cliente", cl], [!arr(v.prods).length, "Productos", null], [!Number(v.cobrado), "Total cobrado", co], [!Number(v.facturar), "Total a facturar", to], [!v.pago, "Pago", pa], [!arr(v.metodo).length, "Método de pago", me], [!v.menv, "Método de envío", mn], [!v.tipo, "Tipo de envío", ti], [!quienDeCobro(v.cobro), "Cobro por", qu]];
+      falt.forEach(function(z){ if (z[2]) z[2].classList.toggle("falta", !!z[0]); });
+      var fl = falt.filter(function(z){ return z[0]; }).map(function(z){ return z[1]; });
+      fa.textContent = fl.length ? "Campos faltantes: " + fl.join(", ") : ""; fa.hidden = !fl.length;
+      bv.disabled = !!fl.length; bv.classList.toggle("off", !!fl.length);
       ft.textContent = si ? "💰 También a Finanzas " + (d.quien || "(elegí quién cobró)") : "Solo a Ventas minoristas";
       fw.classList.toggle("off", !si);
       lf.textContent = si ? d.cols.slice(0, 5).map(function(c){ return c[1]; }).join("  ·  ") : "";
