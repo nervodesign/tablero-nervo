@@ -110,14 +110,14 @@
     KB.forEach(function(k, i){
       var c = h("div", "nvpk-col"), lst = cols[i];
       var ch = h("div", "nvpk-ch"); var d = h("i"); d.style.background = k[2]; ch.append(d, h("span", null, k[0]), h("em", null, String(lst.length))); c.append(ch);
-      lst.slice().sort(function(a, b){ return String(a.fecha || "").localeCompare(String(b.fecha || "")); }).slice(0, 3).forEach(function(r){
+      lst.slice().sort(function(a, b){ return String(a.fecha || "").localeCompare(String(b.fecha || "")); }).slice(0, 2).forEach(function(r){
         var tk = h("div", "nvpk-tk"); tk.onclick = function(){ try { window.__nv.setTab("base"); } catch(e){} };
         tk.append(h("b", null, txt(r.cliente) || ("Pedido " + txt(r.num))));
         var p = txt(r.prods); if (p) tk.append(h("span", null, p));
         var f = String(r.fecha || "").slice(0, 10); if (f || r.num) tk.append(h("small", null, (r.num ? "#" + txt(r.num) : "") + (f ? (r.num ? " · " : "") + f.split("-").reverse().slice(0, 2).join("/") : "")));
         c.append(tk);
       });
-      if (lst.length > 3) c.append(h("div", "nvpk-mas", "+ " + (lst.length - 3) + " más"));
+      if (lst.length > 2) c.append(h("div", "nvpk-mas", "+ " + (lst.length - 2) + " más"));
       if (!lst.length) c.append(h("div", "nvpk-vacio", "—"));
       wrap.append(c);
     });
