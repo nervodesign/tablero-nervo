@@ -3,7 +3,7 @@ html:not(#nv) body.nvmov-on .wrap > :not(header):not(.nvmovp){display:none!impor
 html:not(#nv) .nvmovp{display:none}
 html:not(#nv) body.nvmov-on .nvmovp{display:block;max-width:1100px;margin:0 auto;padding:6px 0 90px;font-family:Outfit,system-ui,sans-serif;color:#3A241C;animation:nvRise .3s cubic-bezier(.2,.8,.2,1) both}
 html:not(#nv) nav.tabs .nvmov-tab{position:relative}
-html:not(#nv) nav.tabs .nvmov-tab .nvmov-n:not(:empty){margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#E9A9A3;color:#fff;font-size:11.5px;font-weight:600;display:inline-grid;place-items:center}
+html:not(#nv) nav.tabs .nvmov-tab .nvmov-n:empty{display:none}
 html:not(#nv) .nvmov-cab h1{font-size:30px;font-weight:600;letter-spacing:-.02em;margin:0}
 html:not(#nv) .nvmov-cab p{margin:4px 0 0;color:#9B8576;font-size:14.5px}
 html:not(#nv) .nvmov-st{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0 14px}

@@ -105,7 +105,7 @@
     var b = nav.querySelector(".nvmov-tab");
     if (!b){
       b = h("button", "tab nvmov-tab"); b.type = "button"; b.id = "tab-mov";
-      b.innerHTML = '<span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="3"></rect><circle cx="12" cy="12" r="2.5"></circle><path d="M7 9.5v5M17 9.5v5"></path></svg></span><span class="nvmov-l">Movimientos</span><span class="nvmov-n"></span>';
+      b.innerHTML = '<span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="3"></rect><circle cx="12" cy="12" r="2.5"></circle><path d="M7 9.5v5M17 9.5v5"></path></svg><span class="n nvmov-n"></span></span><span class="lb">Movimientos</span>';
       b.onclick = function(e){ e.stopPropagation(); abrir(); };
       var ref = nav.querySelector("#tab-ven"); if (ref && ref.nextSibling) nav.insertBefore(b, ref.nextSibling); else nav.appendChild(b);
     }
