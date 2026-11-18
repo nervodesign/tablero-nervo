@@ -103,3 +103,25 @@ html:not(#nv) header.top::before,html:not(#nv) header.top::after{display:none!im
 html:not(#nv) header.top > *{position:relative;top:16px}}
 @media (max-width:800px){html:not(#nv) header.top{background:rgba(255,255,255,.92)!important;-webkit-backdrop-filter:blur(16px)!important;backdrop-filter:blur(16px)!important}}
 html:not(#nv) .card,html:not(#nv) .pz-c,html:not(#nv) .hp-card{box-shadow:0 0 0 1px #F2ECE6,0 6px 20px rgba(58,36,28,.04)!important}
+
+/* ===== blanco cálido, letra casi negra, detalles rosa / chocolate / celeste ===== */
+html:root{--ink:#1F1B19!important;--bg:#FFFCF9!important}
+html:not(#nv),html:not(#nv) body{background:#FFFCF9!important;color:#1F1B19!important}
+html:not(#nv) body :is(h1,h2,h3,b,strong,.hp-h,.pz-hi){color:#1F1B19}
+html:not(#nv) main#list .pz-hi,html:not(#nv) main#list h1{color:#1F1B19!important}
+html:not(#nv) nav.tabs{background:#FFFAF6!important;border-right:1px solid #F3E9E2!important}
+html:not(#nv) nav.tabs .tab{color:#2A2320!important}
+html:not(#nv) nav.tabs .tab svg{color:#6B4A3A!important}
+html:not(#nv) nav.tabs .tab:hover{background:#FBEFEF!important}
+html:not(#nv) nav.tabs .tab[aria-selected="true"]{background:#5A3A2B!important;color:#fff!important}
+html:not(#nv) nav.tabs .tab[aria-selected="true"] svg{color:#fff!important}
+html:not(#nv) nav.tabs .tab[aria-selected="true"] .n{background:rgba(255,255,255,.22)!important;color:#fff!important}
+html:not(#nv) nav.tabs .tab .n{background:#F8E3E6!important;color:#8E4E5A!important}
+html:not(#nv) nav.tabs .navsec{color:#6E9BBE!important;font-weight:600!important}
+html:not(#nv) nav.tabs .tab .lb{color:inherit!important}
+html:not(#nv) nav.tabs .tab:not([aria-selected="true"]) .lb{color:#1F1B19!important}
+html:not(#nv) .nvyo{background:#FFFCF9!important}
+/* Chat como una ventana: marco visible, ocupa toda la altura */
+@media (min-width:801px){html:not(#nv) .chw.nvchat{height:calc(100vh - 92px)!important;max-height:none!important;border:1.5px solid #E3CFC2!important;border-radius:22px!important;overflow:hidden!important;background:#fff!important;box-shadow:0 2px 6px rgba(58,36,28,.06),0 30px 70px -24px rgba(58,36,28,.30)!important;margin-top:8px!important}}
+html:not(#nv) .chw.nvchat > .chc{background:#FFF8F4!important;border-right:1px solid #F0E3DA!important}
+html:not(#nv) .chw.nvchat .chmain > :first-child{background:#FFFCFA!important}
