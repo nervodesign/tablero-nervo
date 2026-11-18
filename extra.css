@@ -60,3 +60,23 @@ html:not(#nv) .nvmov-sub .nvmov-who{font-weight:500;color:#9A8274}
 html:not(#nv) .nvmov-sub .nvmov-tx{color:#A8968A}
 html:not(#nv) .nvmov-sub .nvmov-al,html:not(#nv) .nvmov-sub .nvmov-apro{font-size:11px;padding:1px 7px;border-radius:999px}
 html:not(#nv) .nvmov-it:hover{background:#FDF9F6}
+/* Movimientos: dos bloques plegables (Ventas / Plata) en la misma hoja */
+html:not(#nv) .nvmov-blq{margin:0 0 18px}
+html:not(#nv) .nvmov-blqh{display:flex;align-items:center;gap:10px;width:100%;border:0;background:#F6F3F0;border-radius:16px;padding:12px 16px;font:inherit;color:#3B2418;cursor:pointer;text-align:left;box-shadow:-3px -3px 8px rgba(255,255,255,.9),4px 4px 12px rgba(120,95,80,.12);margin-bottom:12px}
+html:not(#nv) .nvmov-blqh b{font-size:15.5px;font-weight:600}
+html:not(#nv) .nvmov-blqh em{font-style:normal;font-size:11.5px;padding:2px 9px;border-radius:999px;background:#E6EEF6;color:#3F6E8C}
+html:not(#nv) .nvmov-blqh em.pen{background:#F8E4E7;color:#8E4E5A}
+html:not(#nv) .nvmov-blqh small{margin-left:auto;font-size:12px;color:#A08B7D}
+html:not(#nv) .nvmov-chev{font-style:normal;font-size:18px;color:#9A8274;transform:rotate(90deg);transition:transform .2s;width:14px;text-align:center}
+html:not(#nv) .nvmov-blq.cerr .nvmov-chev{transform:rotate(0)}
+html:not(#nv) .nvmov-blq.cerr .nvmov-blqh{margin-bottom:0}
+html:not(#nv) .nvmov-tr.nvmov-vr{grid-template-columns:30px 98px 112px minmax(130px,1.2fr) minmax(170px,1.8fr) 98px 98px 150px 64px minmax(110px,1fr) 52px 26px;min-width:1150px}
+html:not(#nv) .nvmov-vt .nvmov-it{min-width:1150px}
+html:not(#nv) .nvmov-in.fuerte{font-weight:500}
+html:not(#nv) .nvmov-mas{border:0;background:#F3EEE9;color:#6B4A3A;border-radius:999px;font:inherit;font-size:11.5px;padding:4px 9px;cursor:pointer}
+html:not(#nv) .nvmov-mas.on{background:#5A3A2B;color:#fff}
+html:not(#nv) .nvmov-det{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:4px 16px 14px 52px}
+html:not(#nv) .nvmov-det[hidden]{display:none}
+html:not(#nv) .nvmov-det .nvmov-f>span{font-size:10.5px;color:#A8968A}
+html:not(#nv) .nvmov-det textarea.nvmov-in{background:#F7F3EF;resize:vertical;font-size:12.5px;line-height:1.4}
+html:not(#nv) .nvmov-x:disabled{opacity:.25;cursor:default}
