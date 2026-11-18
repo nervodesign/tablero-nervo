@@ -14,7 +14,7 @@
   function catLimpia(c){ c = String(c || "").trim(); if (!c) return null; var k = c.split(" ")[0]; return CATS.find(function(x){ return x === c; }) || CATS.find(function(x){ return x.split(" ")[0] === k; }) || null; }
   function catCorta(c){ return String(c || "").replace(/^\d+\.\d+\s*/, ""); }
   function esBorradorVenta(r){ return r.tipo === "venta" && !/^venta:/.test(r.msg_id || ""); }
-  var ROWS = [], SOY = null, LISTO = false, ENCURSO = {}, FILTRO = "pend", RECIEN = {}, COLAP = (function(){ try { return JSON.parse(localStorage.getItem("nvmov-colap")) || {}; } catch(e){ return {}; } })();
+  var ROWS = [], SOY = null, LISTO = false, ENCURSO = {}, FILTRO = "pend", RECIEN = {}, COLAP = { ventas: true, plata: true }; /* siempre arranca contraído: se ve cuántos hay y se abre a mano */
   function h(tag, cls, txt){ var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
   function plata(n){ n = Number(n) || 0; return "$" + Math.round(n).toLocaleString("es-AR"); }
   function tipoDe(k){ return TIPOS.find(function(t){ return t[0] === k; }) || TIPOS[6]; }

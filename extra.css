@@ -568,3 +568,17 @@ html:not(#nv) .nvmas-ic svg *{fill:none!important;stroke:currentColor!important}
 html:not(#nv) .nvmas-ic .n{display:none!important}
 html:not(#nv) .scrim:has(.nvmas-sh){z-index:90!important}
 html:not(#nv) .sheet.nvmas-sh{padding-bottom:calc(110px + env(safe-area-inset-bottom))!important;max-height:calc(100vh - 70px)!important}
+
+/* Movimientos: cada bloque con su color, contadores en una fila */
+html:not(#nv) .nvmovp>section.nvmov-blq:nth-of-type(1){background:linear-gradient(135deg,#FFF6F4,#F9E6E2)!important;box-shadow:inset 4px 0 0 #E3A49A,0 1px 2px rgba(58,36,28,.04),0 8px 22px rgba(58,36,28,.06)!important;border:0!important}
+html:not(#nv) .nvmovp>section.nvmov-blq:nth-of-type(2){background:linear-gradient(135deg,#F5FAF5,#E6F1E7)!important;box-shadow:inset 4px 0 0 #8DBB96,0 1px 2px rgba(58,36,28,.04),0 8px 22px rgba(58,36,28,.06)!important;border:0!important}
+html:not(#nv) .nvmov-blqh em{font-style:normal!important;font-weight:500!important;border-radius:999px!important;padding:3px 11px!important;background:#E3EFE3!important;color:#3E6B47!important}
+html:not(#nv) .nvmov-blqh em.pen{background:#D9897E!important;color:#fff!important}
+html:not(#nv) .nvmov-blqh .nvmov-chev{color:#3B2418!important;font-weight:500}
+html:not(#nv) .nvmov-st{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;flex-wrap:nowrap!important}
+html:not(#nv) .nvmov-st .nvmov-k{min-width:0!important;width:auto!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:2px!important;padding:10px 12px!important;border-radius:16px!important;border:0!important;background:#F3EDE8!important;box-shadow:none!important}
+html:not(#nv) .nvmov-st .nvmov-k b{font-size:22px!important;font-weight:500!important;line-height:1.1;color:#3B2418!important}
+html:not(#nv) .nvmov-st .nvmov-k small{font-size:11.5px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;color:#7A5E50!important}
+html:not(#nv) .nvmov-st .nvmov-k.pen{background:#F8E0DB!important}html:not(#nv) .nvmov-st .nvmov-k.pen b{color:#A2564C!important}
+html:not(#nv) .nvmov-st .nvmov-k.ok{background:#E1EEE2!important}html:not(#nv) .nvmov-st .nvmov-k.ok b{color:#3E6B47!important}
+@media (max-width:760px){html:not(#nv) .nvmov-st .nvmov-k small{font-size:10.5px!important}html:not(#nv) .nvmov-st .nvmov-k b{font-size:20px!important}html:not(#nv) .nvmov-seg{overflow-x:auto!important;flex-wrap:nowrap!important;scrollbar-width:none}html:not(#nv) .nvmov-seg button{white-space:nowrap!important}}
