@@ -88,14 +88,23 @@
   if ("serviceWorker" in navigator) navigator.serviceWorker.getRegistrations().then(function(rs){ rs.forEach(function(r){ r.unregister(); }); }).catch(function(){});
 })();
 
-/* tema visual: se carga al final para que gane */
-(function(){function t(){if(document.getElementById("nv-tema-l"))return;var l=document.createElement("link");l.id="nv-tema-l";l.rel="stylesheet";l.href="tema.css?v="+Date.now();document.body.appendChild(l);}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",t);else t();})();
-
-/* siempre claro */
-(function(){try{localStorage.setItem("hub_theme","light")}catch(e){}var h=document.documentElement;function L(){if(h.getAttribute("data-theme")!=="light")h.setAttribute("data-theme","light");}L();new MutationObserver(L).observe(h,{attributes:true,attributeFilter:["data-theme"]});document.addEventListener("DOMContentLoaded",function(){var b=document.getElementById("themeBtn");if(b)b.style.display="none";});})();
-
-/* chat tipo Slack */
-(function(){function t(){if(document.getElementById('nv-chat-l'))return;var v=Date.now();var l=document.createElement('link');l.id='nv-chat-l';l.rel='stylesheet';l.href='chat.css?v='+v;document.body.appendChild(l);var s=document.createElement('script');s.src='chat-plus.js?v='+v;document.body.appendChild(s);}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',t);else t();})();
-
-/* Hoy con el diseño nuevo */
-(function(){function t(){if(document.getElementById('nv-hoy-l'))return;var v=Date.now();var l=document.createElement('link');l.id='nv-hoy-l';l.rel='stylesheet';l.href='hoy.css?v='+v;document.body.appendChild(l);var s=document.createElement('script');s.src='hoy-plus.js?v='+v;document.body.appendChild(s);}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',t);else t();})();
+/* tema visual, chat y Hoy: se cargan de entrada para que no aparezca el diseño viejo */
+(function(){
+  var cs = document.currentScript, m = cs && /[?&]v=(\d+)/.exec(cs.src), V = m ? m[1] : String(Date.now());
+  var h = document.documentElement;
+  try{ localStorage.setItem("hub_theme","light"); }catch(e){}
+  function L(){ if (h.getAttribute("data-theme") !== "light") h.setAttribute("data-theme","light"); }
+  L(); new MutationObserver(L).observe(h, { attributes: true, attributeFilter: ["data-theme"] });
+  var tapa = document.createElement("style"); tapa.id = "nv-tapa";
+  tapa.textContent = "html{background:#FFFDFB}body{opacity:0!important}";
+  document.head.appendChild(tapa);
+  function destapar(){ var t = document.getElementById("nv-tapa"); if (t) t.remove(); }
+  setTimeout(destapar, 2500);
+  var pend = 0;
+  function css(id, href){ var l = document.createElement("link"); l.id = id; l.rel = "stylesheet"; l.href = href + "?v=" + V; pend++;
+    l.onload = l.onerror = function(){ if (--pend <= 0) destapar(); }; document.head.appendChild(l); }
+  css("nv-tema-l", "tema.css"); css("nv-chat-l", "chat.css"); css("nv-hoy-l", "hoy.css");
+  function js(){ ["chat-plus.js","hoy-plus.js"].forEach(function(f){ var s = document.createElement("script"); s.src = f + "?v=" + V; document.body.appendChild(s); });
+    var b = document.getElementById("themeBtn"); if (b) b.style.display = "none"; }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", js); else js();
+})();
