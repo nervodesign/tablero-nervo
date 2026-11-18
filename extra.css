@@ -550,3 +550,14 @@ html:not(#nv) .nvmov-chk{font-size:12px;width:100%}
 html:not(#nv) .nvmov-chk.bien{color:#4E7A55}html:not(#nv) .nvmov-chk.mal{color:#A2564C;font-weight:500}
 html:not(#nv) .nvmov-rgo{border:0;background:#3B2418;color:#fff;border-radius:999px;padding:6px 12px;font-family:inherit;font-size:12.5px;cursor:pointer}
 @media (max-width:760px){html:not(#nv) .nvmov-res{margin:6px 8px;padding:9px 12px}html:not(#nv) .nvmov-rk{width:100%}}
+
+/* menú de la izquierda: aire abajo para que se vea lo último (Links, Configuración) */
+@media (min-width:761px){
+  html:not(#nv) nav.tabs{padding-bottom:24px!important;scroll-padding-bottom:110px}
+  html:not(#nv) nav.tabs .nvyo{margin-top:18px!important;box-shadow:0 -14px 18px -8px rgba(251,250,249,.95),0 1px 3px rgba(58,36,28,.06)!important}
+  html:not(#nv) nav.tabs .nvcfg-tab{margin-bottom:6px!important}
+  html:not(#nv) header.top .nvcfg-btn{display:none!important}
+}
+@media (max-width:760px){
+  html:not(#nv) nav.tabs .nvcfg-tab,html:not(#nv) nav.tabs .nvcfg-sec{display:none!important}
+}

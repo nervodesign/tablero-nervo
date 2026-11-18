@@ -770,7 +770,7 @@
     var usados = {}, cont = h("div", "nvmas"), grupo = null, card = null, tono = "cel";
     Array.prototype.forEach.call(nav.children, function(e){
       if (e.classList.contains("navsec")){ grupo = e.textContent.trim(); tono = TONO[grupo] || "cel"; card = null; return; }
-      if (!e.classList.contains("tab") || NUNCA[e.id]) return;
+      if (!e.classList.contains("tab") || NUNCA[e.id] || e.classList.contains("nvcfg-tab")) return;
       if (getComputedStyle(e).display !== "none") return; /* ya está en el menú de abajo */
       var lb = e.querySelector(".lb"), ic = e.querySelector(".ic"), n = e.querySelector(".n");
       var nom = (lb ? lb.textContent : e.textContent).trim(); if (!nom) return;
@@ -880,6 +880,21 @@
       var ay = document.querySelector(".chw .nvmov-ayuda");
       if (ay && Date.now() - ULT > 20000) traer();
       pintar();
+    } catch(e){}
+  }, 1500);
+})();
+
+/* ---------- Compu: "Configuración" abajo en el menú de la izquierda ---------- */
+(function(){
+  if (window.__nvCfgSide) return; window.__nvCfgSide = 1;
+  setInterval(function(){
+    try {
+      var nav = document.querySelector("nav.tabs"), yo = nav && nav.querySelector(".nvyo"); if (!yo || nav.querySelector(".nvcfg-tab")) return;
+      var sec = document.createElement("div"); sec.className = "navsec nvcfg-sec"; sec.textContent = "Ajustes";
+      var b = document.createElement("button"); b.type = "button"; b.className = "tab desk nvcfg-tab";
+      b.innerHTML = '<span class="ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.4M12 18.8v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.8 12h2.4M18.8 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg></span><span class="lb">Configuración</span>';
+      b.onclick = function(){ if (window.__nvAbrirCfg) window.__nvAbrirCfg(); };
+      nav.insertBefore(sec, yo); nav.insertBefore(b, yo);
     } catch(e){}
   }, 1500);
 })();
