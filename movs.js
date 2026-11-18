@@ -200,7 +200,9 @@
       gh.append(h("b", null, diaLargo(k)), h("span", "nvmov-cnt", np ? np + (np === 1 ? " pendiente" : " pendientes") : "todo aprobado"),
         h("span", "nvmov-tot", (ing ? "+" + plata(ing) : "") + (ing && egr ? "  ·  " : "") + (egr ? "−" + plata(egr) : "")));
       g.append(gh);
-      rs.forEach(function(r){ g.append(fila(r)); });
+      var tb = h("div", "nvmov-tb"); tb.append(cabecera());
+      rs.forEach(function(r){ tb.append(fila(r)); });
+      g.append(tb);
       p.append(g);
     });
     window.scrollTo(0, y);
@@ -216,17 +218,21 @@
       google.script.run.withSuccessHandler(function(){ ok(id); }).withFailureHandler(mal).baseGuardarVarios(hoja, [fila]);
     });
   }
-  function campo(lab, el){ var l = h("label", "nvmov-f"); l.append(h("span", null, lab), el); return l; }
+  /* una fila = los mismos casilleros que Finanzas: Concepto · Fecha · Categoría · Total · Cuenta · Notas (+ a quién se carga) */
+  var COLS = ["", "Concepto", "Fecha", "Categoría", "Total", "Cuenta", "Notas", "Se carga a", "", ""];
+  function cabecera(){ var t = h("div", "nvmov-tr nvmov-th"); COLS.forEach(function(x){ t.append(h("span", null, x)); }); return t; }
+  function numAR(v){ var s = String(v || "").trim(); if (!s) return null; var neg = /^-|^−/.test(s) || /-\s*\$/.test(s); s = s.replace(/[^\d,]/g, "").replace(",", "."); var n = Number(s); if (!n) return null; return neg ? -n : n; }
   function fila(r){
-    var f = h("div", "nvmov-row " + (r.estado === "aprobado" ? "ok" : r.estado === "procesando" ? "lee" : r.estado === "descartado" ? "des" : ""));
-    var ck = h("input"); ck.type = "checkbox"; ck.className = "nvmov-ck"; ck.checked = r.estado === "aprobado"; ck.title = "Aprobar";
+    var w = h("div", "nvmov-it " + (r.estado === "aprobado" ? "ok" : r.estado === "procesando" ? "lee" : r.estado === "descartado" ? "des" : ""));
+    var f = h("div", "nvmov-tr");
+    var ck = h("input"); ck.type = "checkbox"; ck.className = "nvmov-ck"; ck.checked = r.estado === "aprobado"; ck.title = "Aprobar y cargar en Finanzas";
     ck.disabled = r.estado === "procesando" || r.estado === "descartado";
     ck.onchange = function(){
       if (ck.checked){
         if (!r.por){ ck.checked = false; toast("Elegí a quién se carga (Euge o Pau) antes de aprobar."); return; }
-        if (!Number(r.monto)){ ck.checked = false; toast("Falta el monto."); return; }
+        if (!Number(r.monto)){ ck.checked = false; toast("Falta el total."); return; }
         if (!r.cat){ ck.checked = false; toast("Elegí la categoría antes de aprobar."); return; }
-        if (signoDe(r) !== "+" && signoDe(r) !== "-"){ ck.checked = false; toast("Marcá si entra o sale."); return; }
+        if (signoDe(r) !== "+" && signoDe(r) !== "-"){ ck.checked = false; toast("Poné el total con signo: negativo si sale plata."); return; }
         RECIEN[r.id] = 1; ck.disabled = true;
         cargarFinanzas(r).then(function(idFin){
           return guardar(r, { estado: "aprobado", aprobado_por: SOY, aprobado_at: new Date().toISOString(), cargado: "fin_" + r.por + ":" + idFin });
@@ -238,49 +244,44 @@
         guardar(r, { estado: "pendiente", aprobado_por: null, aprobado_at: null });
       }
     };
-    var ckw = h("label", "nvmov-ckw"); ckw.append(ck, h("i")); f.append(ckw);
-    var cu = h("div", "nvmov-cu");
-    var g1 = h("div", "nvmov-g");
-    var tp = h("select"); TIPOS.forEach(function(t){ var o = h("option", null, t[1]); o.value = t[0]; tp.append(o); }); tp.value = tipoDe(r.tipo)[0];
-    tp.onchange = function(){ var s = tipoDe(tp.value)[2]; guardar(r, { tipo: tp.value, signo: s === "+" ? "ingreso" : s === "-" ? "egreso" : r.signo }); };
-    var sg = h("button", "nvmov-sg " + (signoDe(r) === "+" ? "in" : signoDe(r) === "-" ? "eg" : ""), signoDe(r) === "+" ? "Entra" : signoDe(r) === "-" ? "Sale" : "±"); sg.type = "button";
-    sg.onclick = function(){ guardar(r, { signo: signoDe(r) === "+" ? "egreso" : "ingreso" }); };
-    var mo = h("input"); mo.inputMode = "numeric"; mo.value = r.monto ? Math.round(r.monto).toLocaleString("es-AR") : ""; mo.placeholder = "$ monto";
-    mo.onchange = function(){ var n = Number(String(mo.value).replace(/[^\d,]/g, "").replace(",", ".")) || null; guardar(r, { monto: n }); };
-    var qu = h("select", r.por ? "" : "falta"); [["","❓ ¿A quién?"],["euge","Euge"],["pau","Pau"]].forEach(function(o){ var e = h("option", null, o[1]); e.value = o[0]; qu.append(e); }); qu.value = r.por || "";
-    qu.onchange = function(){ guardar(r, { por: qu.value || null }); };
-    var fe = h("input"); fe.type = "date"; fe.value = r.fecha || ""; fe.onchange = function(){ guardar(r, { fecha: fe.value || null }); };
-    g1.append(campo("Tipo", tp), campo("Entra / sale", sg), campo("Monto", mo), campo("Se carga a", qu), campo("Fecha", fe));
-    var g2 = h("div", "nvmov-g dos");
-    var co = h("input"); co.value = r.contraparte || ""; co.placeholder = "Cliente, proveedor o empleado"; co.onchange = function(){ guardar(r, { contraparte: co.value.trim() || null }); };
-    var cc = h("input"); cc.value = r.concepto || ""; cc.placeholder = "Qué es"; cc.onchange = function(){ guardar(r, { concepto: cc.value.trim() || null }); };
-    var ca = h("select", r.cat ? "" : "falta"); var o0 = h("option", null, "❓ Elegí categoría"); o0.value = ""; ca.append(o0);
+    var ckw = h("label", "nvmov-ckw"); ckw.append(ck, h("i"));
+    /* Concepto (como en Finanzas: el nombre en mayúscula) */
+    var co = h("input", "nvmov-in up"); co.value = String(r.contraparte || "").toUpperCase(); co.placeholder = "CONCEPTO";
+    co.onchange = function(){ guardar(r, { contraparte: co.value.trim().toUpperCase() || null }); };
+    var fe = h("input", "nvmov-in"); fe.type = "date"; fe.value = r.fecha || diaDe(r.msg_at || r.creado); fe.onchange = function(){ guardar(r, { fecha: fe.value || null }); };
+    var ca = h("select", "nvmov-in cat" + (r.cat ? "" : " falta")); var o0 = h("option", null, "❓ Categoría"); o0.value = ""; ca.append(o0);
     CATS.forEach(function(c){ var o = h("option", null, c); o.value = c; ca.append(o); }); ca.value = r.cat || "";
+    ca.dataset.g = r.cat ? String(r.cat).split(".")[0] : "";
     ca.onchange = function(){ guardar(r, { cat: ca.value || null }); };
-    g2.append(campo("Quién", co), campo("Concepto", cc), campo("Categoría", ca));
-    if (r.cargado) [tp, sg, mo, qu, fe, co, cc, ca].forEach(function(x){ x.disabled = true; });
-    cu.append(g1, g2);
-    var pie = h("div", "nvmov-pie");
-    pie.append(h("span", "nvmov-dest", "→ " + destino(r)));
-    var al = [];
-    if (r.por && r.cuenta && r.por !== r.cuenta) al.push("⚠️ El comprobante es de la cuenta de " + NOM[r.cuenta] + " y el mensaje dice " + NOM[r.por]);
-    (r.falta || []).forEach(function(x){ al.push("Falta: " + x); });
-    al.forEach(function(x){ pie.append(h("span", "nvmov-al", x)); });
-    cu.append(pie);
-    var orig = h("div", "nvmov-orig");
-    var hora = new Date(r.msg_at || r.creado).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
-    orig.append(h("span", "nvmov-who", (NOM[r.autor] || r.autor || "") + " · " + hora), h("span", "nvmov-tx", r.texto || "(sin texto)"));
+    var s = signoDe(r), mon = Number(r.monto) || 0;
+    var to = h("input", "nvmov-in tot " + (s === "+" ? "in" : s === "-" ? "eg" : "")); to.inputMode = "decimal";
+    to.value = mon ? "$ " + (s === "-" ? "-" : "") + Math.round(mon).toLocaleString("es-AR") : ""; to.placeholder = "$ -0";
+    to.title = "Negativo si sale plata, positivo si entra";
+    to.onchange = function(){ var n = numAR(to.value); if (n == null){ guardar(r, { monto: null }); return; } guardar(r, { monto: Math.abs(n), signo: n < 0 ? "egreso" : "ingreso" }); };
+    var cu = h("span", "nvmov-cuenta", r.cat ? (GRUPOS_FIN[String(r.cat).split(".")[0]] || "") : "—");
+    var no = h("input", "nvmov-in"); no.value = r.concepto || ""; no.placeholder = "Notas"; no.onchange = function(){ guardar(r, { concepto: no.value.trim() || null }); };
+    var qu = h("select", "nvmov-in quien" + (r.por ? "" : " falta")); [["","❓"],["euge","Euge"],["pau","Pau"]].forEach(function(o){ var e = h("option", null, o[1]); e.value = o[0]; qu.append(e); }); qu.value = r.por || "";
+    qu.onchange = function(){ guardar(r, { por: qu.value || null }); };
+    var ad = h("span", "nvmov-adjs");
     (r.adj || []).forEach(function(a){
-      if (!a || !a.id) return; var l = h("a", "nvmov-adj", /pdf/i.test(a.t || a.n || "") ? "📄 Ver PDF" : /image/i.test(a.t || "") ? "🖼 Ver comprobante" : "📎 " + (a.n || "Archivo"));
-      l.href = "https://drive.google.com/file/d/" + a.id + "/view"; l.target = "_blank"; l.rel = "noopener"; orig.append(l);
+      if (!a || !a.id) return; var l = h("a", "nvmov-adj", /pdf/i.test(a.t || a.n || "") ? "PDF" : "📎"); l.title = a.n || "Ver comprobante";
+      l.href = "https://drive.google.com/file/d/" + a.id + "/view"; l.target = "_blank"; l.rel = "noopener"; ad.append(l);
     });
-    if (r.estado === "aprobado" && r.aprobado_por) orig.append(h("span", "nvmov-apro", "✓ Aprobó " + (NOM[r.aprobado_por] || r.aprobado_por)));
-    cu.append(orig);
-    f.append(cu);
     var x = h("button", "nvmov-x", r.estado === "descartado" ? "↺" : "✕"); x.type = "button"; x.title = r.estado === "descartado" ? "Recuperar" : "Descartar";
     x.onclick = function(){ guardar(r, { estado: r.estado === "descartado" ? "pendiente" : "descartado" }); };
-    f.append(x);
-    return f;
+    if (r.cargado) [co, fe, ca, to, no, qu].forEach(function(e){ e.disabled = true; });
+    f.append(ckw, co, fe, ca, to, cu, no, qu, ad, x);
+    w.append(f);
+    /* debajo, chiquito: el mensaje original y avisos */
+    var sub = h("div", "nvmov-sub");
+    var hora = new Date(r.msg_at || r.creado).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+    sub.append(h("span", "nvmov-who", (NOM[r.autor] || r.autor || "") + " · " + hora), h("span", "nvmov-tx", "“" + (r.texto || "sin texto") + "”"));
+    if (r.por && r.cuenta && r.por !== r.cuenta) sub.append(h("span", "nvmov-al", "⚠️ El comprobante es de la cuenta de " + NOM[r.cuenta]));
+    (r.falta || []).forEach(function(t){ sub.append(h("span", "nvmov-al", "Falta: " + t)); });
+    if (r.estado === "procesando") sub.append(h("span", "nvmov-al", "⏳ Leyendo…"));
+    if (r.estado === "aprobado") sub.append(h("span", "nvmov-apro", "✓ En Finanzas " + (NOM[r.por] || "") + (r.aprobado_por ? " · aprobó " + (NOM[r.aprobado_por] || r.aprobado_por) : "")));
+    w.append(sub);
+    return w;
   }
 
   /* ---------- canal en el chat ---------- */
