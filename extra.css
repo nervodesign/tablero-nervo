@@ -595,3 +595,11 @@ html:not(#nv) .nvmovp>section.nvmov-blq .nvmov-st .nvmov-k.ok{background:#D3E8D6
 /* Movimientos: cada celda respeta el ancho de su columna */
 html:not(#nv) .nvmov-tb .nvmov-tr>.nvmov-c,html:not(#nv) .nvmov-tb .nvmov-th>*{min-width:0!important;box-sizing:border-box}
 html:not(#nv) .nvmov-tb .nvmov-tr>.nvmov-c{overflow:hidden}
+
+/* Home: números de Tareas / A pagar sin pastilla, tarjeta hundida */
+html:root body #list .nvh .kpi.nvh-k.nvh-k.nvh-k>b{background:none!important;background-image:none!important;box-shadow:none!important;padding:0!important;border-radius:0!important;color:#3B2418!important;font-size:30px!important;font-weight:500!important;letter-spacing:-.01em;text-shadow:0 1px 0 rgba(255,255,255,.7)}
+html:root body #list .nvh .kpi.nvh-k.nvh-k.nvh-k.hp-lila>b{color:#8A4E5C!important}
+html:root body #list .nvh .kpi.nvh-k.nvh-k.nvh-k.hp-rosa>b{color:#4E6488!important}
+html:root body #list .nvh .kpi.nvh-k.nvh-k.nvh-k{box-shadow:inset 4px 4px 10px rgba(120,90,70,.13),inset -4px -4px 10px rgba(255,255,255,.85)!important;transition:box-shadow .2s,transform .2s}
+html:root body #list .nvh .kpi.nvh-k.nvh-k.nvh-k:hover{box-shadow:inset 6px 6px 14px rgba(120,90,70,.18),inset -5px -5px 12px rgba(255,255,255,.9)!important}
+html:root body #list .nvh .kpi.nvh-k.nvh-k.nvh-k:active{transform:scale(.99)}
