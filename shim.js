@@ -447,3 +447,82 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   setTimeout(desdeGoogle, 30000);
   setInterval(desdeGoogle, 5 * 60000);
 })();
+
+/* ================= Chat en Supabase: los mensajes llegan al toque; Google queda de copia ================= */
+(function(){
+  if (!window.__nvLocal || window.__nvLocal.chatLeer) return;
+  var L = window.__nvLocal;
+  function SB(){ return window.__sb; }
+  function tok(){ return window.__nvTok ? window.__nvTok() : Promise.resolve(); }
+  function g(n, a){ return window.__nvGRun(n, a); }
+  function copia(n, a){ g(n, a).catch(function(e){ console.warn("copia chat en Google pendiente:", n, e && e.message); }); }
+  function msg(d){ return { id: String(d.id), canal: String(d.canal || ""), texto: String(d.texto || ""), por: String(d.por || ""), creado: Number(d.creado) || 0, cambiado: Number(d.cambiado) || 0, borrado: !!d.borrado, reac: d.reac || {}, adj: d.adj || [] }; }
+  function subir(d){ return SB().from("registros").upsert({ tabla: "chat", id: String(d.id), data: d, borrado: false, actualizado: new Date(Number(d.cambiado) || Date.now()).toISOString(), por: String(d.por || "") }, { onConflict: "tabla,id" }).then(function(r){ if (r.error) throw new Error("No se pudo mandar: " + r.error.message); }); }
+  function uno(id){ return SB().from("registros").select("data").eq("tabla", "chat").eq("id", String(id)).maybeSingle().then(function(r){ return r.data ? r.data.data : null; }); }
+  var VISTO = null;
+  function vistos(){ return SB().from("registros").select("data").eq("tabla", "chatvisto").eq("id", "v").maybeSingle().then(function(r){ VISTO = (r.data && r.data.data) || VISTO || {}; return VISTO; }); }
+
+  L.chatLeer = function(a){
+    var desde = Number(a[0]) || 0;
+    return tok().then(function(){
+      var q = SB().from("registros").select("data").eq("tabla", "chat");
+      if (desde) q = q.gt("actualizado", new Date(desde - 3000).toISOString());
+      return Promise.all([q.order("actualizado", { ascending: false }).limit(1500), vistos()]);
+    }).then(function(R){
+      if (R[0].error) throw R[0].error;
+      var m = (R[0].data || []).map(function(r){ return msg(r.data || {}); }).filter(function(x){ return x.cambiado > desde || !desde; });
+      m.sort(function(x, y){ return x.creado - y.creado; });
+      return { v: R[1] || {}, m: m };
+    });
+  };
+  L.chatEnviar = function(a){
+    var m = a[0] || {}, now = Date.now();
+    var d = { id: String(m.id || ("c" + now + Math.random().toString(36).slice(2, 6))), canal: String(m.canal || ""), texto: String(m.texto || "").slice(0, 4000), por: String(m.por || ""), creado: Number(m.creado) || now, cambiado: now, borrado: false, reac: m.padre ? { __p: String(m.padre) } : {}, adj: Array.isArray(m.adj) ? m.adj.slice(0, 10) : [] };
+    return tok().then(function(){ return subir(d); }).then(function(){ copia("chatEnviar", [Object.assign({}, m, { id: d.id, creado: d.creado })]); return msg(d); });
+  };
+  function cambiar(id, fn, nombre, args){
+    return tok().then(function(){ return uno(id); }).then(function(d){
+      if (!d) return g(nombre, args);
+      fn(d); d.cambiado = Date.now();
+      return subir(d).then(function(){ copia(nombre, args); return msg(d); });
+    });
+  }
+  L.chatBorrar = function(a){ return cambiar(a[0], function(d){ d.borrado = true; }, "chatBorrar", a).then(function(r){ return !!r; }); };
+  L.chatReaccionar = function(a){
+    var emo = a[1], por = a[2];
+    return cambiar(a[0], function(d){ var re = d.reac || {}; var X = re[emo] || []; re[emo] = X.indexOf(por) >= 0 ? X.filter(function(p){ return p !== por; }) : X.concat([por]); if (!re[emo].length) delete re[emo]; d.reac = re; }, "chatReaccionar", a);
+  };
+  L.chatFijar = function(a){
+    var on = a[1], por = a[2];
+    return cambiar(a[0], function(d){ var re = d.reac || {}; if (on) re.__pin = [String(por || ""), Date.now()]; else delete re.__pin; d.reac = re; }, "chatFijar", a);
+  };
+  L.chatVisto = function(a){
+    var por = a[0], canal = a[1];
+    return tok().then(vistos).then(function(v){
+      v = v || {}; v[por] = v[por] || {}; v[por][canal] = Date.now(); VISTO = v;
+      return SB().from("registros").upsert({ tabla: "chatvisto", id: "v", data: v, borrado: false, actualizado: new Date().toISOString(), por: String(por || "") }, { onConflict: "tabla,id" })
+        .then(function(){ copia("chatVisto", a); return v; });
+    });
+  };
+
+  /* ---------- lo que escriba Google en el chat (avisos automáticos, la app vieja) entra solo ---------- */
+  var ULTG = 0, OCUP = false;
+  async function desdeGoogle(){
+    if (OCUP || document.hidden) return; OCUP = true;
+    try {
+      await tok();
+      var r = await g("chatLeer", [ULTG]); var M = (r && r.m) || []; if (!M.length) return;
+      var ids = M.map(function(x){ return String(x.id); });
+      var q = await SB().from("registros").select("id,data").eq("tabla", "chat").in("id", ids);
+      var cur = {}; (q.data || []).forEach(function(x){ cur[x.id] = x.data || {}; });
+      for (var i = 0; i < M.length; i++){
+        var x = M[i], c = cur[String(x.id)];
+        if (!c || (Number(x.cambiado) || 0) > (Number(c.cambiado) || 0)) await subir({ id: String(x.id), canal: x.canal, texto: x.texto, por: x.por, creado: Number(x.creado) || 0, cambiado: Number(x.cambiado) || Date.now(), borrado: !!x.borrado, reac: x.reac || {}, adj: x.adj || [] });
+        ULTG = Math.max(ULTG, Number(x.cambiado) || 0);
+      }
+    } catch(e){ console.warn("sync chat:", e && e.message); }
+    finally { OCUP = false; }
+  }
+  setTimeout(desdeGoogle, 8000);
+  setInterval(desdeGoogle, 60000);
+})();
