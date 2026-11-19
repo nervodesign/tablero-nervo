@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795090869928"></script>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795091474990"></script>
 <base target="_top">
 <meta charset="utf-8">
 <title>Nervo Design</title>
@@ -7494,15 +7494,15 @@ function chk(k,r,f,max,solo){ const box=el("div","ck"); const txt=String(r[f]||"
   function objDias(iso){ return Math.round((new Date(iso+"T12:00:00")-new Date(todayStr()+"T12:00:00"))/864e5); }
   function objList(){ return (S.objetivos||[]).filter(o=>!(o.arch==="1"||o.arch===true)).sort((a,b)=>(+a.orden||0)-(+b.orden||0)||(+a.creado||0)-(+b.creado||0)); }
   function objOf(t){ return objList().some(o=>o.id===t.obj)?t.obj:"__gen"; }
-  function objDone(t){ return t.rep==="diaria" ? t.hdia===todayStr() : t.estado==="hecha"; }
+  function objDone(t){ return __nvRR(t) ? t.hdia===todayStr() : t.estado==="hecha"; }
   function objEst(t){ if(objDone(t)) return "hecha"; const e=t.estado||"pendiente"; return e==="hecha"?"pendiente":e; }
   function objPal(o){ return OBJ_PAL[o&&o.color]||OBJ_PAL.arena; }
   function objPeople(){ return Object.keys(NAMES).filter(k=>k!=="ambas"&&!/las dos/i.test(String(NAMES[k]))); }
   function objWho(r){ return objPeople().includes(r)?NAMES[r]:"Las dos"; }
   function objAv(r){ const ok=objPeople().includes(r); const s=el("i","ob2-av "+(ok?r:"x"),ok?NAMES[r].charAt(0):"✦"); s.title=objWho(r); return s; }
   async function objSave(col,item,msg){ if(!(await ensureMe())) return false; item.cambiado=Date.now(); item.por=S.soy; const ok=await write(col,item); if(ok&&msg) toast(msg); return ok; }
-  async function objToggle(t){ if(!(await ensureMe())) return; const on=objDone(t);
-    if(t.rep==="diaria") await objSave("tareas",{id:t.id,hdia:on?"":todayStr()}, on?null:"✓ Hecha por hoy");
+  window.__nvObjSave=function(c,i,m){return objSave(c,i,m)}; async function objToggle(t){ if(!(await ensureMe())) return; const on=objDone(t);
+    if(__nvRR(t)) await objSave("tareas",{id:t.id,hdia:on?"":todayStr()}, on?null:"✓ Hecha por hoy");
     else await objSave("tareas",{id:t.id,estado:on?"pendiente":"hecha"}, on?null:"✓ ¡Hecha! Una menos"); }
   function objSeed(){ if(S._objSeed||!S.loaded||!S.soy||!S.objOk||(S.objetivos||[]).length) return; S._objSeed=1;
     const now=Date.now(); const B=[["Tareas diarias","se renuevan cada mañana","sage","diario","diario"],["Optimización web","fichas, fotos y SEO de la tienda","sky","web",""],["Cierre de año","balance, stock y vacaciones","rosa","estrella",""],["Proyectos 2027","lo que arrancamos el año que viene","lila","flecha",""]];
@@ -7519,11 +7519,11 @@ function chk(k,r,f,max,solo){ const box=el("div","ck"); const txt=String(r[f]||"
     const hoy=todayStr(); const L=objList(); const W=el("div","ob2");
     
     const lun=new Date(hoy+"T12:00:00"); lun.setDate(lun.getDate()-((lun.getDay()+6)%7)); lun.setHours(0,0,0,0); const dom=new Date(lun); dom.setDate(dom.getDate()+6); const domS=objIso(dom);
-    const hechasSem=mine.filter(t=>t.estado==="hecha"&&t.rep!=="diaria"&&(+t.cambiado||0)>=lun.getTime()).length;
-    const pendSem=mine.filter(t=>!objDone(t)&&t.rep!=="diaria"&&t.fecha&&t.fecha<=domS).length;
-    const paraHoy=mine.filter(t=>!objDone(t)&&(t.rep==="diaria"||(t.fecha&&t.fecha<=hoy)));
-    const venc=mine.filter(t=>!objDone(t)&&t.rep!=="diaria"&&t.fecha&&t.fecha<hoy);
-    const m1=new Date(hoy.slice(0,7)+"-01T00:00:00").getTime(); const hechasMes=mine.filter(t=>t.estado==="hecha"&&t.rep!=="diaria"&&(+t.cambiado||0)>=m1).length;
+    const hechasSem=mine.filter(t=>t.estado==="hecha"&&!__nvRR(t)&&(+t.cambiado||0)>=lun.getTime()).length;
+    const pendSem=mine.filter(t=>!objDone(t)&&!__nvRR(t)&&t.fecha&&t.fecha<=domS).length;
+    const paraHoy=mine.filter(t=>!objDone(t)&&(__nvRH(t)||(t.fecha&&t.fecha<=hoy)));
+    const venc=mine.filter(t=>!objDone(t)&&!__nvRR(t)&&t.fecha&&t.fecha<hoy);
+    const m1=new Date(hoy.slice(0,7)+"-01T00:00:00").getTime(); const hechasMes=mine.filter(t=>t.estado==="hecha"&&!__nvRR(t)&&(+t.cambiado||0)>=m1).length;
     const semTot=hechasSem+pendSem; const semP=semTot?Math.round(hechasSem*100/semTot):0;
     const sum=el("div","ob2-sum");
     const SM=(ic,bg,fg,lab,val,sub,click)=>{ const d=el("button","ob2-sm"); d.type="button"; const i=el("i","ob2-sq",ic); i.style.background=bg; i.style.color=fg; const tx=el("div"); tx.append(el("small",null,lab), el("b",null,val), el("span",null,sub)); d.append(i,tx); if(click) d.onclick=click; else d.disabled=true; sum.append(d); return d; };
@@ -7549,8 +7549,8 @@ function chk(k,r,f,max,solo){ const box=el("div","ck"); const txt=String(r[f]||"
     W.append(grid);
     
     let o, ts, esp=false;
-    if(S.objSel==="__hoy"){ o={id:"__hoy",nombre:"Para hoy",desc:"",color:"sky",icono:"diario"}; ts=mine.filter(t=>t.rep==="diaria"||(t.fecha&&t.fecha<=hoy)); esp=true; }
-    else if(S.objSel==="__venc"){ o={id:"__venc",nombre:"Vencidas",desc:"",color:"rosa",icono:"bandera"}; ts=mine.filter(t=>t.rep!=="diaria"&&t.fecha&&t.fecha<hoy); esp=true; }
+    if(S.objSel==="__hoy"){ o={id:"__hoy",nombre:"Para hoy",desc:"",color:"sky",icono:"diario"}; ts=mine.filter(t=>__nvRH(t)||(t.fecha&&t.fecha<=hoy)); esp=true; }
+    else if(S.objSel==="__venc"){ o={id:"__venc",nombre:"Vencidas",desc:"",color:"rosa",icono:"bandera"}; ts=mine.filter(t=>!__nvRR(t)&&t.fecha&&t.fecha<hoy); esp=true; }
     else { const c=cards.find(c=>c.o.id===S.objSel); o=c?c.o:null; ts=c?c.ts:[]; }
     if(o){ const [bg,fg]=objPal(o); const st=objStats(ts); const det=el("div","ob2-det");
       const hd=el("div","ob2-dh"); const ic=el("i","ob2-sq big",OBJ_IC[o.icono]||"❒"); ic.style.background=bg; ic.style.color=fg; const ht=el("div"); ht.append(el("h2",null,o.nombre));
@@ -7569,7 +7569,7 @@ function chk(k,r,f,max,solo){ const box=el("div","ck"); const txt=String(r[f]||"
       if(V==="tablero"){ const bd=el("div","ob2-board"); OBJ_EST.forEach(([k,l,c])=>{ const its=ts.filter(t=>objEst(t)===k); const col=el("div","ob2-col"); const ch=el("div","ob2-colh"); ch.append(el("span","ob2-chip c-"+c,l), el("small",null,String(its.length))); col.append(ch);
           its.sort(objSort).forEach(t=>col.append(objCard(t))); if(!its.length) col.append(el("p","ob2-empty","Nada acá")); bd.append(col); }); det.append(bd); det.append(addRow()); }
       else { const groups = V==="fecha"
-          ? [["Vencidas",t=>t.rep!=="diaria"&&t.fecha&&t.fecha<hoy],["Hoy",t=>t.rep==="diaria"||t.fecha===hoy],["Esta semana",t=>t.fecha>hoy&&t.fecha<=domS],["Más adelante",t=>t.fecha>domS],["Sin fecha",t=>!t.fecha]]
+          ? [["Vencidas",t=>!__nvRR(t)&&t.fecha&&t.fecha<hoy],["Hoy",t=>__nvRH(t)||t.fecha===hoy],["Esta semana",t=>t.fecha>hoy&&t.fecha<=domS],["Más adelante",t=>t.fecha>domS],["Sin fecha",t=>!t.fecha]]
           : OBJ_EST.filter(x=>x[0]!=="hecha").map(([k,l])=>[l,t=>objEst(t)===k]);
         const pend=ts.filter(t=>!objDone(t)); let used=new Set();
         const tb=el("div","ob2-tb"); const th=el("div","ob2-r ob2-th"); ["","TAREA","ESTADO","PRIORIDAD","QUIÉN","FECHA","PASOS",""].forEach(x=>th.append(el("span",null,x))); tb.append(th);
@@ -7583,12 +7583,12 @@ function chk(k,r,f,max,solo){ const box=el("div","ck"); const txt=String(r[f]||"
     list.append(W);
   }
   function objSort(a,b){ const pr={alta:0,media:1,baja:2}; return ((a.fecha||"9999")<(b.fecha||"9999")?-1:(a.fecha||"9999")>(b.fecha||"9999")?1:0)||((pr[a.prio]??1)-(pr[b.prio]??1))||((+a.creado||0)-(+b.creado||0)); }
-  function objFechaChip(t){ const hoy=todayStr(); if(t.rep==="diaria") return el("span","ob2-chip c-sage","todos los días"); if(!t.fecha) return el("span","ob2-mu","—");
+  function objFechaChip(t){ const __r=__objFC0(t); try{ if(__r&&__r.dataset) __r.dataset.nvt=t.id; }catch(e){} return __r; } function __objFC0(t){ const hoy=todayStr(); if(__nvRR(t)) return el("span","ob2-chip c-sage",__nvRTxt(t)); if(!t.fecha) return el("span","ob2-mu","—");
     if(!objDone(t)&&t.fecha<hoy) return el("span","ob2-chip c-rosa","venció "+objF(t.fecha)); if(t.fecha===hoy) return el("span","ob2-chip c-sky","hoy"); return el("span",null,objF(t.fecha)); }
   function objPasos(t){ const p=objJ(t.pasos); const w=el("span","ob2-ps"); if(!p.length){ w.append(el("span","ob2-mu","—")); return w; } const ok=p.filter(x=>x.ok).length; const b=el("span","ob2-st"); const i=el("i"); i.style.width=Math.round(ok*100/p.length)+"%"; b.append(i); w.append(b, el("span","ob2-mu",ok+"/"+p.length)); return w; }
   function objCk(t){ const c=el("button","ob2-ck"+(objDone(t)?" on":""),objDone(t)?"✓":""); c.type="button"; c.setAttribute("aria-label",objDone(t)?"Marcar como pendiente":"Marcar como hecha"); c.onclick=e=>{ e.stopPropagation(); objToggle(t); }; return c; }
   function objEstSel(t){ const s=el("select","ob2-esel c-"+(OBJ_EST.find(x=>x[0]===objEst(t))||OBJ_EST[0])[2]); OBJ_EST.forEach(([k,l])=>{ const op=el("option",null,l); op.value=k; if(objEst(t)===k) op.selected=true; s.append(op); });
-    s.onclick=e=>e.stopPropagation(); s.onchange=async()=>{ const v=s.value; if(t.rep==="diaria"){ await objSave("tareas",{id:t.id,hdia:v==="hecha"?todayStr():"",estado:v==="hecha"?"pendiente":v}); } else await objSave("tareas",{id:t.id,estado:v}, v==="hecha"?"✓ ¡Hecha!":null); }; return s; }
+    s.onclick=e=>e.stopPropagation(); s.onchange=async()=>{ const v=s.value; if(__nvRH(t)){ await objSave("tareas",{id:t.id,hdia:v==="hecha"?todayStr():"",estado:v==="hecha"?"pendiente":v}); } else await objSave("tareas",{id:t.id,estado:v}, v==="hecha"?"✓ ¡Hecha!":null); }; return s; }
   function objRow(t,o){ const r=el("div","ob2-r"+(objDone(t)?" dn":"")); r.onclick=()=>objTask(t);
     const tt=el("div","ob2-tt"); tt.append(el("b",null,t.titulo||"(sin título)")); const sb=[]; if(o&&(o.id==="__hoy"||o.id==="__venc")){ const oo=objList().find(x=>x.id===t.obj); if(oo) sb.push(oo.nombre); } if(t.nota) sb.push(String(t.nota).split("\n")[0].slice(0,70)); const cms=objJ(t.coms).length; if(cms) sb.push(cms+(cms===1?" comentario":" comentarios")); if(sb.length) tt.append(el("small",null,sb.join(" · ")));
     const pr=OBJ_PRIO.find(x=>x[0]===(t.prio||"media"))||OBJ_PRIO[1]; const pe=el("span","ob2-pr"); const pd=el("i"); pd.style.background=pr[2]; pe.append(pd, document.createTextNode(pr[1]));
