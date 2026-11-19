@@ -139,3 +139,30 @@
     var b = document.getElementById("themeBtn"); if (b) b.style.display = "none"; }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", js); else js();
 })();
+
+/* ---------- Inicio de sesión: video real de playa de fondo ---------- */
+(function(){
+  if (window.__nvLgVideo) return; window.__nvLgVideo = 1;
+  var SRC = "https://videos.pexels.com/video-files/3575062/3575062-hd_1920_1080_30fps.mp4";
+  var POSTER = "https://images.pexels.com/videos/3575062/free-video-3575062.jpg?auto=compress&w=1600";
+  var quieto = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function poner(){
+    var L = document.getElementById("nv-login"); if (!L || L.querySelector("#nvlg-v")) return;
+    var esc = L.querySelector(".esc"); if (esc) esc.style.visibility = "hidden";
+    var w = document.createElement("div"); w.id = "nvlg-v";
+    w.style.cssText = "position:absolute;inset:0;overflow:hidden;z-index:0;pointer-events:none;background:#E6E1DB url(" + POSTER + ") center/cover no-repeat";
+    if (!quieto){
+      var v = document.createElement("video");
+      v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.setAttribute("playsinline", ""); v.preload = "auto"; v.poster = POSTER;
+      v.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(.75) brightness(1.06)";
+      v.src = SRC; w.appendChild(v);
+      v.addEventListener("error", function(){ v.remove(); });
+    }
+    var velo = document.createElement("div"); velo.style.cssText = "position:absolute;inset:0;background:rgba(230,225,219,.22)"; w.appendChild(velo);
+    L.insertBefore(w, L.firstChild);
+    var c = L.querySelector(".c"); if (c){ c.style.position = "relative"; c.style.zIndex = 1; }
+    var t = L.querySelector(".tema"); if (t){ t.style.position = t.style.position || "absolute"; t.style.zIndex = 2; }
+  }
+  poner(); var n = 0, iv = setInterval(function(){ poner(); if (++n > 40) clearInterval(iv); }, 250);
+  new MutationObserver(poner).observe(document.documentElement, { childList: true, subtree: true });
+})();
