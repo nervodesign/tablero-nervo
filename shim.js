@@ -303,8 +303,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
     } catch(e){ console.warn("sync Google:", e && e.message); }
     finally { SYNC = false; }
   }
-  setTimeout(desdeGoogle, 20000);
-  setInterval(desdeGoogle, 5 * 60000);
+  /* app nueva manda: Google es solo copia de respaldo (no se lee de vuelta) */
 
   /* ---------- cambios de la otra persona: llegan al toque ---------- */
   setTimeout(function(){
@@ -361,7 +360,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
 
   L.baseLeer = function(){
     return tok().then(function(){
-      if (!ON_PEDIDO){ ON_PEDIDO = true; g("baseLeer", []).then(function(r){ if (r && typeof r.on === "boolean" && r.on !== ON){ ON = r.on; gls(); } }, function(){}); }
+      if (false && !ON_PEDIDO){ ON_PEDIDO = true; g("baseLeer", []).then(function(r){ if (r && typeof r.on === "boolean" && r.on !== ON){ ON = r.on; gls(); } }, function(){}); }
       if (MEM && ULT && Date.now() - ULT < 20000) return salida();
       if (MEM){ var p = traer(); return Promise.race([p.then(salida), new Promise(function(ok){ setTimeout(function(){ ok(salida()); }, 1200); })]); }
       return traer().then(salida);
@@ -424,19 +423,19 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
     } catch(e){}
   }, 3500);
 
-  /* ---------- lo que entre a la base por Google (Tienda Nube, la app vieja) se suma solo ---------- */
+  /* ---------- solo las ventas NUEVAS que entran por Tienda Nube (llegan a Google) se suman; nada más se lee de Google ---------- */
   async function desdeGoogle(){
     if (document.hidden) return;
     try {
       await tok(); await aseg();
       var G = await g("baseLeer", []); if (!G) return; if (typeof G.on === "boolean") ON = G.on;
       var cambios = {};
-      BT.forEach(function(t){ (G[t] || []).forEach(function(o, j){
+      ["base_min","base_may"].forEach(function(t){ (G[t] || []).forEach(function(o, j){
         if (!o || o.id == null || o.id === "") return;
         if (Date.now() - (RECIENTES[t + "|" + o.id] || 0) < 10 * 60000) return;
         var i = idx(t, o.id), cur = i >= 0 ? MEM[t][i] : null;
         var d = {}; Object.keys(o).forEach(function(x){ d[x] = s(o[x]); });
-        if (cur){ var igual = true; for (var x in d){ if (s(cur[x]) !== d[x]) { igual = false; break; } } if (igual) return; if (cur.cambiado && d.cambiado && Number(d.cambiado) <= Number(cur.cambiado)) return; d._n = cur._n; MEM[t][i] = d; }
+        if (cur) return; if (cur){ var igual = true; for (var x in d){ if (s(cur[x]) !== d[x]) { igual = false; break; } } if (igual) return; if (cur.cambiado && d.cambiado && Number(d.cambiado) <= Number(cur.cambiado)) return; d._n = cur._n; MEM[t][i] = d; }
         else { d._n = String(Date.now() + j); MEM[t].push(d); }
         (cambios[t] = cambios[t] || []).push(d);
       }); });
@@ -523,8 +522,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
     } catch(e){ console.warn("sync chat:", e && e.message); }
     finally { OCUP = false; }
   }
-  setTimeout(desdeGoogle, 8000);
-  setInterval(desdeGoogle, 60000);
+  /* chat: Google es solo copia de respaldo (no se lee de vuelta) */
 })();
 
 /* ---------- más lecturas de Google que se muestran al instante (lo último guardado) y se actualizan atrás ---------- */
