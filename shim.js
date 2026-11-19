@@ -30,7 +30,7 @@
         var args = Array.prototype.slice.call(arguments);
         var LOC = window.__nvLocal; var usarGoogle = false; try { usarGoogle = localStorage.getItem("nv-google") === "1"; } catch(e){}
         if (LOC && LOC[name] && !usarGoogle){
-          LOC[name](args).then(function(r){ if (ok) ok(r); }, function(e){
+          LOC[name](args, function(r2){ try { if (ok) ok(r2); } catch(e3){} }).then(function(r){ if (ok) ok(r); }, function(e){
             if (name === "leerTodo") { rawCall(name, args).then(function(r){ if (ok) ok(r); }, function(e2){ if (fail) fail(e2); else console.error(e2); }); return; }
             if (fail) fail(e); else console.error(e);
           });
@@ -318,4 +318,132 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
       }).subscribe();
     } catch(e){}
   }, 3000);
+})();
+
+/* ================= Finanzas y ventas: la base vive en Supabase; lo que calcula Google se muestra al instante (último guardado) y se actualiza solo ================= */
+(function(){
+  if (!window.__nvLocal || window.__nvLocal.baseLeer) return;
+  var L = window.__nvLocal;
+  var BT = ["base_min","base_may","fin_euge","fin_pau","fin_usd"];
+  var LS = "nv-base-v1", MEM = null, ON = true, ULT = 0, CARG = null, RECIENTES = {}, ON_PEDIDO = false;
+  try { var c = JSON.parse(localStorage.getItem(LS) || "null"); if (c && c.d){ MEM = c.d; ON = c.on !== false; } } catch(e){}
+  function SB(){ return window.__sb; }
+  function tok(){ return window.__nvTok ? window.__nvTok() : Promise.resolve(); }
+  function g(n, a){ return window.__nvGRun(n, a); }
+  function s(v){ return v == null ? "" : (typeof v === "object" ? JSON.stringify(v) : String(v)); }
+  function gls(){ try { localStorage.setItem(LS, JSON.stringify({ d: MEM, on: ON, t: Date.now() })); } catch(e){} }
+  function ord(A){ A.sort(function(a, b){ return (Number(a._n) || 0) - (Number(b._n) || 0); }); }
+  function limpio(d){ var o = {}; Object.keys(d || {}).forEach(function(k){ if (k !== "_n") o[k] = s(d[k]); }); return o; }
+  function salida(){ var o = {}; BT.forEach(function(t){ o[t] = ((MEM && MEM[t]) || []).map(limpio); }); o.on = ON; return o; }
+  function traer(){
+    if (CARG) return CARG;
+    CARG = (async function(){
+      var all = [], from = 0;
+      while (true){ var q = await SB().from("registros").select("tabla,id,data").in("tabla", BT).eq("borrado", false).range(from, from + 999); if (q.error) throw q.error; all = all.concat(q.data || []); if ((q.data || []).length < 1000) break; from += 1000; }
+      var M = {}; BT.forEach(function(t){ M[t] = []; });
+      all.forEach(function(r){ var d = r.data || {}; if (d.id == null || d.id === "") d.id = r.id; M[r.tabla].push(d); });
+      BT.forEach(function(t){ ord(M[t]); }); MEM = M; ULT = Date.now(); gls(); return M;
+    })();
+    CARG.then(function(){ CARG = null; }, function(){ CARG = null; });
+    return CARG;
+  }
+  function aseg(){ return MEM && ULT ? Promise.resolve(MEM) : traer(); }
+  function idx(t, id){ var A = MEM[t] || (MEM[t] = []); for (var i = 0; i < A.length; i++) if (String(A[i].id) === String(id)) return i; return -1; }
+  function mezclar(t, item){
+    var A = MEM[t] || (MEM[t] = []), i = idx(t, item.id), prev = i >= 0 ? A[i] : null, n = Object.assign({}, prev || {});
+    if (!prev){ Object.keys(A[0] || {}).forEach(function(k){ if (k !== "_n") n[k] = ""; }); n._n = String(Date.now()); }
+    Object.keys(item || {}).forEach(function(k){ n[k] = s(item[k]); });
+    if (i >= 0) A[i] = n; else A.push(n); RECIENTES[t + "|" + item.id] = Date.now(); return n;
+  }
+  function quien(){ return String((window.__nv && window.__nv.S && window.__nv.S.soy) || ""); }
+  function subir(t, F){ var now = new Date().toISOString(); return SB().from("registros").upsert(F.map(function(d){ return { tabla: t, id: String(d.id), data: d, borrado: false, actualizado: now, por: quien() }; }), { onConflict: "tabla,id" }).then(function(r){ if (r.error) throw new Error("No se pudo guardar: " + r.error.message); }); }
+  function copia(n, a){ g(n, a).then(function(){ refrescarVentas(); }, function(e){ console.warn("copia en Google pendiente:", n, e && e.message); }); }
+
+  L.baseLeer = function(){
+    return tok().then(function(){
+      if (!ON_PEDIDO){ ON_PEDIDO = true; g("baseLeer", []).then(function(r){ if (r && typeof r.on === "boolean" && r.on !== ON){ ON = r.on; gls(); } }, function(){}); }
+      if (MEM && ULT && Date.now() - ULT < 20000) return salida();
+      if (MEM){ var p = traer(); return Promise.race([p.then(salida), new Promise(function(ok){ setTimeout(function(){ ok(salida()); }, 1200); })]); }
+      return traer().then(salida);
+    });
+  };
+  L.baseGuardarVarios = function(a){
+    var t = a[0], items = (a[1] || []).filter(function(x){ return x && x.id != null && x.id !== ""; });
+    if (BT.indexOf(t) < 0) return g("baseGuardarVarios", a);
+    return tok().then(aseg).then(function(){ var F = items.map(function(it){ return mezclar(t, it); }); return F.length ? subir(t, F) : null; })
+      .then(function(){ gls(); copia("baseGuardarVarios", a); return true; });
+  };
+  L.baseGuardar = function(a){ return L.baseGuardarVarios([a[0], [a[1]]]); };
+  L.baseBorrar = function(a){
+    var t = a[0], id = String(a[1]);
+    if (BT.indexOf(t) < 0) return g("baseBorrar", a);
+    return tok().then(aseg).then(function(){
+      var i = idx(t, id); if (i >= 0) MEM[t].splice(i, 1);
+      return SB().from("registros").update({ borrado: true, actualizado: new Date().toISOString(), por: quien() }).eq("tabla", t).eq("id", id).then(function(r){ if (r.error) throw new Error("No se pudo borrar: " + r.error.message); });
+    }).then(function(){ gls(); copia("baseBorrar", a); return true; });
+  };
+
+  /* ---------- lo que calcula Google (ventas, envíos, clima…): se muestra lo último al instante y se actualiza atrás ---------- */
+  var SWR = ["ventas","envios","pedidosGanancia","clima","mayoristasAT","resenasAT","mayHistAT"];
+  var VIVOS = {};
+  function clave(n, a){ return "nv-swr-" + n + "-" + JSON.stringify(a || []).slice(0, 80); }
+  function leerC(k){ try { return JSON.parse(localStorage.getItem(k) || "null"); } catch(e){ return null; } }
+  function guardarC(k, r){ try { localStorage.setItem(k, JSON.stringify({ r: r, t: Date.now() })); } catch(e){} }
+  SWR.forEach(function(n){
+    L[n] = function(a, otraVez){
+      var k = clave(n, a), c = leerC(k);
+      var fresco = g(n, a).then(function(r){ guardarC(k, r); return r; });
+      if (c && c.r != null){
+        VIVOS[n] = { a: a, cb: otraVez };
+        fresco.then(function(r){ if (otraVez && JSON.stringify(r) !== JSON.stringify(c.r)) { try { otraVez(r); } catch(e){} } }, function(){});
+        return Promise.resolve(c.r);
+      }
+      return fresco;
+    };
+  });
+  var tRef = null;
+  function refrescarVentas(){
+    clearTimeout(tRef);
+    tRef = setTimeout(function(){
+      ["ventas","pedidosGanancia"].forEach(function(n){
+        var v = VIVOS[n]; if (!v || !v.cb) return;
+        g(n, v.a).then(function(r){ guardarC(clave(n, v.a), r); try { v.cb(r); } catch(e){} }, function(){});
+      });
+    }, 2500);
+  }
+
+  setTimeout(function(){
+    try {
+      SB().channel("nervo-base").on("postgres_changes", { event: "*", schema: "public", table: "registros" }, function(p){
+        var r = p.new || {}; if (!MEM || BT.indexOf(r.tabla) < 0) return;
+        var i = idx(r.tabla, r.id);
+        if (r.borrado){ if (i >= 0) MEM[r.tabla].splice(i, 1); }
+        else { var d = r.data || {}; if (i >= 0) MEM[r.tabla][i] = d; else { MEM[r.tabla].push(d); ord(MEM[r.tabla]); } }
+        ULT = Date.now(); gls();
+      }).subscribe();
+    } catch(e){}
+  }, 3500);
+
+  /* ---------- lo que entre a la base por Google (Tienda Nube, la app vieja) se suma solo ---------- */
+  async function desdeGoogle(){
+    if (document.hidden) return;
+    try {
+      await tok(); await aseg();
+      var G = await g("baseLeer", []); if (!G) return; if (typeof G.on === "boolean") ON = G.on;
+      var cambios = {};
+      BT.forEach(function(t){ (G[t] || []).forEach(function(o, j){
+        if (!o || o.id == null || o.id === "") return;
+        if (Date.now() - (RECIENTES[t + "|" + o.id] || 0) < 10 * 60000) return;
+        var i = idx(t, o.id), cur = i >= 0 ? MEM[t][i] : null;
+        var d = {}; Object.keys(o).forEach(function(x){ d[x] = s(o[x]); });
+        if (cur){ var igual = true; for (var x in d){ if (s(cur[x]) !== d[x]) { igual = false; break; } } if (igual) return; if (cur.cambiado && d.cambiado && Number(d.cambiado) <= Number(cur.cambiado)) return; d._n = cur._n; MEM[t][i] = d; }
+        else { d._n = String(Date.now() + j); MEM[t].push(d); }
+        (cambios[t] = cambios[t] || []).push(d);
+      }); });
+      for (var t in cambios) await subir(t, cambios[t]);
+      gls();
+    } catch(e){ console.warn("sync base:", e && e.message); }
+  }
+  setTimeout(desdeGoogle, 30000);
+  setInterval(desdeGoogle, 5 * 60000);
 })();
