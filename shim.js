@@ -443,8 +443,8 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
       gls();
     } catch(e){ console.warn("sync base:", e && e.message); }
   }
-  setTimeout(desdeGoogle, 30000);
-  setInterval(desdeGoogle, 5 * 60000);
+  /* Tienda Nube entra directo a Supabase (función "tiendanube", cada 5 min); al abrir la app se revisa una vez más */
+  setTimeout(function(){ try { SB().functions.invoke("tiendanube", { body: {} }); } catch(e){} }, 4000);
 })();
 
 /* ================= Chat en Supabase: los mensajes llegan al toque; Google queda de copia ================= */
