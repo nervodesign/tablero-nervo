@@ -668,7 +668,7 @@
 /* ---------- Configuración: qué avisos recibir, horarios, por persona (se guarda en la cuenta de cada una) ---------- */
 (function(){
   if (window.__nvCfg) return; window.__nvCfg = 1;
-  var DEF = { mov: true, ventas: true, buendia: true, chat: true, canales: {}, tareas: true, tareasHora: "09:00", vencidas: true, pagos: true, pagosDias: 2, silencio: false, silDesde: "22:00", silHasta: "08:00" };
+  var DEF = { mov: true, ventas: true, buendia: true, chat: true, canales: {}, tareas: true, tareasNuevas: true, tareasHora: "09:00", vencidas: true, pagos: true, pagosDias: 2, silencio: false, silDesde: "22:00", silHasta: "08:00" };
   var AJ = Object.assign({}, DEF), CARGADO = false;
   function sb(){ return window.__sb; }
   function h(t, c, x){ var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
@@ -728,6 +728,7 @@
       s2.append(fila("Resumen de tareas del día", "Un aviso con lo que tenés para hoy", sw(AJ.tareas, function(v){ AJ.tareas = v; guardar(); pintar(); })));
       if (AJ.tareas) s2.append(fila("¿A qué hora?", null, hora(AJ.tareasHora, function(v){ AJ.tareasHora = v; guardar(); })));
       s1.append(fila("Buen día ✨", "Lunes a viernes a las 9: “Hoy es día de muchas ventas 🔥”", sw(AJ.buendia, function(v){ AJ.buendia = v; guardar(); })));
+      s2.append(fila("Cuando me cargan una tarea", "Te avisa al celu si te asignan una tarea nueva", sw(AJ.tareasNuevas !== false, function(v){ AJ.tareasNuevas = v; guardar(); })));
       s2.append(fila("Tareas vencidas", "Te avisa si quedó algo sin hacer", sw(AJ.vencidas, function(v){ AJ.vencidas = v; guardar(); })));
       p.append(s2);
       /* pagos */
@@ -1049,3 +1050,6 @@
 
 /* ---------- Mayoristas · Mails (archivo aparte) ---------- */
 (function(){ if (window.__nvMailsCarga) return; window.__nvMailsCarga = 1; var cs = document.currentScript, v = cs && /[?&]v=(\d+)/.exec(cs.src); var sc = document.createElement("script"); sc.src = "mails.js" + (v ? "?v=" + v[1] : "?t=" + Date.now()); document.head.appendChild(sc); })();
+
+/* ---------- Tareas: días que se repite + aviso de tarea nueva (archivo aparte) ---------- */
+(function(){ if (window.__nvTareasCarga) return; window.__nvTareasCarga = 1; var cs = document.currentScript, v = cs && /[?&]v=(\d+)/.exec(cs.src); var sc = document.createElement("script"); sc.src = "tareas.js" + (v ? "?v=" + v[1] : "?t=" + Date.now()); document.head.appendChild(sc); })();

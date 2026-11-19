@@ -166,3 +166,8 @@
   poner(); var n = 0, iv = setInterval(function(){ poner(); if (++n > 40) clearInterval(iv); }, 250);
   new MutationObserver(poner).observe(document.documentElement, { childList: true, subtree: true });
 })();
+
+/* ---------- tareas que se repiten ciertos días (lo usan los ganchos de publicarApp) ---------- */
+window.__nvRR = function(t){ var r = (t && t.rep) || ""; return r === "diaria" || /^dias:/.test(r); };
+window.__nvRH = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") return true; var m = /^dias:([\d,]*)/.exec(r); return !!m && m[1].split(",").indexOf(String(new Date().getDay())) >= 0; };
+window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") return "todos los días"; var m = /^dias:([\d,]*)/.exec(r); if (!m) return ""; var D = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"], L = m[1].split(",").filter(Boolean).map(Number).sort(function(a, b){ return ((a + 6) % 7) - ((b + 6) % 7); }); if (L.length === 7) return "todos los días"; if (L.join() === "1,2,3,4,5") return "lun a vie"; return L.map(function(d){ return D[d]; }).join(" · "); };
