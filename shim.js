@@ -526,3 +526,17 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   setTimeout(desdeGoogle, 8000);
   setInterval(desdeGoogle, 60000);
 })();
+
+/* ---------- más lecturas de Google que se muestran al instante (lo último guardado) y se actualizan atrás ---------- */
+(function(){
+  var L = window.__nvLocal; if (!L || L.tareasLeer) return;
+  ["tareasLeer","mayCatalogo","historialLeer","widgetClave","tnWeb"].forEach(function(n){
+    L[n] = function(a, otraVez){
+      var k = "nv-swr-" + n + "-" + JSON.stringify(a || []).slice(0, 80), c = null;
+      try { c = JSON.parse(localStorage.getItem(k) || "null"); } catch(e){}
+      var fresco = window.__nvGRun(n, a).then(function(r){ try { localStorage.setItem(k, JSON.stringify({ r: r, t: Date.now() })); } catch(e){} return r; });
+      if (c && c.r != null){ fresco.then(function(r){ if (otraVez && JSON.stringify(r) !== JSON.stringify(c.r)) { try { otraVez(r); } catch(e){} } }, function(){}); return Promise.resolve(c.r); }
+      return fresco;
+    };
+  });
+})();
