@@ -1021,3 +1021,28 @@
 
 /* ---------- Mayoristas: diseño y WhatsApp (archivo aparte) ---------- */
 (function(){ if (window.__nvMayCarga) return; window.__nvMayCarga = 1; var cs = document.currentScript, v = cs && /[?&]v=(\d+)/.exec(cs.src); var sc = document.createElement("script"); sc.src = "may.js" + (v ? "?v=" + v[1] : "?t=" + Date.now()); document.head.appendChild(sc); })();
+
+/* ---------- Si se borra un mensaje en #movimientos (desde cualquier celu o compu), se borra también en Movimientos ---------- */
+(function(){
+  if (window.__nvMovBorrados) return; window.__nvMovBorrados = 1;
+  var hechos = {};
+  function limpiar(){
+    try {
+      var S = window.__nv && window.__nv.S, SB = window.__sb; if (!S || !S.chat || !S.chat.m || !SB) return;
+      var ids = S.chat.m.filter(function(m){ return m.canal === "mov" && m.borrado && !hechos[m.id]; }).map(function(m){ return String(m.id); });
+      if (!ids.length) return;
+      SB.from("movimientos").select("id,msg_id,estado").in("msg_id", ids).then(function(r){
+        if (r.error) return;
+        var aBorrar = (r.data || []).filter(function(x){ return x.estado !== "aprobado"; });
+        (r.data || []).forEach(function(x){ if (x.estado === "aprobado") hechos[x.msg_id] = 1; });
+        ids.forEach(function(id){ if (!(r.data || []).some(function(x){ return x.msg_id === id; })) hechos[id] = 1; });
+        if (!aBorrar.length) return;
+        SB.from("movimientos").delete().in("id", aBorrar.map(function(x){ return x.id; })).then(function(d){
+          if (!d.error) aBorrar.forEach(function(x){ hechos[x.msg_id] = 1; });
+        });
+      });
+    } catch(e){}
+  }
+  setInterval(limpiar, 8000); setTimeout(limpiar, 3000);
+  document.addEventListener("visibilitychange", function(){ if (!document.hidden) setTimeout(limpiar, 1500); });
+})();
