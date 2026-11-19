@@ -154,7 +154,7 @@
     if (!quieto){
       var v = document.createElement("video");
       v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.setAttribute("playsinline", ""); v.preload = "auto"; v.poster = POSTER;
-      v.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(.75) brightness(1.06)";
+      v.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:" + (innerWidth < 700 ? "78% center" : "center") + ";filter:saturate(.75) brightness(1.06)";
       v.src = SRC; w.appendChild(v);
       v.addEventListener("error", function(){ v.remove(); });
     }
