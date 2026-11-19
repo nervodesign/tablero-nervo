@@ -16,6 +16,11 @@
       return espera;
     });
   }
+  function rawCall(name, args){
+    return token().then(function(t){ return fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ fn: name, args: args || [], token: t }) }); })
+      .then(function(r){ return r.json(); }).then(function(j){ if (j.ok) return j.r; throw new Error(j.e); });
+  }
+  window.__nvGRun = rawCall; window.__nvTok = token;
   function runner(ok, fail){
     return new Proxy({}, { get: function(_, name){
       if (name === "withSuccessHandler") return function(f){ return runner(f, fail); };
@@ -23,6 +28,14 @@
       if (name === "withUserObject") return function(){ return runner(ok, fail); };
       return function(){
         var args = Array.prototype.slice.call(arguments);
+        var LOC = window.__nvLocal; var usarGoogle = false; try { usarGoogle = localStorage.getItem("nv-google") === "1"; } catch(e){}
+        if (LOC && LOC[name] && !usarGoogle){
+          LOC[name](args).then(function(r){ if (ok) ok(r); }, function(e){
+            if (name === "leerTodo") { rawCall(name, args).then(function(r){ if (ok) ok(r); }, function(e2){ if (fail) fail(e2); else console.error(e2); }); return; }
+            if (fail) fail(e); else console.error(e);
+          });
+          return;
+        }
         token().then(function(t){
           return fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ fn: name, args: args, token: t }) });
         }).then(function(r){ return r.json(); }).then(function(j){
@@ -171,3 +184,138 @@
 window.__nvRR = function(t){ var r = (t && t.rep) || ""; return r === "diaria" || /^dias:/.test(r); };
 window.__nvRH = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") return true; var m = /^dias:([\d,]*)/.exec(r); return !!m && m[1].split(",").indexOf(String(new Date().getDay())) >= 0; };
 window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") return "todos los días"; var m = /^dias:([\d,]*)/.exec(r); if (!m) return ""; var D = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"], L = m[1].split(",").filter(Boolean).map(Number).sort(function(a, b){ return ((a + 6) % 7) - ((b + 6) % 7); }); if (L.length === 7) return "todos los días"; if (L.join() === "1,2,3,4,5") return "lun a vie"; return L.map(function(d){ return D[d]; }).join(" · "); };
+
+/* ================= Datos en Supabase: el tablero lee y guarda acá (rápido); Google queda de copia ================= */
+(function(){
+  if (window.__nvLocal) return;
+  var TABLAS = ["presupuestos","catalogo","config","mayoristas","campanas","contenido","seguimiento","costos","preciosweb","ganancias","tareas","proveedores","notas","links","recordatorios","stock","tejedoras","mayclientes","objetivos"];
+  var LS = "nv-datos-v1", MEM = null, DEL = {}, CARGANDO = null, ULT = 0;
+  try { var c = JSON.parse(localStorage.getItem(LS) || "null"); if (c && c.d) MEM = c.d; } catch(e){}
+  function SB(){ return window.__sb; }
+  function tok(){ return window.__nvTok ? window.__nvTok() : Promise.resolve(); }
+  function g(name, args){ return window.__nvGRun ? window.__nvGRun(name, args) : Promise.reject(new Error("sin Google")); }
+  function s(v){ return v == null ? "" : String(v); }
+  function limpio(d){ var o = {}; Object.keys(d || {}).forEach(function(k){ if (k !== "_n") o[k] = s(d[k]); }); return o; }
+  function salida(){ var o = {}; TABLAS.forEach(function(t){ o[t] = ((MEM && MEM[t]) || []).map(limpio); }); return o; }
+  function guardarLS(){ try { localStorage.setItem(LS, JSON.stringify({ d: MEM, t: Date.now() })); } catch(e){} }
+  function ordenar(L){ L.sort(function(a, b){ return (Number(a._n) || 0) - (Number(b._n) || 0); }); }
+
+  function traer(){
+    if (CARGANDO) return CARGANDO;
+    CARGANDO = (async function(){
+      var all = [], from = 0;
+      while (true){
+        var q = await SB().from("registros").select("tabla,id,data,borrado").in("tabla", TABLAS).range(from, from + 999);
+        if (q.error) throw q.error;
+        all = all.concat(q.data || []); if ((q.data || []).length < 1000) break; from += 1000;
+      }
+      var M = {}, D = {}; TABLAS.forEach(function(t){ M[t] = []; });
+      all.forEach(function(r){ if (r.borrado){ D[r.tabla + "|" + r.id] = 1; return; } var d = r.data || {}; if (d.id == null || d.id === "") d.id = r.id; M[r.tabla].push(d); });
+      TABLAS.forEach(function(t){ ordenar(M[t]); });
+      MEM = M; DEL = D; ULT = Date.now(); guardarLS(); return M;
+    })();
+    CARGANDO.then(function(){ CARGANDO = null; }, function(){ CARGANDO = null; });
+    return CARGANDO;
+  }
+  function asegurar(){ return MEM && ULT ? Promise.resolve(MEM) : traer(); }
+  function fila(nombre, id){ var L = MEM[nombre] || (MEM[nombre] = []); for (var i = 0; i < L.length; i++) if (s(L[i].id) === s(id)) return i; return -1; }
+  function mezclar(nombre, item){
+    var L = MEM[nombre] || (MEM[nombre] = []), i = fila(nombre, item.id);
+    var prev = i >= 0 ? L[i] : null, base = L[0] || {};
+    var n = Object.assign({}, prev || {});
+    if (!prev){ Object.keys(base).forEach(function(k){ if (k !== "_n") n[k] = ""; }); n._n = String(Date.now()); }
+    Object.keys(item || {}).forEach(function(k){ n[k] = s(item[k]); });
+    if (i >= 0) L[i] = n; else L.push(n);
+    delete DEL[nombre + "|" + s(item.id)];
+    return n;
+  }
+  function quien(item){ return s((item && item.por) || (window.__nv && window.__nv.S && window.__nv.S.soy) || ""); }
+  function subir(nombre, filas){
+    var now = new Date().toISOString();
+    return SB().from("registros").upsert(filas.map(function(d){ return { tabla: nombre, id: s(d.id), data: d, borrado: false, actualizado: now, por: quien(d) }; }), { onConflict: "tabla,id" })
+      .then(function(r){ if (r.error) throw new Error("No se pudo guardar: " + r.error.message); });
+  }
+  function copiaGoogle(name, args){ g(name, args).catch(function(e){ console.warn("copia en Google pendiente:", name, e && e.message); }); }
+
+  var L = {};
+  L.leerTodo = function(){
+    return tok().then(function(){
+      if (MEM && ULT && Date.now() - ULT < 60000) return salida();
+      if (MEM){ var p = traer(); return Promise.race([p.then(salida), new Promise(function(ok){ setTimeout(function(){ ok(salida()); }, 1200); })]); }
+      return traer().then(salida);
+    });
+  };
+  L.guardar = function(a){
+    var nombre = a[0], item = a[1] || {};
+    if (TABLAS.indexOf(nombre) < 0) return g("guardar", a);
+    if (item.id == null || item.id === "") return g("guardar", a);
+    return tok().then(asegurar).then(function(){ var n = mezclar(nombre, item); return subir(nombre, [n]); })
+      .then(function(){ guardarLS(); copiaGoogle("guardar", a); return salida(); });
+  };
+  L.guardarVarios = function(a){
+    var nombre = a[0], items = (a[1] || []).filter(function(x){ return x && x.id != null && x.id !== ""; });
+    if (TABLAS.indexOf(nombre) < 0) return g("guardarVarios", a);
+    return tok().then(asegurar).then(function(){ var F = items.map(function(it){ return mezclar(nombre, it); }); return F.length ? subir(nombre, F) : null; })
+      .then(function(){ guardarLS(); copiaGoogle("guardarVarios", a); return salida(); });
+  };
+  L.borrar = function(a){
+    var nombre = a[0], id = s(a[1]);
+    if (TABLAS.indexOf(nombre) < 0) return g("borrar", a);
+    return tok().then(asegurar).then(function(){
+      var i = fila(nombre, id); if (i >= 0) MEM[nombre].splice(i, 1); DEL[nombre + "|" + id] = 1;
+      return SB().from("registros").update({ borrado: true, actualizado: new Date().toISOString(), por: quien({}) }).eq("tabla", nombre).eq("id", id)
+        .then(function(r){ if (r.error) throw new Error("No se pudo borrar: " + r.error.message); });
+    }).then(function(){ guardarLS(); copiaGoogle("borrar", a); return salida(); });
+  };
+  L.ajustarStock = function(a){
+    var id = s(a[0]), delta = Number(a[1]) || 0, por = a[2], cambiado = a[3];
+    return tok().then(asegurar).then(function(){
+      var i = fila("stock", id); if (i < 0) return g("ajustarStock", a);
+      var r = MEM.stock[i], n = mezclar("stock", { id: id, cantidad: String(Math.max(0, (Number(r.cantidad) || 0) + delta)), cambiado: s(cambiado || Date.now()), por: s(por || "") });
+      return subir("stock", [n]).then(function(){ guardarLS(); copiaGoogle("ajustarStock", a); return salida(); });
+    });
+  };
+  window.__nvLocal = L;
+
+  /* ---------- lo que se cargue por otro lado (la app vieja, procesos de Google) entra solo ---------- */
+  var SYNC = false, REENVIADOS = {};
+  async function desdeGoogle(){
+    if (SYNC || document.hidden || !window.__nvGRun) return; SYNC = true;
+    try {
+      await tok(); await asegurar();
+      var G = await g("leerTodo", []); if (!G) return;
+      var cambios = {};
+      TABLAS.forEach(function(t){
+        (G[t] || []).forEach(function(o, idx){
+          if (!o || o.id == null || o.id === "") return;
+          var k = t + "|" + s(o.id); if (DEL[k]) return;
+          var i = fila(t, o.id), cur = i >= 0 ? MEM[t][i] : null;
+          var nuevo = !cur, masNuevo = cur && o.cambiado && (Number(o.cambiado) || 0) > (Number(cur.cambiado) || 0);
+          if (!nuevo && !masNuevo) return;
+          var d = {}; Object.keys(o).forEach(function(x){ d[x] = s(o[x]); });
+          d._n = cur ? cur._n : String(Date.now() + idx);
+          if (cur) MEM[t][i] = d; else MEM[t].push(d);
+          (cambios[t] = cambios[t] || []).push(d);
+        });
+      });
+      for (var t in cambios) await subir(t, cambios[t]);
+      if (Object.keys(cambios).length){ TABLAS.forEach(function(t){ ordenar(MEM[t]); }); guardarLS(); }
+    } catch(e){ console.warn("sync Google:", e && e.message); }
+    finally { SYNC = false; }
+  }
+  setTimeout(desdeGoogle, 20000);
+  setInterval(desdeGoogle, 5 * 60000);
+
+  /* ---------- cambios de la otra persona: llegan al toque ---------- */
+  setTimeout(function(){
+    try {
+      SB().channel("nervo-registros").on("postgres_changes", { event: "*", schema: "public", table: "registros" }, function(p){
+        var r = p.new || {}; if (!MEM || TABLAS.indexOf(r.tabla) < 0) return;
+        var i = fila(r.tabla, r.id);
+        if (r.borrado){ if (i >= 0) MEM[r.tabla].splice(i, 1); DEL[r.tabla + "|" + r.id] = 1; }
+        else { var d = r.data || {}; if (i >= 0) MEM[r.tabla][i] = d; else { MEM[r.tabla].push(d); ordenar(MEM[r.tabla]); } }
+        ULT = Date.now(); guardarLS();
+      }).subscribe();
+    } catch(e){}
+  }, 3000);
+})();
