@@ -1046,3 +1046,6 @@
   setInterval(limpiar, 8000); setTimeout(limpiar, 3000);
   document.addEventListener("visibilitychange", function(){ if (!document.hidden) setTimeout(limpiar, 1500); });
 })();
+
+/* ---------- Mayoristas · Mails (archivo aparte) ---------- */
+(function(){ if (window.__nvMailsCarga) return; window.__nvMailsCarga = 1; var cs = document.currentScript, v = cs && /[?&]v=(\d+)/.exec(cs.src); var sc = document.createElement("script"); sc.src = "mails.js" + (v ? "?v=" + v[1] : "?t=" + Date.now()); document.head.appendChild(sc); })();
