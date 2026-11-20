@@ -109,6 +109,7 @@
 
   /* ---------- en el chat: etiqueta debajo de cada mensaje ---------- */
   function etiqueta(r){
+    if (/^web-/.test(r.msg_id || "")){ var wr = baseMin().find(function(x){ return "web-" + x.id === r.msg_id; }); return wr && !/REVISAR/i.test(wr.env || "") ? ["✓ Venta web revisada", "ok"] : ["● Venta web · para revisar en Movimientos", "pen"]; }
     if (r.estado === "procesando") return ["⏳ Leyendo…", "lee"];
     if (r.estado === "descartado") return ["✖ Descartado", "des"];
     var t = tipoDe(r.tipo)[1] + (r.monto ? " · " + plata(r.monto) : "") + " · " + (NOM[r.por] || "❓");
