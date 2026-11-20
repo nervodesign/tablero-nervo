@@ -3,19 +3,19 @@
   if (window.__nvTareasPlus) return; window.__nvTareasPlus = 1;
   var D = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"], ORD = [1,2,3,4,5,6,0];
   var CSS = [
-    ".nvrp-ch{display:inline-flex!important;align-items:center;gap:6px;white-space:nowrap}",
-    ".nvrp{border:0;background:rgba(255,255,255,.75);color:#7A5E50;border-radius:999px;width:20px;height:20px;margin:0 -4px 0 2px;cursor:pointer;font-size:11px;line-height:20px;padding:0;flex:0 0 auto}",
-    ".nvrp:hover{background:#EDE3DB;color:#3B2418}.nvrp.on{background:#E4ECE4;color:#4E6B4F}",
-    ".nvrp-pop{position:fixed;z-index:9500;background:#fff;border-radius:18px;box-shadow:0 10px 34px rgba(58,36,28,.18);padding:14px;width:280px;font-family:Outfit,system-ui,sans-serif;color:#3B2418}",
-    ".nvrp-pop b{display:block;font-weight:500;font-size:14px;margin-bottom:10px}",
-    ".nvrp-pop .op{display:flex;gap:6px;margin-bottom:10px}.nvrp-pop .op button{flex:1;border:0;border-radius:12px;padding:8px 6px;background:#F5EFEA;font:400 13px Outfit,system-ui,sans-serif;color:#5A3A2A;cursor:pointer}",
-    ".nvrp-pop .op button.sel{background:#3B2418;color:#fff}",
-    ".nvrp-pop .ds{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:12px}",
-    ".nvrp-pop .ds button{border:0;border-radius:10px;padding:8px 0;background:#F5EFEA;font:400 12px Outfit,system-ui,sans-serif;color:#5A3A2A;cursor:pointer}",
-    ".nvrp-pop .ds button.sel{background:#7E9A82;color:#fff}",
-    ".nvrp-pop .ft{display:flex;gap:6px;justify-content:flex-end}.nvrp-pop .ft button{border:0;border-radius:999px;padding:8px 14px;font:400 13px Outfit,system-ui,sans-serif;cursor:pointer;background:#F5EFEA;color:#3B2418}",
-    ".nvrp-pop .ft button.ok{background:#3B2418;color:#fff}",
-    ".nvrp-pop .hint{font-size:11.5px;color:#9A8274;margin:-4px 0 10px;font-weight:300}"
+    ".nvrep-ch{display:inline-flex!important;align-items:center;gap:6px;white-space:nowrap}",
+    ".nvrep{border:0;background:rgba(255,255,255,.75);color:#7A5E50;border-radius:999px;width:20px;height:20px;margin:0 -4px 0 2px;cursor:pointer;font-size:11px;line-height:20px;padding:0;flex:0 0 auto}",
+    ".nvrep:hover{background:#EDE3DB;color:#3B2418}.nvrep.on{background:#E4ECE4;color:#4E6B4F}",
+    ".nvrep-pop{position:fixed;z-index:9500;background:#fff;border-radius:18px;box-shadow:0 10px 34px rgba(58,36,28,.18);padding:14px;width:280px;font-family:Outfit,system-ui,sans-serif;color:#3B2418}",
+    ".nvrep-pop b{display:block;font-weight:500;font-size:14px;margin-bottom:10px}",
+    ".nvrep-pop .op{display:flex;gap:6px;margin-bottom:10px}.nvrep-pop .op button{flex:1;border:0;border-radius:12px;padding:8px 6px;background:#F5EFEA;font:400 13px Outfit,system-ui,sans-serif;color:#5A3A2A;cursor:pointer}",
+    ".nvrep-pop .op button.sel{background:#3B2418;color:#fff}",
+    ".nvrep-pop .ds{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:12px}",
+    ".nvrep-pop .ds button{border:0;border-radius:10px;padding:8px 0;background:#F5EFEA;font:400 12px Outfit,system-ui,sans-serif;color:#5A3A2A;cursor:pointer}",
+    ".nvrep-pop .ds button.sel{background:#7E9A82;color:#fff}",
+    ".nvrep-pop .ft{display:flex;gap:6px;justify-content:flex-end}.nvrep-pop .ft button{border:0;border-radius:999px;padding:8px 14px;font:400 13px Outfit,system-ui,sans-serif;cursor:pointer;background:#F5EFEA;color:#3B2418}",
+    ".nvrep-pop .ft button.ok{background:#3B2418;color:#fff}",
+    ".nvrep-pop .hint{font-size:11.5px;color:#9A8274;margin:-4px 0 10px;font-weight:300}"
   ].join("\n");
   var st = document.createElement("style"); st.textContent = CSS; document.head.appendChild(st);
 
@@ -28,12 +28,12 @@
   function botones(){
     document.querySelectorAll("[data-nvt]").forEach(function(ch){
       var on = !!(window.__nvRR && window.__nvRR(tarea(ch.dataset.nvt) || {}));
-      var b = ch.querySelector(".nvrp");
+      var b = ch.querySelector(".nvrep");
       if (b){ b.classList.toggle("on", on); return; }
-      var sig = ch.nextElementSibling; if (sig && sig.classList.contains("nvrp")) sig.remove();
-      b = document.createElement("button"); b.type = "button"; b.className = "nvrp"; b.textContent = "↻"; b.title = "¿Se repite?";
+      var sig = ch.nextElementSibling; if (sig && sig.classList.contains("nvrep")) sig.remove();
+      b = document.createElement("button"); b.type = "button"; b.className = "nvrep"; b.textContent = "↻"; b.title = "¿Se repite?";
       b.dataset.id = ch.dataset.nvt; if (on) b.classList.add("on");
-      ch.classList.add("nvrp-ch"); ch.appendChild(b);
+      ch.classList.add("nvrep-ch"); ch.appendChild(b);
     });
   }
   setInterval(function(){ try { botones(); } catch(e){} }, 700);
@@ -41,13 +41,13 @@
   var POP = null;
   function cerrar(){ if (POP){ POP.remove(); POP = null; } }
   document.addEventListener("click", function(e){
-    var b = e.target.closest && e.target.closest(".nvrp");
+    var b = e.target.closest && e.target.closest(".nvrep");
     if (!b){ if (POP && !POP.contains(e.target)) cerrar(); return; }
     e.preventDefault(); e.stopPropagation();
     cerrar();
     var t = tarea(b.dataset.id); if (!t){ toast("No encontré la tarea"); return; }
     var sel = diasDe(t.rep), modo = !sel.length ? "no" : sel.length === 7 ? "todos" : "dias";
-    POP = document.createElement("div"); POP.className = "nvrp-pop";
+    POP = document.createElement("div"); POP.className = "nvrep-pop";
     function dib(){
       POP.innerHTML = "<b>¿Se repite?</b>" +
         '<div class="op"><button data-m="no"' + (modo === "no" ? ' class="sel"' : "") + '>No</button><button data-m="todos"' + (modo === "todos" ? ' class="sel"' : "") + '>Todos los días</button><button data-m="dias"' + (modo === "dias" ? ' class="sel"' : "") + ">Algunos días</button></div>" +

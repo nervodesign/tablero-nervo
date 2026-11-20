@@ -607,3 +607,29 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   document.addEventListener("visibilitychange", function(){ if (!document.hidden) mirar(); });
   window.addEventListener("focus", mirar);
 })();
+
+
+/* ================= celu: el chat se ve completo y los menús se cierran (botón × y gesto de volver) ================= */
+(function(){
+  if (window.__nvMovilFix) return; window.__nvMovilFix = 1;
+  var st = document.createElement("style");
+  st.textContent = "@media (max-width:760px){html:not(#a):not(#b) body .chw.vl .chrp{display:none!important} html:not(#a):not(#b) body .chw.vl .chc{max-height:none!important;height:auto!important;flex:1 1 auto!important;overflow:auto!important}}" +
+    ".nvsh-x{position:sticky;top:0;float:right;margin:-6px -4px 0 8px;z-index:5;width:36px;height:36px;border-radius:50%;border:0;background:#ECE6DF;color:#6B5B50;font-size:20px;line-height:36px;cursor:pointer;box-shadow:inset 2px 2px 5px rgba(120,100,85,.16),inset -2px -2px 5px rgba(255,255,255,.8)}";
+  document.head.appendChild(st);
+  var abierto = false;
+  function scrim(){ var h = document.getElementById("sheetHost"); return h && h.querySelector(".scrim"); }
+  function cerrar(){ var s = scrim(); if (s) s.dispatchEvent(new MouseEvent("click", { bubbles: true })); }
+  function revisar(){
+    var s = scrim();
+    if (s){
+      var sh = s.querySelector(".sheet");
+      if (sh && !sh.querySelector(".nvsh-x")){ var b = document.createElement("button"); b.type = "button"; b.className = "nvsh-x"; b.textContent = "×"; b.title = "Cerrar"; b.onclick = function(e){ e.preventDefault(); e.stopPropagation(); cerrar(); }; sh.insertBefore(b, sh.firstChild); }
+      if (!abierto){ abierto = true; try { history.pushState({ nvSheet: 1 }, ""); } catch(e){} }
+    } else if (abierto){
+      abierto = false; try { if (history.state && history.state.nvSheet) history.back(); } catch(e){}
+    }
+  }
+  window.addEventListener("popstate", function(){ if (abierto && scrim()){ abierto = false; cerrar(); } });
+  function vigilar(){ var h = document.getElementById("sheetHost"); if (!h) return setTimeout(vigilar, 1000); new MutationObserver(revisar).observe(h, { childList: true, subtree: true }); }
+  vigilar();
+})();
