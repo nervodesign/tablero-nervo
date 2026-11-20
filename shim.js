@@ -356,7 +356,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   }
   function quien(){ return String((window.__nv && window.__nv.S && window.__nv.S.soy) || ""); }
   function subir(t, F){ var now = new Date().toISOString(); return SB().from("registros").upsert(F.map(function(d){ return { tabla: t, id: String(d.id), data: d, borrado: false, actualizado: now, por: quien() }; }), { onConflict: "tabla,id" }).then(function(r){ if (r.error) throw new Error("No se pudo guardar: " + r.error.message); }); }
-  function copia(n, a){ g(n, a).then(function(){ refrescarVentas(); }, function(e){ console.warn("copia en Google pendiente:", n, e && e.message); }); }
+  function copia(n, a){ ventasLocalOtraVez(); g(n, a).then(function(){ refrescarVentas(); }, function(e){ console.warn("copia en Google pendiente:", n, e && e.message); }); }
 
   L.baseLeer = function(){
     return tok().then(function(){
@@ -383,7 +383,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   };
 
   /* ---------- lo que calcula Google (ventas, envíos, clima…): se muestra lo último al instante y se actualiza atrás ---------- */
-  var SWR = ["ventas","envios","pedidosGanancia","clima","mayoristasAT","resenasAT","mayHistAT"];
+  var SWR = ["envios","pedidosGanancia","clima","mayoristasAT","resenasAT","mayHistAT"];
   var VIVOS = {};
   function clave(n, a){ return "nv-swr-" + n + "-" + JSON.stringify(a || []).slice(0, 80); }
   function leerC(k){ try { return JSON.parse(localStorage.getItem(k) || "null"); } catch(e){ return null; } }
@@ -400,6 +400,30 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
       return fresco;
     };
   });
+  /* ---------- resumen de ventas: se calcula acá mismo con la base (ya no se le pide a Google) ---------- */
+  var VCB = null, tVL = null;
+  function ventasArmar(b){
+    b = b || {};
+    var J = function(v){ try { var x = JSON.parse(v || "[]"); return Array.isArray(x) ? x : []; } catch(e){ return []; } };
+    var N = function(t){ return String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(); };
+    var porF = function(x, y){ return x.f < y.f ? -1 : x.f > y.f ? 1 : 0; };
+    var ord = [], agg = {}, items = [];
+    (b.base_min || []).forEach(function(r){
+      var fac0 = Number(r.facturar) || 0, cob = Number(r.cobrado) || 0, fac = fac0 || cob;
+      var cli = String(r.cliente || "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").split("\n")[0].trim();
+      ord.push({ f: String(r.fecha || ""), t: cob || fac, fac: fac, cob: cob, v: String(r.venta || r.num || ""), c: cli });
+      var m = String(r.fecha || "").slice(0, 7); if (!m) return;
+      var Q = String(r.cant || "").split("\n").map(function(l){ var x = /^\s*\[[ xX]?\]\s*(\d+)/.exec(l); return x ? Number(x[1]) : null; }).filter(function(x){ return x != null; });
+      J(r.prods).forEach(function(p, i){ var nm = String(p).split(" · ")[0].trim(), k = m + "|" + N(nm); if (!agg[k]){ agg[k] = { p: nm, q: 0, m: m }; items.push(agg[k]); } agg[k].q += Q[i] != null ? Q[i] : 1; });
+    });
+    var may = (b.base_may || []).map(function(r){ return { f: String(r.fecha || ""), t: (Number(r.sena) || 0) + (Number(r.saldo) || 0) }; });
+    var fin = (b.fin_euge || []).concat(b.fin_pau || []).map(function(r){ return { f: String(r.fecha || ""), k: String(r.cat || ""), t: Number(r.total) || 0, c: String(r.concepto || "") }; });
+    ord.sort(porF); may.sort(porF); fin.sort(porF);
+    return { ord: ord, items: items, may: may, fin: fin, sinAcceso: [], at: Date.now(), base: true };
+  }
+  L.ventas = function(a, otraVez){ if (otraVez) VCB = otraVez; return L.baseLeer([]).then(ventasArmar); };
+  function ventasLocalOtraVez(){ clearTimeout(tVL); tVL = setTimeout(function(){ if (!VCB || !MEM) return; try { VCB(ventasArmar(salida())); } catch(e){} }, 400); }
+
   var tRef = null;
   function refrescarVentas(){
     clearTimeout(tRef);
@@ -418,7 +442,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
         var i = idx(r.tabla, r.id);
         if (r.borrado){ if (i >= 0) MEM[r.tabla].splice(i, 1); }
         else { var d = r.data || {}; if (i >= 0) MEM[r.tabla][i] = d; else { MEM[r.tabla].push(d); ord(MEM[r.tabla]); } }
-        ULT = Date.now(); gls();
+        ULT = Date.now(); gls(); ventasLocalOtraVez();
       }).subscribe();
     } catch(e){}
   }, 3500);
