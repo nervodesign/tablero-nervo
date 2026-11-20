@@ -1,7 +1,7 @@
 /* Mayoristas · Clientes: una sola vista con Activos / En contacto / Para activar, y la ficha completa de cada cliente */
 (function(){
   if (window.__nvClientes) return; window.__nvClientes = 1;
-  var MODO = true, ABIERTO = {}, GRUPO = { act: true, con: true, dor: false }, SEC = {}, BUSCA = "", BASE = null, CARGANDO = false;
+  var MODO = true, ABIERTO = {}, GRUPO = { act: false, con: false, dor: false }, SEC = {}, BUSCA = "", BASE = null, CARGANDO = false;
   var css = document.createElement("style");
   css.textContent = [
     "main#list .my-top .pz-sw > button:not(.nvcl-tab):not(.nvml-tab){display:none!important}",
@@ -34,6 +34,9 @@
     "#nvcl .sc .li{display:none;padding:4px 14px 10px}#nvcl .sc.on .li{display:block}",
     "#nvcl .it{display:grid;grid-template-columns:92px 1fr auto;gap:10px;padding:7px 0;border-top:1px solid #F0EBE5;font-size:13px}#nvcl .it:first-child{border-top:0}#nvcl .it i{font-style:normal;color:var(--su)}#nvcl .it b{font-weight:600;white-space:nowrap}",
     "#nvcl .vac{color:var(--su);font-size:13px;padding:8px 0}",
+    "#nvcl .wa-t{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:-4px 0 14px}#nvcl .wa-t small{color:var(--su);font-size:12px;margin-right:2px}#nvcl .wa-t a{border-radius:999px;padding:6px 12px;font-size:12.5px;background:#E3EDE4;color:#3F5E43;text-decoration:none}#nvcl .wa-t a:hover{background:#D3E4D5}#nvcl .wa-t button{border:0;background:none;color:var(--su);font:inherit;font-size:12px;cursor:pointer;text-decoration:underline}",
+    "#nvcl .top{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}#nvcl .top .p{display:flex;align-items:center;gap:8px;background:var(--ar);border-radius:14px;padding:7px 8px 7px 12px;font-size:13px}#nvcl .top .p b{font-weight:600}#nvcl .top .p i{font-style:normal;color:var(--su);font-size:12px}#nvcl .top .p a{border-radius:999px;padding:4px 9px;font-size:11.5px;background:#E3EDE4;color:#3F5E43;text-decoration:none}",
+    "#nvcl .mt{position:fixed;inset:0;background:rgba(74,63,55,.3);z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px}#nvcl .mt>div{background:var(--ar);border-radius:22px;padding:20px;width:100%;max-width:620px;max-height:88vh;overflow:auto}#nvcl .mt h3{margin:0 0 4px;font-size:18px}#nvcl .mt p{margin:0 0 12px;color:var(--su);font-size:13px}#nvcl .mt label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--su);margin-bottom:10px}#nvcl .mt textarea{min-height:70px}#nvcl .mt .pie{display:flex;justify-content:flex-end;gap:8px}",
     "@media(max-width:760px){#nvcl .k{grid-template-columns:repeat(2,1fr)}#nvcl .res{grid-template-columns:repeat(2,1fr)}#nvcl .fr{grid-template-columns:1fr 1fr}#nvcl .fi{padding:4px 14px 16px}#nvcl .ch{grid-template-columns:34px 1fr auto;padding:10px 14px}#nvcl .ch .fl{display:none}#nvcl .it{grid-template-columns:78px 1fr}#nvcl .it b{grid-column:2}}"
   ].join("\n");
   document.head.appendChild(css);
@@ -70,8 +73,20 @@
   function info(c){
     var C = compras(c), tot = C.reduce(function(s, x){ return s + x.t; }, 0), ult = C[0] ? C[0].f : "", d = dias(ult);
     var log = J(c.log), ultLog = log.reduce(function(m, x){ return x[0] > m ? x[0] : m; }, "");
-    var grupo = d <= 90 ? "act" : ((c.paso || c.etapa === "nuevo" || (ultLog && dias(ultLog) <= 45)) ? "con" : "dor");
-    return { c: c, C: C, tot: tot, ult: ult, d: d, rep: C.length > 1 ? C[0].f : "", pri: C.length ? C[C.length - 1].f : "", log: log, grupo: grupo };
+    var grupo = d <= 90 ? "act" : (((c.paso && !(c.fp && ult && c.fp < ult)) || c.etapa === "nuevo" || (ultLog && dias(ultLog) <= 45)) ? "con" : "dor");
+    // si el paso anotado es de antes de la última compra, ya quedó viejo: no se muestra como atrasado
+    var pasoViejo = !!(c.paso && c.fp && ult && c.fp < ult);
+    var tienePaso = c.paso && !pasoViejo;
+    // ritmo automático después de cada compra: al mes escribirles, a los 75 días ofrecer reposición, a los 5 meses reactivar
+    var auto = null;
+    if (!tienePaso && ult){
+      if (d >= 30 && d < 75) auto = { paso: "Escribirles para ver cómo les va", fp: sumarDias(ult, 30), k: "seg", ic: "💬" };
+      else if (d >= 75 && d <= 150) auto = { paso: "Ofrecer reposición sin mínimo", fp: sumarDias(ult, 75), k: "rep", ic: "🔁" };
+      else if (d > 150) auto = { paso: "Mandar mensaje para reactivar", fp: sumarDias(ult, 150), k: "rea", ic: "✨" };
+    }
+    // último pedido mayorista sin pagar
+    var debe = false; try { var ped = ((BASE && BASE.base_may) || []).filter(function(r){ return N(r.cliente) && [N(c.nombre)].concat(J(c.alias).map(N)).indexOf(N(r.cliente)) >= 0 && !/CANCEL/i.test(r.estado); }).sort(function(a, b){ return a.fecha < b.fecha ? 1 : -1; })[0]; debe = !!(ped && Number(ped.saldo) > 0); } catch(e){}
+    return { pasoViejo: pasoViejo, tienePaso: tienePaso, debe: debe, c: c, C: C, tot: tot, ult: ult, d: d, rep: C.length > 1 ? C[0].f : "", pri: C.length ? C[C.length - 1].f : "", log: log, grupo: grupo, auto: auto };
   }
   function guardar(c, campos){
     campos.id = c.id; campos.cambiado = String(Date.now()); campos.por = soy() || c.por;
@@ -80,6 +95,52 @@
     if (window.__nvLocal && window.__nvLocal.guardar) window.__nvLocal.guardar(["mayclientes", campos]).catch(function(e){ alert("No se pudo guardar: " + (e && e.message || e)); });
   }
   function agregarLog(c, texto, tipo){ var L = J(c.log); L.unshift([hoy(), texto, tipo || "nota", soy()]); guardar(c, { log: JSON.stringify(L.slice(0, 200)) }); }
+
+
+  /* ---------- mensajes de WhatsApp listos (se pueden editar) ---------- */
+  var MSJ_DEF = {
+    rep: ["Reposición", "Hola {nombre}! ¿Cómo están? Ya pasaron unos meses desde su último pedido 🙌 Les recordamos que la reposición no tiene mínimo. ¿Les armamos un pedido? Todo el catálogo está en nervomayorista.com"],
+    cat: ["Catálogo nuevo", "Hola {nombre}! Ya está el catálogo mayorista actualizado con las novedades del mes 🤎 Lo pueden ver en nervomayorista.com ¿Quieren que les separemos algo?"],
+    rea: ["Reactivar", "Hola {nombre}! Hace un tiempo que no hablamos y queríamos contarles que tenemos muchas novedades 🤎 Si quieren les pasamos el catálogo con los precios actualizados. ¡Nos encantaría volver a trabajar juntos!"],
+    seg: ["Seguimiento de pedido", "Hola {nombre}! ¿Cómo están? Les escribimos para contarles cómo viene su pedido. Cualquier cosa nos avisan 🙌"],
+    gra: ["Gracias por la compra", "Hola {nombre}! Muchas gracias por su compra 🤎 Cualquier cosa que necesiten estamos por acá. ¡Que lo disfruten!"]
+  };
+  function msjs(){
+    var M = {}; Object.keys(MSJ_DEF).forEach(function(k){ M[k] = MSJ_DEF[k].slice(); });
+    try { var cf = (S().config || []).find(function(x){ return x.id === "may_wa"; }); var g = cf && JSON.parse(cf.datos || "{}"); if (g) Object.keys(g).forEach(function(k){ if (M[k] && g[k]) M[k][1] = g[k]; }); } catch(e){}
+    return M;
+  }
+  function nombreCorto(c){ return String(c.cont || c.nombre || "").split(/[|(]/)[0].trim(); }
+  function waLink(c, texto){ var tel = String(c.tel || "").replace(/\D/g, ""); if (!tel) return ""; if (tel.length <= 10) tel = "549" + tel; return "https://wa.me/" + tel + "?text=" + encodeURIComponent(String(texto).replace(/\{nombre\}/g, nombreCorto(c)).replace(/\{producto\}/g, "")); }
+  function editarMsjs(){
+    var M = msjs(), box = document.getElementById("nvcl"), fondo = h("div", "mt"), caja = h("div");
+    caja.append(h("h3", null, "Mensajes de WhatsApp"), h("p", null, "Usá {nombre} para el nombre del cliente. Se guardan para las dos."));
+    var ins = {};
+    Object.keys(M).forEach(function(k){ var l = h("label"), t = h("textarea", "in"); t.value = M[k][1]; ins[k] = t; l.append(h("span", null, M[k][0]), t); caja.append(l); });
+    var pie = h("div", "pie"), no = h("button", "bt", "Cancelar"), si = h("button", "bt os", "Guardar"); no.type = si.type = "button";
+    no.onclick = function(){ fondo.remove(); };
+    si.onclick = function(){
+      var o = {}; Object.keys(ins).forEach(function(k){ o[k] = ins[k].value.trim(); });
+      var item = { id: "may_wa", datos: JSON.stringify(o), cambiado: String(Date.now()), por: soy() };
+      try { var L = S().config || (S().config = []), x = L.find(function(y){ return y.id === "may_wa"; }); if (x) Object.assign(x, item); else L.push(item); } catch(e){}
+      if (window.__nvLocal && window.__nvLocal.guardar) window.__nvLocal.guardar(["config", item]);
+      fondo.remove(); pintar();
+    };
+    pie.append(no, si); caja.append(pie); fondo.append(caja); fondo.onclick = function(e){ if (e.target === fondo) fondo.remove(); }; box.append(fondo);
+  }
+  /* ---------- lo que más compra cada cliente ---------- */
+  function productos(C){
+    var P = {};
+    C.forEach(function(x){ String(x.d || "").replace(/detalle pedido:?/ig, "").split(/\s*(?:·|\*|\n|;)\s*/).forEach(function(seg){
+      var m = /^(\d+)\s*[x×]?\s+(.+?)(?:\s*:?\s*\$\s*[\d.,]+)?\s*$/i.exec(seg.trim()); if (!m) return;
+      var nombre = m[2].replace(/:$/, "").trim(); if (nombre.length < 3) return;
+      var k = N(nombre).split(" ").filter(function(w){ return !/^\d/.test(w) && w.length > 1; }).slice(0, 3).join(" "); if (!k) return;
+      if (!P[k]) P[k] = { n: nombre, q: 0, v: 0, ult: "" }; P[k].q += Number(m[1]) || 1; P[k].v++; if (x.f > P[k].ult) P[k].ult = x.f;
+    }); });
+    return Object.keys(P).map(function(k){ return P[k]; }).sort(function(a, b){ return b.q - a.q || b.v - a.v; });
+  }
+  function lindo(n){ return String(n).toLowerCase().split(/\s+/).slice(0, 5).join(" ").replace(/(^|\s)\S/g, function(x){ return x.toUpperCase(); }); }
+  function sumarDias(iso, n){ var d = new Date(String(iso).slice(0, 10) + "T12:00:00"); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 
   function seccion(id, titulo, cuenta, llenar){
     var s = h("div", "sc" + (SEC[id] ? " on" : "")), b = h("button"); b.type = "button";
@@ -100,17 +161,32 @@
     var em = h("a", "bt", "✉ Mail"); if (c.email){ em.href = "mailto:" + c.email; } else em.setAttribute("disabled", "");
     var ct = h("button", "bt", "✓ Le escribimos hoy"); ct.type = "button"; ct.onclick = function(){ agregarLog(c, "Le escribimos", "ct"); pintar(); };
     a.append(wa, em, ct); f.append(a);
+    var M = msjs(), wt = h("div", "wa-t"); wt.append(h("small", null, "Mensajes listos:"));
+    ["rep", "cat", "rea", "seg", "gra"].forEach(function(k){ var l = waLink(c, M[k][1]); if (!l) return; var x = h("a", null, M[k][0]); x.href = l; x.target = "_blank"; x.onclick = function(){ agregarLog(c, "WhatsApp: " + M[k][0], "ct"); }; wt.append(x); });
+    var ed = h("button", null, "editar mensajes"); ed.type = "button"; ed.onclick = editarMsjs; wt.append(ed);
+    if (tel) f.append(wt);
     // resumen
     var r = h("div", "res");
     [["Total comprado", plata(I.tot)], ["Compras", String(I.C.length)], ["Ticket promedio", I.C.length ? plata(I.tot / I.C.length) : "—"], ["Primera compra", fc(I.pri)], ["Última compra", fc(I.ult)], ["Última reposición", fc(I.rep)]].forEach(function(x){ var d = h("div"); d.append(h("small", null, x[0]), h("b", null, x[1])); r.append(d); });
     f.append(r);
+    var P = productos(I.C).slice(0, 5);
+    if (P.length){
+      f.append(h("div", "sb", "Lo que más compra")).lastChild.style.cssText = "margin:-4px 0 6px;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em";
+      var tp = h("div", "top");
+      P.forEach(function(x){ var d = h("div", "p"); d.append(h("b", null, lindo(x.n)), h("i", null, x.q + " u. · " + x.v + " pedido" + (x.v > 1 ? "s" : "") + " · últ. " + fc(x.ult)));
+        var l = waLink(c, "Hola {nombre}! ¿Cómo vienen con " + lindo(x.n) + "? Si quieren reponer, la reposición no tiene mínimo 🙌 ¿Les separamos?"); if (l){ var o = h("a", null, "Ofrecer"); o.href = l; o.target = "_blank"; o.onclick = function(){ agregarLog(c, "Ofrecimos " + lindo(x.n), "ct"); }; d.append(o); }
+        tp.append(d); });
+      f.append(tp);
+    }
     // próximo paso
     var ps = h("div", "ps"); ps.append(h("span", null, "Próximo paso:"));
-    var pt = h("input", "in t"); pt.placeholder = "Ej: mandar catálogo nuevo, ofrecer reposición…"; pt.value = c.paso || "";
+    var pt = h("input", "in t"); pt.placeholder = I.auto ? I.auto.paso + " (sugerido)" : "Ej: mandar catálogo nuevo, ofrecer reposición…"; pt.value = I.tienePaso ? c.paso : "";
     var pf = h("input", "in"); pf.type = "date"; pf.value = c.fp || "";
     pt.onchange = function(){ guardar(c, { paso: pt.value.trim() }); }; pf.onchange = function(){ guardar(c, { fp: pf.value }); };
     var ok = h("button", "bt os", "Hecho ✓"); ok.type = "button"; ok.onclick = function(){ if (!c.paso) return; agregarLog(c, "Hecho: " + c.paso, "hecho"); guardar(c, { paso: "", fp: "" }); pintar(); };
-    ps.append(pt, pf, ok); f.append(ps);
+    ps.append(pt, pf, ok);
+    if (I.auto && !I.tienePaso){ var rl = waLink(c, msjs()[I.auto.k][1]); if (rl){ var rb = h("a", "bt wa", I.auto.ic + " " + I.auto.paso); rb.href = rl; rb.target = "_blank"; rb.onclick = function(){ agregarLog(c, "WhatsApp: " + I.auto.paso, "ct"); guardar(c, { paso: "Ver si respondió", fp: sumarDias(hoy(), 3) }); setTimeout(pintar, 300); }; ps.append(rb); } }
+    f.append(ps);
     // datos
     var fr = h("div", "fr");
     fr.append(
@@ -149,8 +225,9 @@
     var lugar = c.ciu || (String(c.datos || "").match(/(?:-|,)\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ ]{3,})\s*-/) || [])[1];
     if (lugar) sb.append(h("span", null, String(lugar).trim().toLowerCase().replace(/(^|\s)\S/g, function(x){ return x.toUpperCase(); })));
     sb.append(h("span", "tag" + (I.grupo === "act" ? " ve" : I.d <= 180 ? " am" : ""), I.ult ? "últ. compra " + hace(I.d) : "sin compras"));
-    if (c.paso){ var at = c.fp && c.fp < hoy(); sb.append(h("span", "tag" + (at ? " ro" : ""), (at ? "atrasado · " : (c.fp ? fc(c.fp) + " · " : "")) + c.paso)); }
-    if (I.grupo === "act" && I.d >= 75) sb.append(h("span", "tag am", "vence la reposición"));
+    if (I.debe) sb.append(h("span", "tag am", "💳 esperando pago"));
+    if (I.tienePaso){ var at = c.fp && c.fp < hoy(); sb.append(h("span", "tag" + (at ? " ro" : ""), (at ? "pendiente · " : (c.fp ? fc(c.fp) + " · " : "")) + c.paso)); }
+    else if (I.auto && I.auto.k !== "rea") sb.append(h("span", "tag am", I.auto.ic + " " + I.auto.paso.toLowerCase()));
     var tot = h("div", "tot", plata(I.tot)); tot.append(h("small", null, I.C.length + " compra" + (I.C.length === 1 ? "" : "s")));
     var av = h("span", "av", ini(c.nombre)); var fl = h("span", "fl", "›");
     b.append(av, mid, tot, fl);
@@ -167,7 +244,7 @@
     G.act.sort(function(a, b){ return a.d - b.d; });
     G.con.sort(function(a, b){ return (a.c.fp || "9") < (b.c.fp || "9") ? -1 : 1; });
     G.dor.sort(function(a, b){ return b.tot - a.tot; });
-    var hoyN = L.filter(function(I){ return I.c.paso && I.c.fp && I.c.fp <= hoy(); }).length;
+    var hoyN = L.filter(function(I){ return (I.tienePaso && I.c.fp && I.c.fp <= hoy()) || (I.auto && I.auto.k !== "rea" && I.auto.fp <= hoy()); }).length;
     var scroll = window.scrollY, foco = document.activeElement && document.activeElement.classList.contains("bus");
     box.innerHTML = "";
     var k = h("div", "k");
