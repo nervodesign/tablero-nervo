@@ -1012,7 +1012,7 @@
     try { (window.__nv.getCH() || []).forEach(function(c){ if (String(c[1]).toLowerCase() === nom.toLowerCase()) id = String(c[0]); }); } catch(e){}
     return { id: id, nom: nom };
   }
-  function avisarChat(form){
+  function avisarChat(form){ if (window.__nvChatAvisoDatos) return;
     var ta = form.querySelector("textarea, input[type=text]"); var tx = ta ? ta.value.trim() : "";
     var c = canalActual(); if (!c.id || /movimiento/i.test(c.nom)) return;
     var clave = c.id + "|" + tx; if (clave === ult) return; ult = clave; setTimeout(function(){ if (ult === clave) ult = ""; }, 3000);

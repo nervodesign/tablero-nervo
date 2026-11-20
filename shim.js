@@ -189,7 +189,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
 (function(){
   if (window.__nvLocal) return;
   var TABLAS = ["presupuestos","catalogo","config","mayoristas","campanas","contenido","seguimiento","costos","preciosweb","ganancias","tareas","proveedores","notas","links","recordatorios","stock","tejedoras","mayclientes","objetivos"];
-  var LS = "nv-datos-v1", MEM = null, DEL = {}, CARGANDO = null, ULT = 0;
+  var LS = "nv-datos-v1", MEM = null, DEL = {}, CARGANDO = null, ULT = 0, VACIO_D = 0;
   try { var c = JSON.parse(localStorage.getItem(LS) || "null"); if (c && c.d) MEM = c.d; } catch(e){}
   function SB(){ return window.__sb; }
   function tok(){ return window.__nvTok ? window.__nvTok() : Promise.resolve(); }
@@ -209,6 +209,8 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
         if (q.error) throw q.error;
         all = all.concat(q.data || []); if ((q.data || []).length < 1000) break; from += 1000;
       }
+      /* si llega vacío (todavía no terminó de entrar), no pisa nada: espera y vuelve a probar */
+      if (!all.length){ VACIO_D++; if (VACIO_D < 8){ await new Promise(function(ok){ setTimeout(ok, 1500); }); CARGANDO = null; return traer(); } if (MEM) return MEM; } else VACIO_D = 0;
       var M = {}, D = {}; TABLAS.forEach(function(t){ M[t] = []; });
       all.forEach(function(r){ if (r.borrado){ D[r.tabla + "|" + r.id] = 1; return; } var d = r.data || {}; if (d.id == null || d.id === "") d.id = r.id; M[r.tabla].push(d); });
       TABLAS.forEach(function(t){ ordenar(M[t]); });
@@ -490,6 +492,15 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   var VISTO = null;
   function vistos(){ return SB().from("registros").select("data").eq("tabla", "chatvisto").eq("id", "v").maybeSingle().then(function(r){ VISTO = (r.data && r.data.data) || VISTO || {}; return VISTO; }); }
 
+  /* aviso al celu/compu de las demás cuando alguien escribe (sale desde acá, no depende de la pantalla) */
+  window.__nvChatAvisoDatos = 1;
+  function avisoChat(d){
+    try {
+      if (!d || /^mov/i.test(d.canal)) return;
+      var nom = d.canal; try { (window.__nv.getCH() || []).forEach(function(c){ if (String(c[0]) === String(d.canal)) nom = c[1]; }); } catch(e){}
+      SB().functions.invoke("avisos", { body: { accion: "chat", canal: d.canal, canalNombre: nom, texto: d.texto || "" } }).catch(function(){});
+    } catch(e){}
+  }
   L.chatLeer = function(a){
     var desde = Number(a[0]) || 0;
     return tok().then(function(){
@@ -506,7 +517,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   L.chatEnviar = function(a){
     var m = a[0] || {}, now = Date.now();
     var d = { id: String(m.id || ("c" + now + Math.random().toString(36).slice(2, 6))), canal: String(m.canal || ""), texto: String(m.texto || "").slice(0, 4000), por: String(m.por || ""), creado: Number(m.creado) || now, cambiado: now, borrado: false, reac: m.padre ? { __p: String(m.padre) } : {}, adj: Array.isArray(m.adj) ? m.adj.slice(0, 10) : [] };
-    return tok().then(function(){ return subir(d); }).then(function(){ copia("chatEnviar", [Object.assign({}, m, { id: d.id, creado: d.creado })]); return msg(d); });
+    return tok().then(function(){ return subir(d); }).then(function(){ avisoChat(d); copia("chatEnviar", [Object.assign({}, m, { id: d.id, creado: d.creado })]); return msg(d); });
   };
   function cambiar(id, fn, nombre, args){
     return tok().then(function(){ return uno(id); }).then(function(d){
