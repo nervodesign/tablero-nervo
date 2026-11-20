@@ -690,6 +690,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
     var kb = escribiendo() && innerWidth <= 760 && ((("ontouchstart" in window) || navigator.maxTouchPoints > 0) || vv.height < (BASE || window.innerHeight) - 100);
     var R = document.documentElement;
     R.classList.toggle("nv-kb", kb);
+    [].forEach.call(document.querySelectorAll("nav.tabs, .fab, #nvupd"), function(n){ if (kb) n.style.setProperty("display", "none", "important"); else n.style.removeProperty("display"); });
     R.style.setProperty("--vvh", Math.round(vv.height) + "px");
     R.style.setProperty("--vvt", Math.round(vv.offsetTop) + "px");
     var chw = document.querySelector(".chw");
