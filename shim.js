@@ -684,9 +684,10 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   var vv = window.visualViewport; if (!vv) return;
   function escribiendo(){ var a = document.activeElement; return !!a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable); }
   function alFondo(chw){ [].forEach.call(chw.querySelectorAll("*"), function(x){ var o = getComputedStyle(x).overflowY; if ((o === "auto" || o === "scroll") && x.scrollHeight > x.clientHeight + 4 && !x.contains(document.activeElement)) x.scrollTop = x.scrollHeight; }); }
-  var abierto = false;
+  var abierto = false, BASE = 0;
   function upd(){
-    var kb = escribiendo() && vv.height < window.innerHeight - 120 && innerWidth <= 760;
+    if (!escribiendo()) BASE = Math.max(window.innerHeight, vv.height);
+    var kb = escribiendo() && innerWidth <= 760 && ((("ontouchstart" in window) || navigator.maxTouchPoints > 0) || vv.height < (BASE || window.innerHeight) - 100);
     var R = document.documentElement;
     R.classList.toggle("nv-kb", kb);
     R.style.setProperty("--vvh", Math.round(vv.height) + "px");
@@ -756,7 +757,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
       if (k !== CLAVE){ CLAVE = k; setTimeout(alFondo, 60); setTimeout(alFondo, 400); }
     }
   }
-  setInterval(medir, 400); window.addEventListener("resize", function(){ document.documentElement.classList.remove("nv-chat"); medir(); });
+  var LW = innerWidth; setInterval(medir, 400); window.addEventListener("resize", function(){ if (innerWidth === LW) return; LW = innerWidth; document.documentElement.classList.remove("nv-chat"); medir(); });
   // el casillero crece al escribir (hasta 5 renglones) y vuelve a 1 al mandar
   function crecer(ta){ if (!document.documentElement.classList.contains("nv-chat")) return; ta.style.height = "40px"; ta.style.height = Math.min(120, ta.scrollHeight + 2) + "px"; }
   document.addEventListener("input", function(e){ var ta = e.target; if (ta && ta.tagName === "TEXTAREA" && ta.closest && ta.closest(".chw .chf")) crecer(ta); }, true);

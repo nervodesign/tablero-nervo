@@ -1234,7 +1234,7 @@
     if (!q){ var m = document.createElement("div"); m.className = "mas"; m.textContent = "Seguí escribiendo para ver más: /ojo, /cobro, /seña, /sueldo…"; POP.appendChild(m); }
     var r = ta.getBoundingClientRect();
     POP.style.left = Math.max(10, Math.min(r.left, innerWidth - POP.offsetWidth - 10)) + "px";
-    POP.style.top = Math.max(10, r.top - POP.offsetHeight - 8) + "px";
+    var vt = window.visualViewport ? visualViewport.offsetTop : 0; POP.style.top = Math.max(vt + 10, r.top - POP.offsetHeight - 8) + "px";
   }
   document.addEventListener("input", function(e){ var ta = e.target; if (ta && ta.tagName === "TEXTAREA") sugerir(ta); }, true);
   document.addEventListener("keydown", function(e){
