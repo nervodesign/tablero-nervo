@@ -1053,3 +1053,6 @@
 
 /* ---------- Tareas: días que se repite + aviso de tarea nueva (archivo aparte) ---------- */
 (function(){ if (window.__nvTareasCarga) return; window.__nvTareasCarga = 1; var cs = document.currentScript, v = cs && /[?&]v=(\d+)/.exec(cs.src); var sc = document.createElement("script"); sc.src = "tareas.js" + (v ? "?v=" + v[1] : "?t=" + Date.now()); document.head.appendChild(sc); })();
+
+/* resumen de la semana (lunes) */
+(function(){ if (window.__nvLunesCarga) return; window.__nvLunesCarga = 1; var cs = document.currentScript, v = cs && /[?&]v=(\d+)/.exec(cs.src); var sc = document.createElement("script"); sc.src = "lunes.js" + (v ? "?v=" + v[1] : "?t=" + Date.now()); document.head.appendChild(sc); })();
