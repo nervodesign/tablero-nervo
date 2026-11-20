@@ -49,10 +49,10 @@
     C + " .q-fr{display:grid;grid-template-columns:1.4fr 1.6fr 110px 150px;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid #F5EFE8;font-size:13.5px}",
     C + " .q-fr:last-child{border-bottom:0}" + C + " .q-fr .q-ml{color:#6B5A4E;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
     C + " .q-fr input{border:1px solid #E4D9CE;border-radius:9px;padding:6px 9px;font:inherit;font-size:13px;width:100%;box-sizing:border-box}",
-    C + " .q-sw{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:#6B5A4E;cursor:pointer;user-select:none}",
-    C + " .q-sw i{width:34px;height:20px;border-radius:999px;background:#D9CDC1;position:relative;transition:background .2s;flex:none}",
-    C + " .q-sw i:after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}",
-    C + " .q-sw.q-on i{background:#7C9A6E}" + C + " .q-sw.q-on i:after{left:16px}",
+    C + " .q-sw, .nvme .q-sw{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:#6B5A4E;cursor:pointer;user-select:none}",
+    C + " .q-sw i, .nvme .q-sw i{width:34px;height:20px;border-radius:999px;background:#D9CDC1;position:relative;transition:background .2s;flex:none}",
+    C + " .q-sw i:after, .nvme .q-sw i:after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}",
+    C + " .q-sw.q-on i, .nvme .q-sw.q-on i{background:#7C9A6E}" + C + " .q-sw.q-on i:after, .nvme .q-sw.q-on i:after{left:16px}",
     C + " .q-hi{display:grid;grid-template-columns:110px 1fr auto;gap:12px;padding:11px 14px;border-bottom:1px solid #F5EFE8;font-size:13.5px;align-items:center}",
     "@media(max-width:760px){" + C + " .q-kp{grid-template-columns:repeat(2,minmax(0,1fr))}" + C + " .q-fr{grid-template-columns:1fr auto;}" + C + " .q-fr .q-ml{grid-column:1/-1;order:3}" + C + " .q-fr .q-gq{display:none}" + C + " .q-hi{grid-template-columns:1fr auto}" + C + " .q-hi .q-hf{grid-column:1/-1;font-size:12px;color:#8C7D71}}",
     /* editor */
@@ -492,8 +492,8 @@
     var b2 = h("div", "q-two"); s5.append(b2);
     var t2 = h("label", null, "Botón de abajo (opcional)"), i2 = h("input"); i2.type = "text"; i2.value = d.boton2 || ""; i2.oninput = function(){ d.boton2 = i2.value; cambio(); }; t2.append(i2);
     var l2 = h("label", null, "Lleva a"), j2 = h("input"); j2.type = "url"; j2.value = d.link2 || ""; j2.placeholder = WA; j2.oninput = function(){ d.link2 = j2.value.trim(); cambio(); }; l2.append(j2); b2.append(t2, l2);
-    var atj = h("div", "q-pc"); atj.append(h("span", "q-hint", "Links rápidos:"));
-    [["Catálogo", WEB], ["WhatsApp", WA], ["Tienda", TIENDA]].forEach(function(x){ atj.append(btn("", x[0] + " → 1", function(){ j1.value = x[1]; d.link1 = x[1]; cambio(); })); });
+    var atj = h("div", "q-pc"); atj.append(h("span", "q-hint", "Atajos para el botón principal:"));
+    [["Catálogo", WEB], ["WhatsApp", WA], ["Tienda", TIENDA]].forEach(function(x){ atj.append(btn("", x[0], function(){ j1.value = x[1]; d.link1 = x[1]; cambio(); })); });
     s5.append(atj);
 
     // 6. productos
