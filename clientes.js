@@ -171,7 +171,7 @@
     f.append(r);
     var P = productos(I.C).slice(0, 5);
     if (P.length){
-      f.append(h("div", "sb", "Lo que más compra")).lastChild.style.cssText = "margin:-4px 0 6px;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em";
+      var tt = h("div", "sb", "Lo que más compra"); tt.style.cssText = "margin:-4px 0 6px;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em"; f.append(tt);
       var tp = h("div", "top");
       P.forEach(function(x){ var d = h("div", "p"); d.append(h("b", null, lindo(x.n)), h("i", null, x.q + " u. · " + x.v + " pedido" + (x.v > 1 ? "s" : "") + " · últ. " + fc(x.ult)));
         var l = waLink(c, "Hola {nombre}! ¿Cómo vienen con " + lindo(x.n) + "? Si quieren reponer, la reposición no tiene mínimo 🙌 ¿Les separamos?"); if (l){ var o = h("a", null, "Ofrecer"); o.href = l; o.target = "_blank"; o.onclick = function(){ agregarLog(c, "Ofrecimos " + lindo(x.n), "ct"); }; d.append(o); }
