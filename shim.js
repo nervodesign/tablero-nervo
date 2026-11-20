@@ -862,3 +862,16 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   document.head.appendChild(st);
   setInterval(function(){ if (innerWidth > 760) return; [].forEach.call(document.querySelectorAll(".chw .chf textarea"), function(t){ if (t.placeholder && t.placeholder !== "Escribí… ( / comandos)") t.placeholder = "Escribí… ( / comandos)"; }); }, 1000);
 })();
+
+/* ---------- Chat en el celu: que el nombre no se corte arriba ---------- */
+(function(){
+  if (window.__nvChatCorte) return; window.__nvChatCorte = 1;
+  var Q = "html.nv-chat:not(#nv1):not(#nv2) .chw.vc ";
+  var st = document.createElement("style");
+  st.textContent = "@media (max-width:760px){" +
+    Q + ".chmsg .chh{overflow:visible!important;line-height:1.35!important;align-items:center!important;min-height:20px;padding-top:1px!important}" +
+    Q + ".chmsg .chh b{overflow:visible!important;line-height:1.35!important;display:inline-block!important;padding-top:1px}" +
+    Q + ".chmsg{overflow:visible!important}" +
+    "}";
+  document.head.appendChild(st);
+})();
