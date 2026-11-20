@@ -1460,6 +1460,7 @@
     "#nvmc .l::-webkit-scrollbar-thumb:hover{background:#B39A88}",
     "@media(min-width:901px){",
     "html:not(#nv1):not(#nv2) body.nvmov-on.nvmc-on{padding-left:84px!important}",
+    "html:not(#nv1):not(#nv2) body.nvmov-on.nvmc-on nav.tabs::before{font-size:0!important;color:transparent!important;margin:0 auto 14px!important;width:60px!important;background-position:center top!important;background-size:auto 36px!important;padding-top:42px!important}",
     "html:not(#nv1):not(#nv2) body.nvmov-on.nvmc-on nav.tabs{width:84px!important;padding-left:8px!important;padding-right:8px!important;overflow-x:hidden!important}",
     "html:not(#nv1):not(#nv2) body.nvmov-on.nvmc-on nav.tabs .lb,html:not(#nv1):not(#nv2) body.nvmov-on.nvmc-on nav.tabs .navsec{display:none!important}",
     "html:not(#nv1):not(#nv2) body.nvmov-on.nvmc-on nav.tabs .tab{justify-content:center!important;padding-left:0!important;padding-right:0!important;width:100%!important}",
