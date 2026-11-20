@@ -613,7 +613,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
 (function(){
   if (window.__nvMovilFix) return; window.__nvMovilFix = 1;
   var st = document.createElement("style");
-  st.textContent = "@media (max-width:760px){html:not(#a):not(#b) body .chw.vl .chrp{display:none!important} html:not(#a):not(#b) body .chw.vl .chc{max-height:none!important;height:auto!important;flex:1 1 auto!important;overflow:auto!important}}" +
+  st.textContent = "@media (max-width:760px){html:not(#a):not(#b) body .chw .chrp{display:none!important} html:not(#a):not(#b) body .chw.vl .chc{max-height:none!important;height:auto!important;flex:1 1 auto!important;overflow:auto!important}}" +
     ".nvsh-x{position:sticky;top:0;float:right;margin:-6px -4px 0 8px;z-index:5;width:36px;height:36px;border-radius:50%;border:0;background:#ECE6DF;color:#6B5B50;font-size:20px;line-height:36px;cursor:pointer;box-shadow:inset 2px 2px 5px rgba(120,100,85,.16),inset -2px -2px 5px rgba(255,255,255,.8)}";
   document.head.appendChild(st);
   var abierto = false;
