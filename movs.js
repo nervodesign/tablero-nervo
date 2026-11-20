@@ -1264,6 +1264,8 @@
   st.textContent = [
     "#nvmc{position:fixed;z-index:30;display:none;flex-direction:column;background:#FFFDFB;border:1px solid #EDE5DC;border-radius:20px;box-shadow:0 10px 30px rgba(58,36,28,.08);overflow:hidden;font-family:Outfit,system-ui,sans-serif;color:#3B2418}",
     "body.nvmov-on.nvmc-on #nvmc{display:flex}",
+    "@media(min-width:901px){body.nvmov-on.nvmc-on .wrap{max-width:none!important}}",
+    "@media(max-width:900px){html.nv-kb body.nvmc-on #nvmc{top:var(--vvt,0px)!important;height:var(--vvh,100vh)!important;bottom:auto!important;z-index:6000;border-radius:0}}",
     "@media(min-width:901px){body.nvmov-on.nvmc-on section.nvmovp{margin-right:calc(min(420px,34vw) + 22px)!important}}",
     "#nvmc .h{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #F0E8E0}",
     "#nvmc .h b{font-size:15px}#nvmc .h small{display:block;font-size:12px;color:#8C7D71;font-weight:400}",
@@ -1291,6 +1293,7 @@
     "  body.nvmov-on.nvmc-solo section.nvmovp > :not(.nvmov-cab){display:none!important}",
     "  .nvmc-sw{margin-left:0;width:100%;justify-content:space-between}.nvmc-sw button{flex:1;padding:8px 6px;font-size:13.5px}",
     "  #nvmc .m{font-size:14px}",
+    "  #nvmc .h{display:none}",
     "}"
   ].join("\n");
   document.head.appendChild(st);
@@ -1304,7 +1307,7 @@
     if (BOX) return BOX;
     BOX = document.createElement("div"); BOX.id = "nvmc";
     BOX.innerHTML = '<div class="h"><div><b># Movimientos</b><small>El chat entero, en orden</small></div></div><div class="f"></div><div class="l"></div>' +
-      '<form><textarea rows="1" placeholder="Escribí lo que falte… (con / ves los comandos)"></textarea><button type="submit" aria-label="Enviar">➤</button></form>';
+      '<form><textarea rows="1" placeholder="Escribí… (con / ves los comandos)"></textarea><button type="submit" aria-label="Enviar">➤</button></form>';
     document.body.appendChild(BOX);
     LISTA = BOX.querySelector(".l");
     var f = BOX.querySelector(".f");
@@ -1405,7 +1408,7 @@
       var wrap = sec && sec.parentElement, r = wrap ? wrap.getBoundingClientRect() : { right: innerWidth - 20 };
       var w = Math.min(420, innerWidth * 0.34);
       BOX.style.width = w + "px"; BOX.style.left = "auto"; BOX.style.right = Math.max(12, innerWidth - r.right + 8) + "px";
-      BOX.style.top = "84px"; BOX.style.bottom = "16px"; BOX.style.height = "auto";
+      BOX.style.top = "84px"; BOX.style.bottom = "80px"; BOX.style.height = "auto";
       if (sec) sec.style.paddingBottom = "";
     } else {
       var nav = document.querySelector("nav.tabs"), bot = nav && nav.getBoundingClientRect().height ? innerHeight - nav.getBoundingClientRect().top : 0;
