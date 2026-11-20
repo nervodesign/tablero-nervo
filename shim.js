@@ -8,6 +8,7 @@
   function token(){
     return SB.auth.getSession().then(function(r){
       var s = r && r.data && r.data.session;
+      if (s && s.expires_at && s.expires_at * 1000 < Date.now() + 60000) return SB.auth.refreshSession().then(function(x){ var n = x && x.data && x.data.session; return n ? n.access_token : s.access_token; }, function(){ return s.access_token; });
       if (s) return s.access_token;
       if (!espera) espera = new Promise(function(ok){
         var sub = SB.auth.onAuthStateChange(function(ev, ses){ if (ses && ses.access_token){ quitarLogin(); ok(ses.access_token); } });
@@ -514,6 +515,10 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
       return { v: R[1] || {}, m: m };
     });
   };
+  /* si el chat llega vacío al abrir (todavía entrando), vuelve a probar en vez de quedar vacío */
+  (function(){ var base = L.chatLeer; L.chatLeer = function(a){ var desde = Number(a && a[0]) || 0, n = 0;
+    function prueba(){ return base(a).then(function(r){ if (!desde && (!r || !r.m || !r.m.length) && n++ < 6) return new Promise(function(ok){ setTimeout(ok, 1500); }).then(prueba); return r; }); }
+    return prueba(); }; })();
   L.chatEnviar = function(a){
     var m = a[0] || {}, now = Date.now();
     var d = { id: String(m.id || ("c" + now + Math.random().toString(36).slice(2, 6))), canal: String(m.canal || ""), texto: String(m.texto || "").slice(0, 4000), por: String(m.por || ""), creado: Number(m.creado) || now, cambiado: now, borrado: false, reac: m.padre ? { __p: String(m.padre) } : {}, adj: Array.isArray(m.adj) ? m.adj.slice(0, 10) : [] };
@@ -577,4 +582,28 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
       return fresco;
     };
   });
+})();
+
+
+/* ================= aviso de versión nueva: un toque y queda actualizada (sirve también en la app instalada) ================= */
+(function(){
+  if (window.__nvActualiza) return; window.__nvActualiza = 1;
+  var cs = [].slice.call(document.scripts).find(function(x){ return /shim\.js\?v=\d+/.test(x.src); });
+  var cur = cs ? Number(/v=(\d+)/.exec(cs.src)[1]) : 0; if (!cur) return;
+  var mostrado = false;
+  function mirar(){
+    if (mostrado || document.hidden) return;
+    fetch("version.txt?x=" + Date.now(), { cache: "no-store" }).then(function(r){ return r.ok ? r.text() : ""; }).then(function(t){
+      var v = Number(String(t).trim()); if (!v || v <= cur) return; mostrado = true;
+      var b = document.createElement("div");
+      b.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top, 0px) + 12px);z-index:99999;background:#4A3F37;color:#fff;border-radius:999px;padding:8px 8px 8px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);font-family:inherit;font-size:14px;max-width:calc(100vw - 24px);white-space:nowrap";
+      var tx = document.createElement("span"); tx.textContent = "Hay una actualización";
+      var bt = document.createElement("button"); bt.textContent = "Actualizar"; bt.style.cssText = "border:0;border-radius:999px;background:#E6E1DB;color:#4A3F37;padding:8px 14px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer";
+      bt.onclick = function(){ bt.textContent = "Actualizando…"; location.replace(location.pathname + "?r=" + Date.now() + location.hash); };
+      b.appendChild(tx); b.appendChild(bt); document.body.appendChild(b);
+    }).catch(function(){});
+  }
+  setTimeout(mirar, 5000); setInterval(mirar, 2 * 60000);
+  document.addEventListener("visibilitychange", function(){ if (!document.hidden) mirar(); });
+  window.addEventListener("focus", mirar);
 })();
