@@ -1,249 +1,560 @@
-/* ================= Mayoristas · Mails: calendario de mails editable, vista previa y prueba ================= */
+/* Mayoristas · Mails: plataforma de email marketing (campañas, editor con vista previa, destinatarios con bajas, historial) */
 (function(){
   if (window.__nvMails) return; window.__nvMails = 1;
   var LOGO = "https://nervomayorista.com/logo_nervo.png";
-  var CAT = null, ROWS = null, MODO = false, SOY = "";
-  var PARA = { todos: "Todos", activos: "Activos", enfriando: "Enfriándose", dormidos: "Para reactivar", nuevos: "Sin compras" };
+  var WEB = "https://nervomayorista.com", WA = "https://wa.me/5493518622392", TIENDA = "https://www.nervodesign.com";
+  var BAJA = "mailto:nervodesigncordoba@gmail.com?subject=No%20quiero%20recibir%20m%C3%A1s%20mails";
+  var CAT = null, ROWS = null, MODO = false, SOY = "", VISTA = "camp", VER_ARCH = false;
+  var GR = { todos: "Todos", act: "Activos", con: "En contacto", dor: "Para activar", mano: "Elegidos a mano" };
+  var MES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 
+  /* ---------- estilos de la app ---------- */
+  var C = "#nvml";
   var CSS = [
     "main#list.nvml-on > :not(.my-top):not(#nvml){display:none!important}",
     "main#list.nvml-on .my-top .pz-sw button:not(.nvml-tab){background:transparent!important;box-shadow:none!important;color:#7A5E50!important}",
     "html:not(#nv) .my-top .pz-sw button.nvml-tab.on{background:#fff!important;color:#3B2418!important;box-shadow:0 1px 3px rgba(58,36,28,.08)!important}",
-    "#nvml{font-family:Outfit,system-ui,sans-serif;color:#3B2418}",
-    "#nvml .ml-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:6px 2px 14px}",
-    "#nvml .ml-head h3{margin:0;font-weight:500;font-size:18px}",
-    "#nvml .ml-head p{margin:3px 0 0;font-size:13px;color:#9A8274;font-weight:300}",
-    "#nvml .ml-btn{border:0;border-radius:999px;padding:9px 16px;font:400 13.5px Outfit,system-ui,sans-serif;cursor:pointer;background:#F5EFEA;color:#3B2418;white-space:nowrap}",
-    "#nvml .ml-btn.dark,.nvml-modal .ml-btn.dark{background:#3B2418;color:#fff}",
-    "#nvml .ml-btn:hover{filter:brightness(.97)}",
-    "#nvml .ml-tbl{background:#fff;border-radius:22px;box-shadow:0 1px 2px rgba(58,36,28,.04),0 8px 24px rgba(58,36,28,.05);overflow:hidden}",
-    "#nvml table{width:100%;border-collapse:collapse}",
-    "#nvml th{font-weight:400;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#9A8274;text-align:left;padding:14px 14px 10px;background:#FBF8F5}",
-    "#nvml td{padding:13px 14px;border-top:1px solid #F4EEE9;font-size:14px;vertical-align:middle}",
-    "#nvml tr.ml-r{cursor:pointer}#nvml tr.ml-r:hover td{background:#FCF9F7}",
-    "#nvml .ml-dia{width:46px;height:46px;border-radius:14px;background:#F3EAE3;display:grid;place-items:center;font-weight:500;font-size:17px;line-height:1}",
-    "#nvml .ml-dia small{display:block;font-size:9px;letter-spacing:.1em;color:#9A8274;font-weight:400;margin-top:2px}",
-    "#nvml .ml-nom b{font-weight:500;display:block}#nvml .ml-nom span{font-size:12.5px;color:#9A8274;font-weight:300}",
-    "#nvml .ml-chip{display:inline-block;background:#F5EFEA;border-radius:999px;padding:3px 10px;font-size:12px;white-space:nowrap}",
-    "#nvml .ml-sw{width:38px;height:22px;border-radius:999px;background:#E4DAD2;position:relative;display:inline-block;vertical-align:middle;transition:.2s}",
-    "#nvml .ml-sw:after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.15)}",
-    "#nvml .ml-sw.on{background:#7E9A82}#nvml .ml-sw.on:after{left:19px}",
-    "#nvml .ml-est{font-size:12.5px;color:#9A8274;margin-left:8px}",
-    "#nvml .ml-acts{display:flex;gap:6px;justify-content:flex-end}",
-    "#nvml .ml-note{margin:12px 4px 0;font-size:12.5px;color:#9A8274;font-weight:300}",
-    "#nvml .ml-add td{color:#8A6B58;font-size:13.5px}",
-    ".nvml-modal{position:fixed;inset:0;z-index:9000;background:rgba(40,26,18,.38);display:flex;align-items:stretch;justify-content:flex-end;font-family:Outfit,system-ui,sans-serif;color:#3B2418}",
-    ".nvml-modal .mm{background:#FBF8F5;width:min(1180px,100%);height:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);box-shadow:-10px 0 40px rgba(0,0,0,.12)}",
-    ".nvml-modal .mm-f{overflow:auto;padding:22px 24px 90px}",
-    ".nvml-modal .mm-p{background:#E9E3DC;overflow:auto;padding:18px;position:relative}",
-    ".nvml-modal .mm-p iframe{width:100%;height:calc(100% - 44px);border:0;border-radius:16px;background:#fff}",
-    ".nvml-modal .mm-p .pv-bar{display:flex;gap:6px;margin-bottom:10px;align-items:center;justify-content:space-between}",
-    ".nvml-modal h4{margin:0 0 4px;font-weight:500;font-size:19px}",
-    ".nvml-modal .sec{background:#fff;border-radius:18px;padding:14px 16px;margin:12px 0;box-shadow:0 1px 2px rgba(58,36,28,.04)}",
-    ".nvml-modal .sec>b{display:block;font-weight:500;font-size:13px;margin-bottom:8px;color:#5A3A2A}",
-    ".nvml-modal label{display:block;font-size:11.5px;letter-spacing:.06em;color:#9A8274;margin:8px 0 4px}",
-    ".nvml-modal input,.nvml-modal textarea,.nvml-modal select{width:100%;box-sizing:border-box;border:1px solid #EAE1DA;border-radius:12px;padding:9px 11px;font:400 14px Outfit,system-ui,sans-serif;color:#3B2418;background:#FDFBF9}",
-    ".nvml-modal textarea{min-height:92px;resize:vertical;line-height:1.45}",
-    ".nvml-modal .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}",
-    ".nvml-modal .row3{display:grid;grid-template-columns:90px 1fr 1fr;gap:10px}",
-    ".nvml-modal .ml-btn{border:0;border-radius:999px;padding:9px 16px;font:400 13.5px Outfit,system-ui,sans-serif;cursor:pointer;background:#F5EFEA;color:#3B2418}",
-    ".nvml-modal .foot{position:sticky;bottom:-90px;margin:16px -24px -90px;padding:14px 24px;background:rgba(251,248,245,.96);border-top:1px solid #EFE7E0;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}",
-    ".nvml-modal .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;max-height:260px;overflow:auto;padding:2px}",
-    ".nvml-modal .pgrid .pi{border-radius:12px;overflow:hidden;background:#F5EFEA;cursor:pointer;border:2px solid transparent;font-size:11px;text-align:center}",
-    ".nvml-modal .pgrid .pi img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#EEE6DF}",
-    ".nvml-modal .pgrid .pi span{display:block;padding:4px 4px 6px;line-height:1.2}",
-    ".nvml-modal .pgrid .pi.sel{border-color:#3B2418}",
-    ".nvml-modal .hint{font-size:12px;color:#9A8274;font-weight:300;margin-top:6px}",
-    ".nvml-modal .x{position:absolute;top:14px;right:16px;border:0;background:#fff;border-radius:50%;width:34px;height:34px;font-size:18px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.1)}",
-    "@media (max-width:760px){",
-    "  #nvml th.h-m,#nvml td.h-m{display:none}",
-    "  #nvml td{padding:11px 10px}#nvml .ml-acts .ml-btn{padding:7px 11px;font-size:12.5px}",
-    "  .nvml-modal .mm{grid-template-columns:1fr;grid-template-rows:auto auto;overflow:auto;display:block}",
-    "  .nvml-modal .mm-f{overflow:visible;padding:18px 16px 20px}",
-    "  .nvml-modal .mm-p{height:640px}",
-    "  .nvml-modal .foot{position:sticky;bottom:0;margin:16px -16px 0}",
-    "  .nvml-modal .row3{grid-template-columns:80px 1fr}",
+    C + "{font-family:Outfit,system-ui,sans-serif;color:#3B2418;margin-top:18px}",
+    C + " button{font:inherit;cursor:pointer}",
+    C + " .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}",
+    C + " .seg{display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:#ECE6DF;box-shadow:inset 2px 2px 5px rgba(120,100,85,.14),inset -2px -2px 5px rgba(255,255,255,.8)}",
+    C + " .seg button{border:0;background:transparent;padding:7px 16px;border-radius:999px;font-size:13.5px;color:#7A5E50}",
+    C + " .seg button.on{background:#fff;color:#3B2418;font-weight:600;box-shadow:0 1px 3px rgba(58,36,28,.1)}",
+    C + " .pri{border:0;background:#3B2418;color:#fff;border-radius:999px;padding:10px 18px;font-size:13.5px;font-weight:500;box-shadow:0 4px 12px rgba(58,36,28,.18)}",
+    C + " .sec{border:1px solid #DCCFC2;background:#fff;color:#3B2418;border-radius:999px;padding:7px 14px;font-size:13px}",
+    C + " .kp{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}",
+    C + " .kp div{background:#F3EEE8;border-radius:16px;padding:14px 16px;box-shadow:4px 4px 10px rgba(120,100,85,.10),-4px -4px 10px rgba(255,255,255,.75)}",
+    C + " .kp b{display:block;font-size:24px;font-weight:500}" + C + " .kp small{font-size:12px;color:#8C7D71}",
+    C + " .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}",
+    C + " .cc{background:#fff;border:1px solid #EDE5DC;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .2s,transform .2s}",
+    C + " .cc:hover{box-shadow:0 10px 26px rgba(58,36,28,.10);transform:translateY(-2px)}",
+    C + " .th{height:230px;overflow:hidden;background:#F6F1EB;position:relative;cursor:pointer;border-bottom:1px solid #EFE7DE}",
+    C + " .th iframe{width:600px;height:900px;border:0;transform:scale(.47);transform-origin:top left;position:absolute;left:50%;margin-left:-141px;pointer-events:none;background:#F6F1EB}",
+    C + " .cb{padding:13px 15px 15px;display:flex;flex-direction:column;gap:7px;flex:1}",
+    C + " .cb h4{margin:0;font-size:15.5px;font-weight:600}",
+    C + " .cb .as{font-size:13px;color:#6B5A4E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+    C + " .chips{display:flex;flex-wrap:wrap;gap:5px}",
+    C + " .chip{font-size:11.5px;padding:3px 9px;border-radius:999px;background:#F1EAE2;color:#6B5A4E}",
+    C + " .chip.ok{background:#E3EEDF;color:#3E6B3A}" + C + " .chip.no{background:#F3E2DC;color:#9A4B36}" + C + " .chip.am{background:#F6ECD5;color:#8A6420}",
+    C + " .acts{display:flex;gap:6px;margin-top:auto;padding-top:6px}",
+    C + " .acts button{flex:1;border:0;background:#F3EEE8;border-radius:10px;padding:8px 6px;font-size:12.5px;color:#3B2418}",
+    C + " .acts button:hover{background:#EAE1D7}",
+    C + " .new{border:2px dashed #DCCFC2;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:330px;color:#8C7D71;background:transparent}",
+    C + " .new b{font-size:30px;font-weight:300;color:#9C7B62}",
+    C + " .note{font-size:13px;color:#8C7D71;margin:14px 2px}",
+    C + " .box{background:#fff;border:1px solid #EDE5DC;border-radius:18px;overflow:hidden}",
+    C + " .tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:12px 14px;border-bottom:1px solid #F0E9E1}",
+    C + " .tools input{flex:1;min-width:200px;border:0;outline:0;background:#F3EEE8;border-radius:11px;padding:9px 12px;font:inherit;font-size:14px;color:#3B2418}",
+    C + " .tools .seg button{padding:5px 11px;font-size:12.5px}",
+    C + " .fr{display:grid;grid-template-columns:1.4fr 1.6fr 110px 150px;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid #F5EFE8;font-size:13.5px}",
+    C + " .fr:last-child{border-bottom:0}" + C + " .fr .ml{color:#6B5A4E;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+    C + " .fr input{border:1px solid #E4D9CE;border-radius:9px;padding:6px 9px;font:inherit;font-size:13px;width:100%;box-sizing:border-box}",
+    C + " .sw{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:#6B5A4E;cursor:pointer;user-select:none}",
+    C + " .sw i{width:34px;height:20px;border-radius:999px;background:#D9CDC1;position:relative;transition:background .2s;flex:none}",
+    C + " .sw i:after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}",
+    C + " .sw.on i{background:#7C9A6E}" + C + " .sw.on i:after{left:16px}",
+    C + " .hi{display:grid;grid-template-columns:110px 1fr auto;gap:12px;padding:11px 14px;border-bottom:1px solid #F5EFE8;font-size:13.5px;align-items:center}",
+    "@media(max-width:760px){" + C + " .kp{grid-template-columns:repeat(2,minmax(0,1fr))}" + C + " .fr{grid-template-columns:1fr auto;}" + C + " .fr .ml{grid-column:1/-1;order:3}" + C + " .fr .gq{display:none}" + C + " .hi{grid-template-columns:1fr auto}" + C + " .hi .hf{grid-column:1/-1;font-size:12px;color:#8C7D71}}",
+    /* editor */
+    ".nvme{position:fixed;inset:0;z-index:9000;background:#F6F1EB;display:flex;flex-direction:column;font-family:Outfit,system-ui,sans-serif;color:#3B2418}",
+    ".nvme button{font:inherit;cursor:pointer}",
+    ".nvme .eh{display:flex;align-items:center;gap:10px;padding:12px 18px;background:#fff;border-bottom:1px solid #EDE5DC}",
+    ".nvme .eh .nm{flex:1;min-width:0;border:0;outline:0;font:inherit;font-size:18px;font-weight:600;color:#3B2418;background:transparent}",
+    ".nvme .eh .st{font-size:12px;color:#8C7D71;white-space:nowrap}",
+    ".nvme .x{border:0;background:#F3EEE8;width:36px;height:36px;border-radius:50%;font-size:20px;line-height:1;color:#3B2418;flex:none}",
+    ".nvme .pri{border:0;background:#3B2418;color:#fff;border-radius:999px;padding:9px 16px;font-size:13.5px;white-space:nowrap}",
+    ".nvme .sec{border:1px solid #DCCFC2;background:#fff;color:#3B2418;border-radius:999px;padding:8px 14px;font-size:13px;white-space:nowrap}",
+    ".nvme .pri[disabled],.nvme .sec[disabled]{opacity:.45;cursor:default}",
+    ".nvme .eb{flex:1;display:grid;grid-template-columns:minmax(360px,460px) 1fr;min-height:0}",
+    ".nvme .ef{overflow:auto;padding:16px 18px 80px;border-right:1px solid #EDE5DC}",
+    ".nvme .ep{overflow:auto;display:flex;flex-direction:column;align-items:center;padding:14px 16px 40px;background:#EFE8E0}",
+    ".nvme .pv-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}",
+    ".nvme .seg{display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:#E4DBD1}",
+    ".nvme .seg button{border:0;background:transparent;padding:6px 14px;border-radius:999px;font-size:13px;color:#6B5A4E}",
+    ".nvme .seg button.on{background:#fff;color:#3B2418;font-weight:600}",
+    ".nvme .pv{border:0;background:#fff;border-radius:14px;box-shadow:0 10px 30px rgba(58,36,28,.12);transition:width .25s;height:calc(100vh - 150px);min-height:500px}",
+    ".nvme .pv.celu{width:390px;border-radius:30px;border:10px solid #2E2520}",
+    ".nvme .pv.compu{width:min(720px,100%)}",
+    ".nvme .sc{background:#fff;border:1px solid #EDE5DC;border-radius:16px;padding:14px;margin-bottom:12px}",
+    ".nvme .sc h5{margin:0 0 10px;font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:#9C7B62;font-weight:600;display:flex;justify-content:space-between;align-items:center}",
+    ".nvme label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#8C7D71;margin-bottom:9px}",
+    ".nvme input[type=text],.nvme input[type=url],.nvme input[type=number],.nvme textarea,.nvme select{border:1px solid #E4D9CE;border-radius:10px;padding:8px 10px;font:inherit;font-size:14px;color:#3B2418;background:#FCFAF8;outline:0;width:100%;box-sizing:border-box}",
+    ".nvme input:focus,.nvme textarea:focus{border-color:#B99A82;background:#fff}",
+    ".nvme textarea{min-height:90px;resize:vertical}",
+    ".nvme .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}",
+    ".nvme .hint{font-size:11.5px;color:#A08F82;margin:-4px 0 8px}",
+    ".nvme .pc{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}",
+    ".nvme .pc button{border:1px solid #E4D9CE;background:#fff;border-radius:999px;padding:6px 12px;font-size:13px;color:#6B5A4E}",
+    ".nvme .pc button.on{background:#3B2418;border-color:#3B2418;color:#fff}",
+    ".nvme .pc button small{opacity:.7;margin-left:4px}",
+    ".nvme .drop{border:2px dashed #DCCFC2;border-radius:14px;padding:14px;text-align:center;color:#8C7D71;font-size:13px;cursor:pointer;background:#FCFAF8;position:relative;overflow:hidden}",
+    ".nvme .drop.over{border-color:#9C7B62;background:#F6EEE6}",
+    ".nvme .drop img{display:block;width:100%;border-radius:9px;margin-bottom:8px}",
+    ".nvme .pl{display:flex;flex-direction:column;gap:8px}",
+    ".nvme .pi{display:grid;grid-template-columns:52px 1fr auto;gap:8px;align-items:center;background:#FCFAF8;border:1px solid #EFE7DE;border-radius:12px;padding:6px}",
+    ".nvme .pi img{width:52px;height:52px;object-fit:cover;border-radius:8px;background:#EEE}",
+    ".nvme .pi input{padding:5px 8px;font-size:12.5px;margin-top:3px}",
+    ".nvme .pi b{font-size:13px;font-weight:500}",
+    ".nvme .rm{border:0;background:transparent;color:#B07A68;font-size:18px;padding:4px 8px}",
+    ".nvme .lst{max-height:260px;overflow:auto;border:1px solid #EFE7DE;border-radius:12px}",
+    ".nvme .lst label{flex-direction:row;align-items:center;gap:8px;padding:7px 10px;margin:0;border-bottom:1px solid #F5EFE8;color:#3B2418;font-size:13px}",
+    ".nvme .mtabs{display:none}",
+    ".nvmp{position:fixed;inset:0;z-index:9100;background:rgba(40,28,20,.45);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Outfit,system-ui,sans-serif}",
+    ".nvmp .in{background:#F6F1EB;border-radius:20px;width:min(860px,100%);max-height:88vh;display:flex;flex-direction:column;overflow:hidden}",
+    ".nvmp .ih{display:flex;align-items:center;gap:10px;padding:14px 16px;background:#fff;border-bottom:1px solid #EDE5DC}",
+    ".nvmp .ih input{flex:1;border:0;outline:0;background:#F3EEE8;border-radius:11px;padding:9px 12px;font:inherit;font-size:14px}",
+    ".nvmp .ig{overflow:auto;padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}",
+    ".nvmp .ig button{border:2px solid transparent;background:#fff;border-radius:14px;padding:6px;text-align:left;font:inherit;font-size:12.5px;color:#3B2418;cursor:pointer}",
+    ".nvmp .ig button.on{border-color:#3B2418}",
+    ".nvmp .ig img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block;margin-bottom:5px;background:#EEE}",
+    ".nvmp .tp{padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;overflow:auto}",
+    ".nvmp .tp button{border:1px solid #E4D9CE;background:#fff;border-radius:16px;padding:16px;text-align:left;font:inherit;cursor:pointer;color:#3B2418}",
+    ".nvmp .tp button:hover{border-color:#9C7B62;box-shadow:0 6px 18px rgba(58,36,28,.1)}",
+    ".nvmp .tp b{display:block;font-size:15px;margin:6px 0 4px}.nvmp .tp span{font-size:24px}.nvmp .tp small{font-size:12.5px;color:#8C7D71}",
+    ".nvmp .x{border:0;background:#F3EEE8;width:34px;height:34px;border-radius:50%;font-size:19px;cursor:pointer}",
+    "@media(max-width:900px){",
+    "  .nvme .eb{grid-template-columns:1fr}",
+    "  .nvme .ef,.nvme .ep{border:0}",
+    "  .nvme.m-ed .ep{display:none}.nvme.m-pv .ef{display:none}",
+    "  .nvme .mtabs{display:flex;justify-content:center;padding:8px;background:#fff;border-bottom:1px solid #EDE5DC}",
+    "  .nvme .eh .st{display:none}",
+    "  .nvme .eh{padding:10px 12px;gap:6px;flex-wrap:wrap}",
+    "  .nvme .eh .nm{font-size:16px;flex-basis:calc(100% - 50px)}",
+    "  .nvme .pv{height:calc(100vh - 220px)}",
+    "  .nvme .pv.celu{width:100%;max-width:390px}",
     "}"
   ].join("\n");
   var st = document.createElement("style"); st.id = "nvml-css"; st.textContent = CSS; document.head.appendChild(st);
 
+  /* ---------- ayudas ---------- */
+  function h(t, c, x){ var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
-  function norm(s){ return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim(); }
-  function toast(t){ try { var d = document.createElement("div"); d.textContent = t; d.style.cssText = "position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#3B2418;color:#fff;padding:11px 18px;border-radius:999px;font:400 14px Outfit,system-ui,sans-serif;z-index:9999;box-shadow:0 6px 20px rgba(0,0,0,.2)"; document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 2800); } catch(e){} }
+  function N(s){ return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim(); }
+  function J(s){ if (Array.isArray(s)) return s; try { var v = JSON.parse(s || "[]"); return Array.isArray(v) ? v : []; } catch(e){ return []; } }
   function SB(){ return window.__sb; }
+  function S(){ return (window.__nv && window.__nv.S) || {}; }
+  function hoy(){ return new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10); }
+  function fc(s){ if (!s) return "—"; var p = String(s).slice(0, 10).split("-"); return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0].slice(2) : s; }
+  function toast(t){ var d = h("div", null, t); d.style.cssText = "position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#3B2418;color:#fff;padding:11px 18px;border-radius:999px;font:400 14px Outfit,system-ui,sans-serif;z-index:9999;box-shadow:0 6px 20px rgba(0,0,0,.2)"; document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 2800); }
+  function btn(c, t, f){ var b = h("button", c, t); b.type = "button"; if (f) b.onclick = f; return b; }
 
-  /* ---------- catálogo de nervomayorista.com (nombre + foto) ---------- */
+  /* ---------- catálogo (fotos de nervomayorista.com) ---------- */
   function catalogo(){
     if (CAT) return Promise.resolve(CAT);
-    return fetch("https://nervomayorista.com/?n=" + Date.now()).then(function(r){ return r.text(); }).then(function(t){
+    return fetch(WEB + "/?n=" + Date.now()).then(function(r){ return r.text(); }).then(function(t){
       var fotos = {}, re = /'([a-z0-9-]+)':\s*\{([^}]*)\}/g, m;
       while ((m = re.exec(t))){ var f = /:'([^']+)'/.exec(m[2]); if (f && /^[a-z]+_/.test(f[1])) fotos[m[1]] = f[1]; }
       var out = [], seen = {}, re2 = /\{\s*id:'([^']+)',\s*nombre:'([^']+)'/g;
-      while ((m = re2.exec(t))){ if (seen[m[1]]) continue; seen[m[1]] = 1; if (fotos[m[1]]) out.push({ id: m[1], nombre: m[2], foto: "https://nervomayorista.com/" + fotos[m[1]] + ".webp" }); }
+      while ((m = re2.exec(t))){ if (seen[m[1]]) continue; seen[m[1]] = 1; if (fotos[m[1]]) out.push({ id: m[1], nombre: m[2], foto: WEB + "/" + fotos[m[1]] + ".webp" }); }
       CAT = out; return out;
     }).catch(function(){ CAT = []; return CAT; });
   }
 
-  /* ---------- a quién le llega ---------- */
-  function fecha(s){
-    if (!s) return 0; s = String(s);
-    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s); if (m) return Date.UTC(+m[1], m[2] - 1, +m[3]);
-    m = /^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/.exec(s); if (m){ var y = +m[3]; if (y < 100) y += 2000; return Date.UTC(y, m[2] - 1, +m[1]); }
-    var d = Date.parse(s); return isNaN(d) ? 0 : d;
+  /* ---------- clientes y grupos (los mismos de la solapa Clientes) ---------- */
+  function fechaN(s){ var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || "")); return m ? Date.UTC(+m[1], m[2] - 1, +m[3]) : 0; }
+  function grupoDe(c){
+    try { if (window.__nvCliInfo) return window.__nvCliInfo(c).grupo; } catch(e){}
+    var V = ((S().bzData || {}).may) || [], k = N(c.nombre), u = 0;
+    V.forEach(function(v){ if (N(v.cliente) === k){ var f = fechaN(v.fecha); if (f > u) u = f; } });
+    return u && (Date.now() - u) / 864e5 <= 90 ? "act" : (c.paso ? "con" : "dor");
   }
-  function clientes(){
-    var S = (window.__nv && window.__nv.S) || {}, L = S.mayclientes || [], V = ((S.bzData || {}).may) || [];
-    var ult = {}; V.forEach(function(v){ var k = norm(v.cliente), f = fecha(v.fecha); if (k && f > (ult[k] || 0)) ult[k] = f; });
-    var hoy = Date.now();
-    return L.filter(function(c){ return /@/.test(c.email || ""); }).map(function(c){
-      var u = ult[norm(c.nombre)] || 0, dias = u ? (hoy - u) / 864e5 : null;
-      var seg = dias == null ? "nuevos" : dias <= 90 ? "activos" : dias <= 180 ? "enfriando" : "dormidos";
-      return { nombre: c.nombre, cont: c.cont, email: String(c.email).trim(), seg: seg };
-    });
+  function conMail(c){ return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(c.email || "").trim()); }
+  function todos(){ return (S().mayclientes || []).filter(function(c){ return c && c.id && !c.borrado; }); }
+  function suscriptos(){ return todos().filter(function(c){ return conMail(c) && !c.mailbaja; }); }
+  function destinatarios(d){
+    var L = suscriptos();
+    if (d.para === "mano"){ var E = d.elegidos || []; return L.filter(function(c){ return E.indexOf(c.id) >= 0; }); }
+    if (!d.para || d.para === "todos") return L;
+    return L.filter(function(c){ return grupoDe(c) === d.para; });
   }
-  function destinatarios(para){ var L = clientes(); return para === "todos" || !para ? L : L.filter(function(c){ return c.seg === para; }); }
-  function primerNombre(c){ var k = (c && (c.cont || "")).trim(); if (!k){ var m = String((c && c.nombre) || "").match(/\(([^)]+)\)/); k = m ? m[1] : ""; } k = k.split(/\s+/)[0] || ""; return k ? k.charAt(0).toUpperCase() + k.slice(1).toLowerCase() : ""; }
+  function primerNombre(c){ var k = String((c && c.cont) || "").trim(); if (!k){ var m = String((c && c.nombre) || "").match(/\(([^)]+)\)/); k = m ? m[1] : ""; } k = k.split(/\s+/)[0] || ""; return k ? k.charAt(0).toUpperCase() + k.slice(1).toLowerCase() : ""; }
+  function guardarCli(c, campos){
+    campos.id = c.id; campos.cambiado = String(Date.now()); campos.por = SOY || c.por;
+    Object.keys(campos).forEach(function(k){ c[k] = campos[k]; });
+    if (window.__nvLocal && window.__nvLocal.guardar) return window.__nvLocal.guardar(["mayclientes", campos]).catch(function(e){ toast("No se pudo guardar: " + (e && e.message || e)); });
+  }
+  function logCli(c, texto){ var L = J(c.log); L.unshift([hoy(), texto, "mail", SOY]); return guardarCli(c, { log: JSON.stringify(L.slice(0, 200)) }); }
 
-  /* ---------- el mail (HTML que funciona en Gmail, Outlook y celu) ---------- */
-  var MES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-  function proximo(d){
-    var dia = Math.min(28, Math.max(1, +d.dia || 1)), h = new Date(), f = new Date(h.getFullYear(), h.getMonth(), dia, 9, 0);
-    if (f < new Date(h.getFullYear(), h.getMonth(), h.getDate())) f = new Date(h.getFullYear(), h.getMonth() + 1, dia, 9, 0);
-    return f;
-  }
-  function bannerDe(d, cuando){ var B = (d.banners || []).filter(Boolean); if (!B.length) return ""; var f = cuando || proximo(d); return B[(f.getFullYear() * 12 + f.getMonth()) % B.length]; }
+  /* ---------- plantillas para empezar ---------- */
+  var PLANT = {
+    novedades: { ic: "✨", nombre: "Novedades", desc: "Cargan la foto del banner nuevo y listo", d: { tipo: "novedades", para: "todos", dia: 10, asunto: "Sumamos novedades al catálogo 🤎", preheader: "Lo nuevo de este mes en Nervo", etiqueta: "Nuevos ingresos", titulo: "Sumamos novedades 🤎", texto: "Hola {nombre}! Les contamos lo nuevo que sumamos al catálogo este mes. Ya pueden verlo y sumarlo a su próximo pedido.", boton1: "Ver novedades", link1: WEB, boton2: "Escribinos por WhatsApp", link2: WA } },
+    catalogo: { ic: "📒", nombre: "Catálogo del mes", desc: "Principio de mes, con productos destacados", d: { tipo: "catalogo", para: "todos", dia: 1, asunto: "Catálogo de {mes} · Nervo Design", preheader: "Ya está el catálogo actualizado", etiqueta: "Catálogo de {mes}", titulo: "Ya está el catálogo de {mes}", texto: "Hola {nombre}! Les dejamos el catálogo actualizado con todo lo que tenemos para este mes.", boton1: "Ver catálogo", link1: WEB, boton2: "Hacer un pedido por WhatsApp", link2: WA, recordar: "Reposición sin mínimo\nEl envío lo coordinan ustedes con su transporte\nRetiro en Córdoba: martes y jueves de 9:30 a 14 h" } },
+    reposicion: { ic: "🔁", nombre: "Reposición", desc: "Para los que compraron hace un tiempo", d: { tipo: "reposicion", para: "act", dia: 25, asunto: "Cómo vienen con el stock, {nombre}?", preheader: "La reposición no tiene mínimo", etiqueta: "Reposición", titulo: "Hora de reponer?", texto: "Hola {nombre}! Si ya se les están terminando los productos, les recordamos que la reposición no tiene mínimo. Les armamos el pedido?", boton1: "Armar mi pedido", link1: WA, boton2: "Ver catálogo", link2: WEB } },
+    reactivar: { ic: "🤎", nombre: "Reactivar", desc: "Para los que hace meses que no compran", d: { tipo: "reactivar", para: "dor", dia: "", asunto: "Hace rato que no nos vemos, {nombre} 🤎", preheader: "Les dejamos lo nuevo y una propuesta", etiqueta: "Los extrañamos", titulo: "Volvamos a trabajar juntos", texto: "Hola {nombre}! Hace un tiempo que no nos hacen un pedido y queríamos contarles todo lo nuevo que sumamos. Si quieren, les armamos una propuesta para volver a tener Nervo en su local.", boton1: "Ver lo nuevo", link1: WEB, boton2: "Hablemos por WhatsApp", link2: WA } },
+    blanco: { ic: "📝", nombre: "En blanco", desc: "Arrancar de cero", d: { tipo: "otro", para: "todos", dia: "", asunto: "", preheader: "", etiqueta: "", titulo: "", texto: "Hola {nombre}!", boton1: "Ver catálogo", link1: WEB, boton2: "", link2: "" } }
+  };
+  var TIPO = { novedades: "Novedades", catalogo: "Catálogo", reposicion: "Reposición", reactivar: "Reactivar", otro: "Otro" };
+  function tipoDe(row){ var d = row.datos || {}; if (d.tipo) return d.tipo; var id = String(row.id); return /catalogo/.test(id) ? "catalogo" : /novedad/.test(id) ? "novedades" : /repos/.test(id) ? "reposicion" : "otro"; }
+
+  /* ---------- el mail (HTML que se ve bien en Gmail, Outlook y celu) ---------- */
+  function reemplazar(s, c){ var hoyD = new Date(); return String(s || "").replace(/\{nombre\}/g, primerNombre(c) || "").replace(/\{mes\}/g, MES[hoyD.getMonth()]).replace(/\s+([,!?.])/g, "$1").replace(/,([!?.])/g, "$1").replace(/^,\s*/, ""); }
+  function banner(d){ if (d.banner) return d.banner; var B = (d.banners || []).filter(Boolean); if (!B.length) return ""; var f = new Date(); return B[(f.getFullYear() * 12 + f.getMonth()) % B.length]; }
   function mailHTML(d, c){
-    var F = "font-family:'Outfit','Helvetica Neue',Arial,sans-serif;";
-    var nom = primerNombre(c);
-    function per(s){ return esc(s).replace(/\{nombre\}/g, esc(nom)).replace(/\{mes\}/g, MES[proximo(d).getMonth()]); }
-    var titulo = per(d.titulo || ""); if (nom && !/\{nombre\}/.test(d.titulo || "")) titulo = titulo.replace(/^Hola!?/, "Hola " + esc(nom) + "!");
-    var parr = String(d.texto || "").split(/\n\s*\n/).map(function(p){ return '<p style="margin:0 0 14px;' + F + 'font-size:15px;line-height:1.6;font-weight:300;color:#6B5E55;">' + per(p).replace(/\n/g, "<br>") + "</p>"; }).join("");
-    var ban = bannerDe(d);
-    var btn = function(t, l, dark){ if (!t || !l) return ""; return '<td style="padding:0 5px 8px 0;"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="' + (dark ? "background:#4A3F37;" : "border:1.5px solid #4A3F37;") + 'border-radius:999px;"><a href="' + esc(l) + '" style="display:inline-block;padding:' + (dark ? "13px 26px" : "11.5px 22px") + ';' + F + 'font-size:15px;color:' + (dark ? "#FFFFFF" : "#4A3F37") + ';text-decoration:none;">' + esc(t) + "</a></td></tr></table></td>"; };
-    var P = (d.productos || []).slice(0, 4), prods = "";
+    var F = "font-family:'Outfit','Helvetica Neue',Helvetica,Arial,sans-serif;";
+    var T = function(s){ return esc(reemplazar(s, c)); };
+    var b = banner(d), o = [];
+    o.push('<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>' + T(d.asunto) + '</title>');
+    o.push('<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">');
+    o.push('<style>body{margin:0;padding:0;background:#F6F1EB}a{text-decoration:none}img{border:0;display:block}@media(max-width:620px){.w{width:100%!important}.px{padding-left:22px!important;padding-right:22px!important}.col{display:block!important;width:100%!important;padding:0 0 14px!important}.h1{font-size:26px!important}.bt{display:block!important}}</style></head>');
+    o.push('<body style="margin:0;padding:0;background:#F6F1EB">');
+    if (d.preheader) o.push('<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#F6F1EB">' + T(d.preheader) + '&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>');
+    o.push('<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F6F1EB"><tr><td align="center" style="padding:24px 12px">');
+    o.push('<table role="presentation" class="w" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px">');
+    // logo
+    o.push('<tr><td align="center" style="padding:6px 0 20px"><a href="' + esc(WEB) + '"><img src="' + LOGO + '" width="120" alt="Nervo Design" style="width:120px;height:auto;margin:0 auto"></a></td></tr>');
+    o.push('<tr><td style="background:#FFFFFF;border-radius:22px;overflow:hidden">');
+    o.push('<table role="presentation" width="100%" cellpadding="0" cellspacing="0">');
+    if (b) o.push('<tr><td><a href="' + esc(d.bannerLink || d.link1 || WEB) + '"><img src="' + esc(b) + '" width="600" alt="' + T(d.titulo || "Nervo Design") + '" style="width:100%;max-width:600px;height:auto;border-radius:22px 22px 0 0"></a></td></tr>');
+    o.push('<tr><td class="px" style="padding:34px 44px 8px;' + F + '">');
+    if (d.etiqueta) o.push('<p style="margin:0 0 10px;' + F + 'font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#9C7B62;font-weight:500">' + T(d.etiqueta) + '</p>');
+    if (d.titulo) o.push('<h1 class="h1" style="margin:0 0 16px;' + F + 'font-size:30px;line-height:1.2;font-weight:500;color:#3B2418">' + T(d.titulo) + '</h1>');
+    String(d.texto || "").split(/\n{2,}/).forEach(function(p){ if (p.trim()) o.push('<p style="margin:0 0 14px;' + F + 'font-size:16px;line-height:1.65;color:#5A4638;font-weight:300">' + T(p).replace(/\n/g, "<br>") + '</p>'); });
+    o.push('</td></tr>');
+    if (d.boton1) o.push('<tr><td class="px" align="left" style="padding:10px 44px 30px"><a class="bt" href="' + esc(d.link1 || WEB) + '" style="display:inline-block;background:#3B2418;color:#FFFFFF;' + F + 'font-size:15px;font-weight:500;padding:15px 30px;border-radius:999px;text-align:center">' + T(d.boton1) + ' &rarr;</a></td></tr>');
+    // productos
+    var P = (d.productos || []).filter(function(p){ return p && p.foto; });
     if (P.length){
-      var celdas = P.map(function(p){ return '<td class="col" width="50%" valign="top" style="padding:0 6px 14px;"><a href="' + esc(d.link1 || "https://nervomayorista.com") + '" style="text-decoration:none;"><img src="' + esc(p.foto) + '" width="250" alt="' + esc(p.nombre) + '" style="display:block;width:100%;max-width:250px;height:auto;border-radius:14px;border:0;background:#EEEAE5;"></a><p style="margin:8px 0 0;' + F + 'font-size:14px;font-weight:500;color:#4A3F37;">' + esc(p.nombre) + "</p></td>"; });
-      var filas = ""; for (var i = 0; i < celdas.length; i += 2) filas += "<tr>" + celdas[i] + (celdas[i + 1] || '<td class="col" width="50%"></td>') + "</tr>";
-      prods = '<tr><td class="px" style="padding:22px 38px 4px;"><p style="margin:0 0 12px 6px;' + F + 'font-size:16px;font-weight:500;color:#4A3F37;">' + esc(d.titProductos || "Lo que más se está vendiendo") + '</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + filas + "</table></td></tr>";
+      o.push('<tr><td class="px" style="padding:6px 32px 12px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">');
+      for (var i = 0; i < P.length; i += 2){
+        o.push('<tr>');
+        [P[i], P[i + 1]].forEach(function(p){
+          if (!p){ o.push('<td class="col" width="50%" style="width:50%;padding:0 6px 16px"></td>'); return; }
+          var l = esc(p.link || d.link1 || WEB);
+          o.push('<td class="col" width="50%" valign="top" style="width:50%;padding:0 6px 16px"><a href="' + l + '"><img src="' + esc(p.foto) + '" width="256" alt="' + esc(p.nombre) + '" style="width:100%;height:auto;border-radius:16px;background:#F6F1EB"></a>' +
+            '<p style="margin:10px 2px 2px;' + F + 'font-size:15px;color:#3B2418;font-weight:500">' + esc(p.nombre) + '</p>' +
+            (p.precio ? '<p style="margin:0 2px 4px;' + F + 'font-size:14px;color:#9C7B62">' + esc(p.precio) + '</p>' : '') +
+            '<a href="' + l + '" style="' + F + 'font-size:13.5px;color:#9C7B62;font-weight:500">Ver producto &rarr;</a></td>');
+        });
+        o.push('</tr>');
+      }
+      o.push('</table></td></tr>');
     }
-    var rec = String(d.recordar || "").split("\n").map(function(x){ return x.trim(); }).filter(Boolean);
-    var recH = rec.length ? '<tr><td class="px" style="padding:10px 44px 8px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EEEAE5;border-radius:16px;"><tr><td style="padding:16px 20px;' + F + 'font-size:13.5px;line-height:1.6;color:#6B5E55;"><b style="font-weight:500;color:#4A3F37;">Para recordar</b><br>· ' + rec.map(per).join("<br>· ") + "</td></tr></table></td></tr>" : "";
-    return '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + per(d.asunto) + '</title>' +
-      '<style>@media (max-width:600px){.col{display:block!important;width:100%!important;padding:0 0 16px!important}.col img{max-width:100%!important}.px{padding-left:22px!important;padding-right:22px!important}}</style></head>' +
-      '<body style="margin:0;padding:0;background:#E6E1DB;"><div style="display:none;max-height:0;overflow:hidden;">' + per(d.preheader) + '</div>' +
-      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#E6E1DB;"><tr><td align="center" style="padding:24px 10px;">' +
-      '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#FFFFFF;border-radius:22px;overflow:hidden;">' +
-      '<tr><td align="center" style="padding:26px 20px 16px;"><img src="' + LOGO + '" width="64" alt="Nervo Design" style="display:block;border:0;width:64px;height:auto;"><p style="margin:8px 0 0;' + F + 'font-size:10.5px;letter-spacing:.22em;color:#8F8780;text-transform:uppercase;">Iluminación &amp; Deco · Mayoristas</p></td></tr>' +
-      (ban ? '<tr><td style="padding:0;"><img src="' + esc(ban) + '" width="600" alt="" style="display:block;width:100%;height:auto;border:0;"></td></tr>' : "") +
-      '<tr><td class="px" style="padding:28px 44px 8px;">' + (d.etiqueta ? '<p style="margin:0 0 6px;' + F + 'font-size:11px;letter-spacing:.18em;color:#8A9A98;text-transform:uppercase;font-weight:500;">' + per(d.etiqueta) + "</p>" : "") +
-      '<h1 style="margin:0 0 14px;' + F + 'font-size:25px;line-height:1.25;font-weight:500;color:#4A3F37;">' + titulo + "</h1>" + parr +
-      '<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:8px;"><tr>' + btn(d.boton1, d.link1, true) + btn(d.boton2, d.link2, false) + "</tr></table></td></tr>" +
-      prods + recH +
-      '<tr><td align="center" style="padding:22px 44px 28px;' + F + 'font-size:13px;color:#8F8780;">Gracias por elegirnos 🤎 · ' + esc(d.firma || "Pau y Euge") + "</td></tr>" +
-      '<tr><td align="center" style="background:#EEEAE5;padding:18px;' + F + 'font-size:11.5px;line-height:1.6;color:#8F8780;">Nervo Design · Córdoba · nervodesigncordoba@gmail.com · +54 9 3518 62-2392<br>Si no querés recibir más estos mails, respondé este mail con la palabra BAJA.</td></tr>' +
-      "</table></td></tr></table></body></html>";
+    // datos útiles
+    var R = String(d.recordar || "").split(/\n/).map(function(x){ return x.trim(); }).filter(Boolean);
+    if (R.length){
+      o.push('<tr><td class="px" style="padding:4px 44px 24px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F6F1EB;border-radius:16px"><tr><td style="padding:18px 22px;' + F + '">');
+      R.forEach(function(x){ o.push('<p style="margin:4px 0;' + F + 'font-size:14px;line-height:1.5;color:#5A4638">🤎&nbsp; ' + T(x) + '</p>'); });
+      o.push('</td></tr></table></td></tr>');
+    }
+    if (d.boton2) o.push('<tr><td class="px" align="center" style="padding:0 44px 34px"><a class="bt" href="' + esc(d.link2 || WA) + '" style="display:inline-block;border:1.5px solid #3B2418;color:#3B2418;' + F + 'font-size:14.5px;font-weight:500;padding:12px 26px;border-radius:999px;text-align:center">' + T(d.boton2) + '</a></td></tr>');
+    o.push('</table></td></tr>');
+    // pie
+    o.push('<tr><td align="center" style="padding:26px 20px 8px;' + F + 'font-size:13px;line-height:1.7;color:#8C7D71">');
+    o.push('<a href="' + WEB + '" style="color:#3B2418;font-weight:500">Catálogo mayorista</a> &nbsp;·&nbsp; <a href="' + WA + '" style="color:#3B2418;font-weight:500">WhatsApp</a> &nbsp;·&nbsp; <a href="' + TIENDA + '" style="color:#3B2418;font-weight:500">Tienda online</a><br>');
+    o.push('Nervo Design · Tu casa, tu refugio · Córdoba, Argentina</td></tr>');
+    o.push('<tr><td align="center" style="padding:6px 20px 30px;' + F + 'font-size:12px;color:#A99A8E">Te llega este mail porque sos cliente mayorista de Nervo. <a href="' + esc(d.bajaLink || BAJA) + '" style="color:#A99A8E;text-decoration:underline">No quiero recibir más mails</a></td></tr>');
+    o.push('</table></td></tr></table></body></html>');
+    return o.join("");
   }
-  function mailTexto(d, c){ var nom = primerNombre(c); return (d.titulo || "").replace(/\{nombre\}/g, nom) + "\n\n" + (d.texto || "").replace(/\{nombre\}/g, nom) + "\n\n" + (d.link1 || "https://nervomayorista.com"); }
+  function mailTexto(d, c){ return [reemplazar(d.titulo, c), reemplazar(d.texto, c), (d.boton1 ? reemplazar(d.boton1, c) + ": " + (d.link1 || WEB) : ""), "No querés recibir más mails? Respondé este mail y te damos de baja."].filter(Boolean).join("\n\n"); }
+  function ejemplo(d){ var L = destinatarios(d); return L[0] || { nombre: "Ejemplo (Lucía)", cont: "Lucía" }; }
 
   /* ---------- datos ---------- */
   function cargar(){
     return SB().from("mail_campanas").select("*").order("orden").then(function(r){ if (r.error){ toast("No se pudieron leer los mails"); ROWS = []; return; } ROWS = r.data || []; });
   }
   function guardar(row){
-    row.cambiado = new Date().toISOString(); row.por = SOY;
+    row.cambiado = new Date().toISOString();
     return SB().from("mail_campanas").upsert({ id: row.id, orden: row.orden || 0, datos: row.datos, cambiado: row.cambiado, por: SOY }).then(function(r){ if (r.error){ toast("No se pudo guardar: " + r.error.message); throw r.error; } });
   }
+  function historialTodo(){
+    var H = []; (ROWS || []).forEach(function(r){ (r.datos.historial || []).forEach(function(x){ H.push({ f: x.f, n: x.n, prueba: x.prueba, por: x.por, para: x.para, camp: r.datos.nombre || r.id }); }); });
+    return H.sort(function(a, b){ return a.f < b.f ? 1 : -1; });
+  }
 
-  /* ---------- tabla ---------- */
+  /* ---------- pantalla principal ---------- */
   function pintar(){
     var box = document.getElementById("nvml"); if (!box) return;
-    if (!ROWS){ box.innerHTML = '<p class="ml-note">Cargando…</p>'; return; }
-    var cl = clientes();
-    var filas = ROWS.slice().sort(function(a, b){ return (+a.datos.dia || 0) - (+b.datos.dia || 0); }).map(function(r){
-      var d = r.datos || {}, n = d.para === "todos" || !d.para ? cl.length : cl.filter(function(c){ return c.seg === d.para; }).length, f = proximo(d);
-      return '<tr class="ml-r" data-id="' + esc(r.id) + '"><td style="width:60px"><div class="ml-dia">' + esc(d.dia || "–") + "<small>DÍA</small></div></td>" +
-        '<td class="ml-nom"><b>' + esc(d.nombre || "Sin nombre") + "</b><span>" + esc(d.asunto || "") + "</span></td>" +
-        '<td class="h-m"><span class="ml-chip">' + esc(PARA[d.para] || "Todos") + " · " + n + "</span></td>" +
-        '<td class="h-m">' + f.getDate() + " de " + MES[f.getMonth()] + "</td>" +
-        '<td><span class="ml-sw' + (d.activo ? " on" : "") + '" data-sw="' + esc(r.id) + '" title="Prender / apagar"></span><span class="ml-est h-m">' + (d.activo ? "Prendido" : "Apagado") + "</span></td>" +
-        '<td><div class="ml-acts"><button class="ml-btn" data-ed="' + esc(r.id) + '">Editar</button></div></td></tr>';
-    }).join("");
-    box.innerHTML = '<div class="ml-head"><div><h3>Mails a mayoristas</h3><p>Cada mail sale solo el día del mes que elijas. Tocá una fila para cambiar texto, fotos o a quién le llega.</p></div><button class="ml-btn dark" data-nuevo="1">+ Nuevo mail</button></div>' +
-      '<div class="ml-tbl"><table><thead><tr><th>Día</th><th>Mail</th><th class="h-m">Para</th><th class="h-m">Próximo</th><th>Estado</th><th></th></tr></thead><tbody>' + filas +
-      (ROWS.length ? "" : '<tr class="ml-add"><td colspan="6">Todavía no hay mails. Tocá “+ Nuevo mail”.</td></tr>') + "</tbody></table></div>" +
-      '<p class="ml-note">' + cl.length + " mayoristas con mail cargado. Por ahora los mails se mandan solo como prueba a tu casilla; el envío automático se prende cuando conectemos la cuenta de mails de mayoristas.</p>";
+    box.innerHTML = "";
+    if (!ROWS){ box.append(h("p", "note", "Cargando…")); return; }
+    var bar = h("div", "bar"), seg = h("div", "seg");
+    [["camp", "Campañas"], ["dest", "Destinatarios"], ["hist", "Historial"]].forEach(function(x){ seg.append(btn(VISTA === x[0] ? "on" : "", x[1], function(){ VISTA = x[0]; pintar(); })); });
+    bar.append(seg, btn("pri", "+ Nueva campaña", elegirPlantilla));
+    box.append(bar);
+    var T = todos(), sus = suscriptos().length, bajas = T.filter(function(c){ return conMail(c) && c.mailbaja; }).length, sin = T.filter(function(c){ return !conMail(c); }).length;
+    var act = ROWS.filter(function(r){ return r.datos.activo && !r.datos.archivado; }).length;
+    var kp = h("div", "kp");
+    [[sus, "reciben mails"], [bajas, "se dieron de baja"], [sin, "sin mail cargado"], [act, "campañas programadas"]].forEach(function(x){ var d = h("div"); d.append(h("b", null, String(x[0])), h("small", null, x[1])); kp.append(d); });
+    box.append(kp);
+    if (VISTA === "camp") pintarCamp(box); else if (VISTA === "dest") pintarDest(box); else pintarHist(box);
   }
-  document.addEventListener("click", function(e){
-    var box = document.getElementById("nvml"); if (!box || !box.contains(e.target)) return;
-    var sw = e.target.closest("[data-sw]");
-    if (sw){ e.stopPropagation(); var r = ROWS.find(function(x){ return x.id === sw.dataset.sw; }); if (!r) return; r.datos.activo = !r.datos.activo; pintar(); guardar(r).catch(function(){ r.datos.activo = !r.datos.activo; pintar(); }); return; }
-    if (e.target.closest("[data-nuevo]")){
-      var base = ROWS[0] ? JSON.parse(JSON.stringify(ROWS[0].datos)) : {};
-      var nuevo = { id: "mc" + Date.now(), orden: (ROWS.length + 1), datos: Object.assign(base, { nombre: "Nuevo mail", dia: 15, activo: false, asunto: "", titulo: "Hola!", texto: "", productos: [], etiqueta: "" }) };
-      ROWS.push(nuevo); editar(nuevo, true); return;
+  function pintarCamp(box){
+    var g = h("div", "grid");
+    var L = ROWS.filter(function(r){ return VER_ARCH ? r.datos.archivado : !r.datos.archivado; });
+    L.forEach(function(r){
+      var d = r.datos, cc = h("div", "cc"), th = h("div", "th"), fr = h("iframe");
+      fr.setAttribute("loading", "lazy"); fr.setAttribute("tabindex", "-1"); fr.srcdoc = mailHTML(d, ejemplo(d)); th.append(fr); th.onclick = function(){ editar(r); };
+      var cb = h("div", "cb"), chips = h("div", "chips");
+      chips.append(h("span", "chip", TIPO[tipoDe(r)] || "Otro"));
+      if (d.archivado) chips.append(h("span", "chip", "Archivada"));
+      else if (d.activo && d.dia) chips.append(h("span", "chip ok", "Programada · día " + d.dia));
+      else chips.append(h("span", "chip am", "Borrador"));
+      chips.append(h("span", "chip", (GR[d.para] || "Todos") + " · " + destinatarios(d).length));
+      var ult = (d.historial || []).filter(function(x){ return !x.prueba; })[0];
+      cb.append(h("h4", null, d.nombre || "Sin nombre"), h("div", "as", reemplazar(d.asunto, ejemplo(d)) || "Sin asunto"), chips,
+        h("div", "as", ult ? "Último envío: " + fc(ult.f) + " a " + ult.n : "Todavía no se mandó"));
+      var a = h("div", "acts");
+      a.append(btn("", "Editar", function(){ editar(r); }), btn("", "Duplicar", function(){ duplicar(r); }),
+        btn("", d.archivado ? "Recuperar" : "Archivar", function(){ d.archivado = !d.archivado; if (d.archivado) d.activo = false; guardar(r).then(pintar); }));
+      cb.append(a); cc.append(th, cb); g.append(cc);
+    });
+    if (!VER_ARCH){ var nw = btn("new", null, elegirPlantilla); nw.append(h("b", null, "+"), h("span", null, "Nueva campaña")); g.append(nw); }
+    box.append(g);
+    var arch = ROWS.filter(function(r){ return r.datos.archivado; }).length;
+    if (arch || VER_ARCH){ var p = h("p", "note"); p.append(btn("sec", VER_ARCH ? "← Volver a las campañas" : "Ver archivadas (" + arch + ")", function(){ VER_ARCH = !VER_ARCH; pintar(); })); box.append(p); }
+    box.append(h("p", "note", "Las campañas programadas se van a mandar solas el día elegido cuando conectemos el envío. Mientras tanto podés armarlas y mandarte pruebas a tu mail."));
+  }
+  var FIL = "todos", BUS = "";
+  function pintarDest(box){
+    var b = h("div", "box"), tl = h("div", "tools"), inp = h("input"); inp.placeholder = "Buscar por nombre o mail…"; inp.value = BUS;
+    var sg = h("div", "seg");
+    [["todos", "Todos"], ["act", "Activos"], ["con", "En contacto"], ["dor", "Para activar"], ["baja", "Bajas"], ["sin", "Sin mail"]].forEach(function(x){ sg.append(btn(FIL === x[0] ? "on" : "", x[1], function(){ FIL = x[0]; pintar(); })); });
+    tl.append(inp, sg); b.append(tl);
+    var lista = h("div"); b.append(lista); box.append(b);
+    function fila(c){
+      var r = h("div", "fr"), g = grupoDe(c);
+      r.append(h("b", null, c.nombre || "Sin nombre"));
+      if (conMail(c)) r.append(h("span", "ml", c.email));
+      else { var m = h("input"); m.type = "email"; m.placeholder = "Cargar mail…"; m.onchange = function(){ var v = m.value.trim(); if (!v) return; if (!conMail({ email: v })){ toast("Ese mail no parece válido"); return; } guardarCli(c, { email: v }); toast("Mail guardado"); pintar(); }; var w = h("span", "ml"); w.append(m); r.append(w); }
+      r.append(h("span", "chip gq " + (g === "act" ? "ok" : g === "con" ? "am" : ""), GR[g]));
+      if (conMail(c)){
+        var s = h("span", "sw" + (c.mailbaja ? "" : " on")); s.append(h("i"), h("span", null, c.mailbaja ? "Dado de baja" : "Recibe mails"));
+        s.onclick = function(){
+          var baja = !c.mailbaja;
+          if (baja && !confirm(c.nombre + " no va a recibir más mails de campañas. ¿Seguimos?")) return;
+          guardarCli(c, { mailbaja: baja ? hoy() : "" }); logCli(c, baja ? "Se dio de baja de los mails" : "Volvió a recibir mails"); pintar();
+        };
+        r.append(s);
+      } else r.append(h("span", "chip no", "Falta el mail"));
+      return r;
     }
-    var tr = e.target.closest("tr.ml-r"); if (tr){ var row = ROWS.find(function(x){ return x.id === tr.dataset.id; }); if (row) editar(row); }
-  });
+    function lleno(){
+      lista.innerHTML = "";
+      var q = N(BUS), L = todos().filter(function(c){
+        if (q && N(c.nombre + " " + (c.email || "")).indexOf(q) < 0) return false;
+        if (FIL === "sin") return !conMail(c);
+        if (FIL === "baja") return conMail(c) && c.mailbaja;
+        if (FIL === "todos") return true;
+        return grupoDe(c) === FIL;
+      }).sort(function(a, b){ return conMail(b) - conMail(a) || String(a.nombre).localeCompare(String(b.nombre)); });
+      if (!L.length) lista.append(h("p", "note", "No hay clientes con ese filtro.")); else L.forEach(function(c){ lista.append(fila(c)); });
+    }
+    inp.oninput = function(){ BUS = inp.value; lleno(); };
+    lleno();
+    box.append(h("p", "note", "Si alguien pide no recibir más mails, apagalo acá y no le llega nada más. Cada mail que se manda queda anotado en la ficha del cliente."));
+  }
+  function pintarHist(box){
+    var b = h("div", "box"), H = historialTodo();
+    if (!H.length) b.append(h("p", "note", "Todavía no se mandó ningún mail. Las pruebas y los envíos van a aparecer acá."));
+    H.forEach(function(x){ var r = h("div", "hi"); r.append(h("b", null, x.camp), h("span", "chip " + (x.prueba ? "" : "ok"), x.prueba ? "Prueba" : "Enviado a " + x.n), h("span", "hf", fc(x.f) + (x.para ? " · " + x.para : "") + (x.por ? " · " + String(x.por).split("@")[0] : ""))); b.append(r); });
+    box.append(b);
+  }
 
-  /* ---------- editor con vista previa ---------- */
-  function editar(row, esNuevo){
-    var d = JSON.parse(JSON.stringify(row.datos || {}));
-    var m = document.createElement("div"); m.className = "nvml-modal";
-    function campo(k, lab, tipo, ph){ return "<label>" + lab + "</label>" + (tipo === "area" ? '<textarea data-k="' + k + '" placeholder="' + esc(ph || "") + '">' + esc(d[k] || "") + "</textarea>" : '<input data-k="' + k + '" value="' + esc(d[k] || "") + '" placeholder="' + esc(ph || "") + '"' + (tipo === "num" ? ' type="number" min="1" max="28"' : "") + ">"); }
-    m.innerHTML = '<div class="mm"><div class="mm-f"><h4>' + esc(d.nombre || "Mail") + '</h4><div class="hint">Todo se puede cambiar. Usá {nombre} para poner el nombre del cliente y {mes} para el mes.</div>' +
-      '<div class="sec"><b>Cuándo y a quién</b><div class="row3"><div>' + campo("dia", "Día del mes", "num") + "</div><div>" + campo("nombre", "Nombre interno") + '</div><div><label>Para</label><select data-k="para">' +
-      Object.keys(PARA).map(function(k){ return '<option value="' + k + '"' + ((d.para || "todos") === k ? " selected" : "") + ">" + PARA[k] + " (" + destinatarios(k).length + ")</option>"; }).join("") + "</select></div></div></div>" +
-      '<div class="sec"><b>Asunto</b>' + campo("asunto", "Asunto del mail") + campo("preheader", "Texto chiquito que se ve en la bandeja (opcional)") + "</div>" +
-      '<div class="sec"><b>Contenido</b>' + campo("etiqueta", "Etiqueta arriba del título (opcional)", "", "Ej: Catálogo de {mes}") + campo("titulo", "Título") + campo("texto", "Texto (dejá una línea en blanco para separar párrafos)", "area") +
-      '<div class="row2"><div>' + campo("boton1", "Botón 1") + "</div><div>" + campo("link1", "Link botón 1") + '</div></div><div class="row2"><div>' + campo("boton2", "Botón 2") + "</div><div>" + campo("link2", "Link botón 2") + "</div></div>" +
-      campo("recordar", "Recuadro “Para recordar” (una cosa por línea, vacío = no aparece)", "area") + campo("firma", "Firma", "", "Pau y Euge") + "</div>" +
-      '<div class="sec"><b>Banner de arriba</b>' + campo("banners", "Links de fotos, uno por línea. Cada mes usa la siguiente.", "area", "https://…") + '<div class="hint">Tip: tocá un producto de abajo con la tecla ⌥/Alt apretada para usar su foto como banner.</div></div>' +
-      '<div class="sec"><b>Productos destacados (hasta 4)</b>' + campo("titProductos", "Título de la sección", "", "Lo que más se está vendiendo") + '<div class="pgrid" id="nvml-pg"><div class="hint">Cargando catálogo…</div></div></div>' +
-      '<div class="foot">' + (esNuevo ? "" : '<button class="ml-btn" data-a="borrar">Borrar</button>') + '<button class="ml-btn" data-a="cerrar">Cerrar</button><button class="ml-btn" data-a="prueba">Mandarme una prueba</button><button class="ml-btn dark" data-a="guardar">Guardar</button></div></div>' +
-      '<div class="mm-p"><div class="pv-bar"><span style="font-size:13px;color:#6B5E55">Vista previa</span><span><button class="ml-btn" data-pv="pc">Compu</button> <button class="ml-btn" data-pv="cel">Celu</button></span></div><iframe id="nvml-pv"></iframe><button class="x" data-a="cerrar">×</button></div></div>';
-    document.body.appendChild(m);
-    var ta = m.querySelector('[data-k="banners"]'); ta.value = (d.banners || []).join("\n");
-    function leer(){
-      m.querySelectorAll("[data-k]").forEach(function(el){ var k = el.dataset.k, v = el.value; if (k === "banners") d.banners = v.split("\n").map(function(x){ return x.trim(); }).filter(Boolean); else if (k === "dia") d.dia = Math.min(28, Math.max(1, parseInt(v, 10) || 1)); else d[k] = v; });
+  /* ---------- nueva / duplicar ---------- */
+  function popup(titulo){
+    var p = h("div", "nvmp"), i = h("div", "in"), hd = h("div", "ih");
+    hd.append(h("b", null, titulo)); hd.style.justifyContent = "space-between";
+    var x = btn("x", "×", function(){ p.remove(); }); hd.append(x);
+    i.append(hd); p.append(i); p.onclick = function(e){ if (e.target === p) p.remove(); };
+    document.body.append(p); return { p: p, i: i, hd: hd };
+  }
+  function elegirPlantilla(){
+    var P = popup("¿Qué mail querés armar?"), g = h("div", "tp");
+    Object.keys(PLANT).forEach(function(k){ var t = PLANT[k], b = btn("", null, function(){ P.p.remove(); crear(k); }); b.append(h("span", null, t.ic), h("b", null, t.nombre), h("small", null, t.desc)); g.append(b); });
+    P.i.append(g);
+  }
+  function crear(k){
+    var t = PLANT[k], d = JSON.parse(JSON.stringify(t.d)); d.nombre = t.nombre; d.activo = false; d.productos = []; d.banner = ""; d.historial = [];
+    var row = { id: "mc_" + Date.now().toString(36), orden: (ROWS.length + 1) * 10, datos: d };
+    ROWS.push(row); guardar(row).then(function(){ pintar(); editar(row); });
+  }
+  function duplicar(r){
+    var d = JSON.parse(JSON.stringify(r.datos)); d.nombre = (d.nombre || "Campaña") + " (copia)"; d.activo = false; d.archivado = false; d.historial = [];
+    var row = { id: "mc_" + Date.now().toString(36), orden: (ROWS.length + 1) * 10, datos: d };
+    ROWS.push(row); guardar(row).then(pintar);
+  }
+
+  /* ---------- subir fotos (se achican antes de subir) ---------- */
+  function subirFoto(file){
+    return new Promise(function(ok, mal){
+      if (!/^image\//.test(file.type)) return mal(new Error("Tiene que ser una imagen"));
+      var img = new Image(), url = URL.createObjectURL(file);
+      img.onload = function(){
+        var W = Math.min(1200, img.naturalWidth), H = Math.round(img.naturalHeight * W / img.naturalWidth);
+        var cv = document.createElement("canvas"); cv.width = W; cv.height = H; var cx = cv.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, W, H); cx.drawImage(img, 0, 0, W, H);
+        URL.revokeObjectURL(url);
+        cv.toBlob(function(bl){
+          var path = hoy().slice(0, 7) + "/" + Date.now().toString(36) + "-" + N(file.name.replace(/\.[^.]+$/, "")).replace(/[^a-z0-9]+/g, "-").slice(0, 40) + ".jpg";
+          SB().storage.from("mails").upload(path, bl, { contentType: "image/jpeg", upsert: false }).then(function(r){
+            if (r.error) return mal(r.error);
+            ok(SB().storage.from("mails").getPublicUrl(path).data.publicUrl);
+          }, mal);
+        }, "image/jpeg", 0.86);
+      };
+      img.onerror = function(){ mal(new Error("No pude leer la imagen")); };
+      img.src = url;
+    });
+  }
+
+  /* ---------- editor ---------- */
+  function editar(row){
+    var d = row.datos; d.productos = d.productos || []; d.historial = d.historial || [];
+    var E = h("div", "nvme m-ed"), eh = h("div", "eh");
+    var nm = h("input", "nm"); nm.value = d.nombre || ""; nm.placeholder = "Nombre de la campaña";
+    var est = h("span", "st", "Todo guardado");
+    var pru = btn("sec", "✉ Mandarme una prueba"), env = btn("pri", "Enviar ahora"); env.disabled = true; env.title = "Se activa cuando conectemos el envío";
+    var cerrar = btn("x", "×", function(){ guardarYa(); E.remove(); document.body.style.overflow = ""; pintar(); });
+    eh.append(nm, est, pru, env, cerrar);
+    var mt = h("div", "mtabs"), ms = h("div", "seg");
+    var bE = btn("on", "Editar", function(){ E.className = "nvme m-ed"; bE.className = "on"; bV.className = ""; }), bV = btn("", "Ver cómo queda", function(){ E.className = "nvme m-pv"; bV.className = "on"; bE.className = ""; refrescar(true); });
+    ms.append(bE, bV); mt.append(ms);
+    var eb = h("div", "eb"), ef = h("div", "ef"), ep = h("div", "ep");
+    eb.append(ef, ep); E.append(eh, mt, eb); document.body.append(E); document.body.style.overflow = "hidden";
+
+    // vista previa
+    var pvt = h("div", "pv-top"), ps = h("div", "seg"), MODOPV = "compu", pv = h("iframe", "pv compu");
+    var bC = btn("on", "💻 Compu", function(){ MODOPV = "compu"; pv.className = "pv compu"; bC.className = "on"; bM.className = ""; }), bM = btn("", "📱 Celu", function(){ MODOPV = "celu"; pv.className = "pv celu"; bM.className = "on"; bC.className = ""; });
+    ps.append(bC, bM); var quien = h("span", "st"); pvt.append(ps, quien); ep.append(pvt, pv);
+    if (innerWidth < 900){ MODOPV = "celu"; pv.className = "pv celu"; bM.className = "on"; bC.className = ""; }
+
+    var tR = null, tG = null;
+    function refrescar(ya){ clearTimeout(tR); tR = setTimeout(function(){ var y = pv.contentWindow ? pv.contentWindow.scrollY : 0; var c = ejemplo(d); pv.srcdoc = mailHTML(d, c); pv.onload = function(){ try { pv.contentWindow.scrollTo(0, y); } catch(e){} }; quien.textContent = "Ejemplo con: " + (c.nombre || ""); }, ya ? 0 : 250); }
+    function cambio(){ est.textContent = "Guardando…"; refrescar(); clearTimeout(tG); tG = setTimeout(guardarYa, 900); }
+    function guardarYa(){ clearTimeout(tG); return guardar(row).then(function(){ est.textContent = "Todo guardado ✓"; }, function(){ est.textContent = "No se pudo guardar"; }); }
+    nm.oninput = function(){ d.nombre = nm.value; cambio(); };
+
+    function sec(t, extra){ var s = h("div", "sc"), hh = h("h5", null, t); if (extra) hh.append(extra); s.append(hh); ef.append(s); return s; }
+    function campo(s, t, k, tipo, ph, hint){
+      var l = h("label", null, t), i = tipo === "area" ? h("textarea") : h("input"); if (tipo !== "area") i.type = tipo || "text";
+      i.value = d[k] == null ? "" : d[k]; if (ph) i.placeholder = ph; i.oninput = function(){ d[k] = tipo === "number" ? (i.value ? +i.value : "") : i.value; cambio(); };
+      l.append(i); s.append(l); if (hint) s.append(h("p", "hint", hint)); return i;
     }
-    var ej = destinatarios(d.para)[0] || { nombre: "Cliente (Natalia)", cont: "Natalia" };
-    function preview(){ leer(); var f = m.querySelector("#nvml-pv"); f.srcdoc = mailHTML(d, ej); }
-    var tmo; m.addEventListener("input", function(){ clearTimeout(tmo); tmo = setTimeout(preview, 300); });
-    m.addEventListener("change", preview);
-    catalogo().then(function(L){
-      var pg = m.querySelector("#nvml-pg"); if (!L.length){ pg.innerHTML = '<div class="hint">No se pudo leer el catálogo de nervomayorista.com.</div>'; return; }
-      function dib(){ var sel = (d.productos || []).map(function(p){ return p.id; }); pg.innerHTML = L.map(function(p){ return '<div class="pi' + (sel.indexOf(p.id) >= 0 ? " sel" : "") + '" data-p="' + esc(p.id) + '"><img loading="lazy" src="' + esc(p.foto) + '" alt=""><span>' + esc(p.nombre.replace(/^Colgante |^Aplique /, "")) + "</span></div>"; }).join(""); }
-      dib();
-      pg.addEventListener("click", function(e){
-        var it = e.target.closest("[data-p]"); if (!it) return; var p = L.find(function(x){ return x.id === it.dataset.p; }); if (!p) return;
-        if (e.altKey){ leer(); d.banners = (d.banners || []).concat([p.foto]); ta.value = d.banners.join("\n"); preview(); return; }
-        d.productos = d.productos || []; var i = d.productos.findIndex(function(x){ return x.id === p.id; });
-        if (i >= 0) d.productos.splice(i, 1); else { if (d.productos.length >= 4){ toast("Hasta 4 productos"); return; } d.productos.push(p); }
-        dib(); preview();
+
+    // 1. a quién y cuándo
+    var s1 = sec("1 · A quién y cuándo");
+    var pc = h("div", "pc"), cuenta = h("p", "hint");
+    function pintarPara(){
+      pc.innerHTML = "";
+      ["todos", "act", "con", "dor", "mano"].forEach(function(k){ var b = btn(d.para === k || (!d.para && k === "todos") ? "on" : "", GR[k], function(){ d.para = k; pintarPara(); cambio(); }); if (k !== "mano") b.append(h("small", null, destinatarios({ para: k }).length)); pc.append(b); });
+      var n = destinatarios(d).length; cuenta.textContent = "Le llega a " + n + " cliente" + (n === 1 ? "" : "s") + " (los que tienen mail y no se dieron de baja).";
+      lst.style.display = d.para === "mano" ? "" : "none"; if (d.para === "mano") pintarLista();
+    }
+    var lst = h("div", "lst");
+    function pintarLista(){
+      lst.innerHTML = ""; d.elegidos = d.elegidos || [];
+      suscriptos().sort(function(a, b){ return String(a.nombre).localeCompare(String(b.nombre)); }).forEach(function(c){
+        var l = h("label"), ch = h("input"); ch.type = "checkbox"; ch.checked = d.elegidos.indexOf(c.id) >= 0;
+        ch.onchange = function(){ var i = d.elegidos.indexOf(c.id); if (ch.checked && i < 0) d.elegidos.push(c.id); if (!ch.checked && i >= 0) d.elegidos.splice(i, 1); var n = destinatarios(d).length; cuenta.textContent = "Le llega a " + n + " cliente" + (n === 1 ? "" : "s") + "."; cambio(); };
+        l.append(ch, h("span", null, c.nombre + " · " + c.email)); lst.append(l);
       });
-    });
-    m.addEventListener("click", function(e){
-      var pv = e.target.closest("[data-pv]"); if (pv){ m.querySelector("#nvml-pv").style.maxWidth = pv.dataset.pv === "cel" ? "390px" : ""; m.querySelector("#nvml-pv").style.margin = "0 auto"; m.querySelector("#nvml-pv").style.display = "block"; return; }
-      if (e.target === m){ cerrar(); return; }
-      var a = e.target.closest("[data-a]"); if (!a) return;
-      if (a.dataset.a === "cerrar") cerrar();
-      if (a.dataset.a === "guardar"){ leer(); row.datos = d; guardar(row).then(function(){ toast("Guardado 🤎"); m.remove(); pintar(); }).catch(function(){}); }
-      if (a.dataset.a === "borrar"){ if (!confirm("¿Borrar el mail “" + (d.nombre || "") + "”?")) return; SB().from("mail_campanas").delete().eq("id", row.id).then(function(r){ if (r.error){ toast("No se pudo borrar"); return; } ROWS = ROWS.filter(function(x){ return x.id !== row.id; }); m.remove(); pintar(); }); }
-      if (a.dataset.a === "prueba"){
-        leer(); if (!/@/.test(SOY)){ toast("No encontré tu mail"); return; }
-        a.disabled = true; a.textContent = "Mandando…";
-        try {
-          google.script.run.withSuccessHandler(function(r){ a.disabled = false; a.textContent = "Mandarme una prueba"; toast(r && (r.ok || []).length ? "Prueba enviada a " + SOY : "No se pudo mandar la prueba"); })
-            .withFailureHandler(function(){ a.disabled = false; a.textContent = "Mandarme una prueba"; toast("No se pudo mandar la prueba"); })
-            .mandarMails(JSON.stringify({ asunto: "[Prueba] " + String(d.asunto || "").replace(/\{nombre\}/g, primerNombre(ej)), fotos: [], para: [{ id: "prueba-" + row.id, email: SOY, html: mailHTML(d, ej), texto: mailTexto(d, ej) }] }));
-        } catch(err){ a.disabled = false; a.textContent = "Mandarme una prueba"; toast("No se pudo mandar la prueba"); }
-      }
-    });
-    function cerrar(){ if (esNuevo) ROWS = ROWS.filter(function(x){ return x !== row; }); m.remove(); pintar(); }
-    preview();
+    }
+    s1.append(pc, cuenta, lst); pintarPara();
+    var dos = h("div", "two"); s1.append(dos);
+    var ld = h("label", null, "Se manda el día"), sd = h("select");
+    var o0 = h("option", null, "Lo mando yo a mano"); o0.value = ""; sd.append(o0);
+    for (var i = 1; i <= 28; i++){ var o = h("option", null, i + " de cada mes"); o.value = i; sd.append(o); }
+    sd.value = d.dia || ""; sd.onchange = function(){ d.dia = sd.value ? +sd.value : ""; if (!d.dia) d.activo = false; act.className = "sw" + (d.activo ? " on" : ""); actT.textContent = d.activo ? "Programada" : "Pausada"; cambio(); };
+    ld.append(sd); dos.append(ld);
+    var la = h("label", null, "Estado"), act = h("span", "sw" + (d.activo ? " on" : "")), actT = h("span", null, d.activo ? "Programada" : "Pausada");
+    act.append(h("i"), actT); act.style.marginTop = "6px";
+    act.onclick = function(){ if (!d.dia){ toast("Primero elegí qué día se manda"); return; } d.activo = !d.activo; act.className = "sw" + (d.activo ? " on" : ""); actT.textContent = d.activo ? "Programada" : "Pausada"; cambio(); };
+    la.append(act); dos.append(la);
+
+    // 2. asunto
+    var s2 = sec("2 · Asunto");
+    campo(s2, "Asunto (lo primero que ven en la bandeja)", "asunto", "text", "Ej: Sumamos novedades al catálogo 🤎", "Podés usar {nombre} y {mes}. Cortito: menos de 50 letras se lee entero en el celu.");
+    campo(s2, "Texto de vista previa", "preheader", "text", "Aparece al lado del asunto en Gmail");
+
+    // 3. banner
+    var s3 = sec("3 · Foto del banner");
+    var dr = h("div", "drop"), fi = h("input"); fi.type = "file"; fi.accept = "image/*"; fi.style.display = "none";
+    function pintarBanner(){ dr.innerHTML = ""; var b = banner(d); if (b){ var im = h("img"); im.src = b; dr.append(im, h("span", null, "Tocá o arrastrá otra foto para cambiarla")); } else dr.append(h("span", null, "📷 Tocá acá o arrastrá la foto del banner (ideal horizontal, 1200 × 600)")); }
+    function usar(file){ if (!file) return; dr.innerHTML = ""; dr.append(h("span", null, "Subiendo foto…")); subirFoto(file).then(function(u){ d.banner = u; pintarBanner(); cambio(); toast("Foto cargada"); }, function(e){ toast("No se pudo subir: " + (e && e.message || e)); pintarBanner(); }); }
+    dr.onclick = function(){ fi.click(); }; fi.onchange = function(){ usar(fi.files[0]); fi.value = ""; };
+    dr.ondragover = function(e){ e.preventDefault(); dr.classList.add("over"); }; dr.ondragleave = function(){ dr.classList.remove("over"); };
+    dr.ondrop = function(e){ e.preventDefault(); dr.classList.remove("over"); usar(e.dataTransfer.files[0]); };
+    s3.append(dr, fi); pintarBanner();
+    var qb = btn("sec", "Sacar foto", function(){ d.banner = ""; d.banners = []; pintarBanner(); cambio(); }); qb.style.marginTop = "8px"; s3.append(qb);
+    var lbl = h("label", null, "Al tocar el banner va a…"); lbl.style.marginTop = "10px"; s3.append(lbl);
+    var bl = h("input"); bl.type = "url"; bl.value = d.bannerLink || ""; bl.placeholder = WEB; bl.oninput = function(){ d.bannerLink = bl.value.trim(); cambio(); }; lbl.append(bl);
+
+    // 4. texto
+    var s4 = sec("4 · Texto");
+    campo(s4, "Etiqueta chiquita (arriba del título)", "etiqueta", "text", "Ej: Nuevos ingresos");
+    campo(s4, "Título", "titulo", "text", "Ej: Sumamos novedades 🤎");
+    campo(s4, "Texto", "texto", "area", "Hola {nombre}! …", "{nombre} se cambia solo por el nombre de cada cliente. Dejá una línea en blanco para separar párrafos.");
+
+    // 5. botones
+    var s5 = sec("5 · Botones");
+    var b1 = h("div", "two"); s5.append(b1);
+    var t1 = h("label", null, "Botón principal"), i1 = h("input"); i1.type = "text"; i1.value = d.boton1 || ""; i1.oninput = function(){ d.boton1 = i1.value; cambio(); }; t1.append(i1);
+    var l1 = h("label", null, "Lleva a"), j1 = h("input"); j1.type = "url"; j1.value = d.link1 || ""; j1.placeholder = WEB; j1.oninput = function(){ d.link1 = j1.value.trim(); cambio(); }; l1.append(j1); b1.append(t1, l1);
+    var b2 = h("div", "two"); s5.append(b2);
+    var t2 = h("label", null, "Botón de abajo (opcional)"), i2 = h("input"); i2.type = "text"; i2.value = d.boton2 || ""; i2.oninput = function(){ d.boton2 = i2.value; cambio(); }; t2.append(i2);
+    var l2 = h("label", null, "Lleva a"), j2 = h("input"); j2.type = "url"; j2.value = d.link2 || ""; j2.placeholder = WA; j2.oninput = function(){ d.link2 = j2.value.trim(); cambio(); }; l2.append(j2); b2.append(t2, l2);
+    var atj = h("div", "pc"); atj.append(h("span", "hint", "Links rápidos:"));
+    [["Catálogo", WEB], ["WhatsApp", WA], ["Tienda", TIENDA]].forEach(function(x){ atj.append(btn("", x[0] + " → 1", function(){ j1.value = x[1]; d.link1 = x[1]; cambio(); })); });
+    s5.append(atj);
+
+    // 6. productos
+    var s6 = sec("6 · Productos destacados", btn("sec", "+ Elegir", elegirProd));
+    var pl = h("div", "pl"); s6.append(pl);
+    function pintarProd(){
+      pl.innerHTML = "";
+      if (!d.productos.length) pl.append(h("p", "hint", "Opcional. Elegí productos del catálogo mayorista: salen con su foto y cada uno lleva al link que pongas."));
+      d.productos.forEach(function(p, ix){
+        var r = h("div", "pi"), im = h("img"); im.src = p.foto;
+        var mid = h("div"); mid.append(h("b", null, p.nombre));
+        var pr = h("input"); pr.type = "text"; pr.placeholder = "Precio (opcional)"; pr.value = p.precio || ""; pr.oninput = function(){ p.precio = pr.value; cambio(); };
+        var lk = h("input"); lk.type = "url"; lk.placeholder = "Link (si lo dejás vacío, va al catálogo)"; lk.value = p.link || ""; lk.oninput = function(){ p.link = lk.value.trim(); cambio(); };
+        mid.append(pr, lk);
+        r.append(im, mid, btn("rm", "×", function(){ d.productos.splice(ix, 1); pintarProd(); cambio(); })); pl.append(r);
+      });
+    }
+    function elegirProd(){
+      var P = popup("Elegí productos"), q = h("input"); q.placeholder = "Buscar producto…"; P.hd.insertBefore(q, P.hd.children[1]);
+      var g = h("div", "ig"); P.i.append(g); g.append(h("p", "hint", "Cargando catálogo…"));
+      var listo = btn("pri", "Listo", function(){ P.p.remove(); pintarProd(); cambio(); }); listo.style.cssText = "border:0;background:#3B2418;color:#fff;border-radius:999px;padding:8px 16px;font:inherit;cursor:pointer"; P.hd.insertBefore(listo, P.hd.lastChild);
+      catalogo().then(function(L){
+        function lleno(){
+          g.innerHTML = ""; var qq = N(q.value);
+          if (!L.length){ g.append(h("p", "hint", "No pude leer el catálogo mayorista.")); return; }
+          L.filter(function(p){ return !qq || N(p.nombre).indexOf(qq) >= 0; }).forEach(function(p){
+            var ya = d.productos.some(function(x){ return x.id === p.id; }), b = btn(ya ? "on" : "", null), im = h("img"); im.src = p.foto; im.loading = "lazy";
+            b.append(im, h("span", null, p.nombre));
+            b.onclick = function(){ var i = -1; d.productos.forEach(function(x, k){ if (x.id === p.id) i = k; }); if (i >= 0) d.productos.splice(i, 1); else d.productos.push({ id: p.id, nombre: p.nombre, foto: p.foto, link: "" }); b.classList.toggle("on", i < 0); };
+            g.append(b);
+          });
+        }
+        q.oninput = lleno; lleno();
+      });
+    }
+    pintarProd();
+
+    // 7. datos útiles
+    var s7 = sec("7 · Recuadro de datos útiles");
+    campo(s7, "Uno por renglón (opcional)", "recordar", "area", "Reposición sin mínimo\nRetiro en Córdoba: martes y jueves");
+
+    // 8. pie
+    var s8 = sec("8 · Pie del mail");
+    s8.append(h("p", "hint", "Va solo: links al catálogo, WhatsApp y tienda, y el link para darse de baja (así no es spam). Si alguien se da de baja, apagalo en Destinatarios."));
+
+    // prueba
+    pru.onclick = function(){
+      if (!/@/.test(SOY)){ toast("No encontré tu mail"); return; }
+      guardarYa(); pru.disabled = true; pru.textContent = "Mandando…";
+      var ej = ejemplo(d);
+      function fin(ok){ pru.disabled = false; pru.textContent = "✉ Mandarme una prueba"; toast(ok ? "Prueba enviada a " + SOY : "No se pudo mandar la prueba"); if (ok){ d.historial.unshift({ f: hoy(), n: 1, prueba: true, por: SOY, para: SOY }); guardar(row); } }
+      try {
+        google.script.run.withSuccessHandler(function(r){ fin(r && (r.ok || []).length); }).withFailureHandler(function(){ fin(false); })
+          .mandarMails(JSON.stringify({ asunto: "[Prueba] " + reemplazar(d.asunto, ej), fotos: [], para: [{ id: "prueba-" + row.id, email: SOY, html: mailHTML(d, ej), texto: mailTexto(d, ej) }] }));
+      } catch(e){ fin(false); }
+    };
+    E.tabIndex = -1; E.addEventListener("keydown", function(e){ if (e.key === "Escape" && !document.querySelector(".nvmp")) cerrar.click(); });
+    refrescar(true);
   }
 
-  /* ---------- solapa "Mails" dentro de Mayoristas ---------- */
+  /* ---------- montar en Mayoristas ---------- */
   function montar(){
     var main = document.querySelector("main#list"); if (!main) return;
     var top = main.querySelector(".my-top"), sw = top && top.querySelector(".pz-sw");
@@ -254,7 +565,7 @@
     main.classList.toggle("nvml-on", MODO);
     var box = document.getElementById("nvml");
     if (MODO){
-      if (!box || box.parentNode !== main){ if (box) box.remove(); box = document.createElement("div"); box.id = "nvml"; top.after(box); if (ROWS) pintar(); else { pintar(); cargar().then(pintar); } }
+      if (!box || box.parentNode !== main){ if (box) box.remove(); box = document.createElement("div"); box.id = "nvml"; top.after(box); pintar(); if (!ROWS) cargar().then(pintar); }
     } else if (box) box.remove();
   }
   document.addEventListener("click", function(e){
@@ -263,6 +574,8 @@
     if (MODO && !era && ROWS) cargar().then(pintar);
     setTimeout(montar, 0); setTimeout(montar, 200);
   }, true);
-  try { SB().auth.getUser().then(function(r){ SOY = (r && r.data && r.data.user && r.data.user.email) || ""; }); } catch(e){}
-  setInterval(function(){ try { if (!SOY && SB()) SB().auth.getUser().then(function(r){ SOY = (r && r.data && r.data.user && r.data.user.email) || ""; }); montar(); } catch(e){} }, 600);
+  function quienSoy(){ try { SB().auth.getUser().then(function(r){ SOY = (r && r.data && r.data.user && r.data.user.email) || ""; }); } catch(e){} }
+  quienSoy();
+  setInterval(function(){ try { if (!SOY && SB()) quienSoy(); montar(); } catch(e){} }, 600);
+  window.__nvMailHTML = mailHTML;
 })();

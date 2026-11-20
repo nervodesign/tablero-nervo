@@ -265,7 +265,7 @@
     if (foco){ bus.focus(); bus.setSelectionRange(bus.value.length, bus.value.length); }
     window.scrollTo(0, scroll);
   }
-  window.__nvClientesPintar = pintar;
+  window.__nvClientesPintar = pintar; window.__nvCliInfo = info;
 
   function montar(){
     var main = document.querySelector("main#list"); if (!main) return;
