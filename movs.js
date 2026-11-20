@@ -272,7 +272,7 @@
         h("span", "nvmov-tot", (ing ? "+" + plata(ing) : "") + (ing && egr ? "  ·  " : "") + (egr ? "−" + plata(egr) : "")));
       g.append(gh);
       var tb = h("div", "nvmov-tb"); tb.append(cabecera());
-      rs.forEach(function(r){ tb.append(fila(r)); });
+      rs.forEach(function(r){ var fr = fila(r); try { fr.dataset.msg = r.msg_id || ""; } catch(e){} tb.append(fr); });
       g.append(tb);
       p.append(g);
     });
@@ -437,7 +437,7 @@
     if (!lista.length){ var v = h("div", "nvmov-vacio"); v.append(h("b", null, "No hay ventas para revisar 🎉"), h("small", null, "Las de Tienda Nube aparecen solas. Las de WhatsApp o Instagram mandalas a #movimientos, por ejemplo: “Venta Juana Pérez $85.000 transferencia por Pau”.")); p.append(v); return; }
     var tb = h("div", "nvmov-dia nvmov-vt"); var t = h("div", "nvmov-tb");
     var th = h("div", "nvmov-tr nvmov-vr nvmov-th"); VCOLS.forEach(function(x){ th.append(h("span", null, x)); }); t.append(th);
-    lista.forEach(function(it){ t.append(filaVenta(it)); });
+    lista.forEach(function(it){ var fr = filaVenta(it); try { fr.dataset.msg = it.src === "web" ? "web-" + it.row.id : ((it.mov && it.mov.msg_id) || ""); } catch(e){} t.append(fr); });
     tb.append(t); p.append(tb);
   }
   function inp(val, ph, cls, on){ var e = h("input", "nvmov-in " + (cls || "")); e.value = val == null ? "" : val; e.placeholder = ph || ""; e.onchange = function(){ on(e.value.trim()); }; return e; }
@@ -1380,7 +1380,7 @@
       var d = new Date(Number(m.creado)), dk = d.toDateString();
       if (dk !== dia){ dia = dk; var x = document.createElement("div"); x.className = "dia"; x.textContent = dk === new Date().toDateString() ? "Hoy" : d.toLocaleDateString("es-AR", { weekday: "short", day: "numeric", month: "short" }); LISTA.appendChild(x); }
       var e = estado(m), b = document.createElement("div");
-      b.className = "m" + (m.por === SOY ? " yo" : "") + (e[2] === "falta" ? " falta" : "");
+      b.className = "m" + (m.por === SOY ? " yo" : "") + (e[2] === "falta" ? " falta" : ""); b.dataset.msg = m.id;
       var w = document.createElement("div"); w.className = "w"; w.innerHTML = "<span></span><i></i>";
       w.firstChild.textContent = NOM[m.por] || m.por || ""; w.lastChild.textContent = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
       var tx = document.createElement("div"); tx.textContent = m.texto || ((m.adj || []).length ? "📎 Archivo" : "");
@@ -1437,4 +1437,78 @@
   }
   setInterval(montar, 700);
   window.addEventListener("resize", function(){ if (SW){ SW.remove(); SW = null; } montar(); });
+})();
+
+/* ---------- Movimientos: filas más fáciles de leer + chat enlazado con la lista ---------- */
+(function(){
+  if (window.__nvMovLink) return; window.__nvMovLink = 1;
+  var st = document.createElement("style");
+  st.textContent = [
+    "section.nvmovp .nvmov-blqh em{white-space:nowrap!important;flex:none!important;display:inline-flex!important;align-items:center;line-height:1.2!important}",
+    "html body section.nvmovp .nvmov-tb > .nvmov-it{border-top:2px solid #EBDDD2!important}",
+    "html body section.nvmovp .nvmov-tb > .nvmov-it:nth-child(odd){background:#FAF4EE!important}",
+    "html body section.nvmovp .nvmov-tb > .nvmov-it:nth-child(even){background:#FFFFFF!important}",
+    "html body section.nvmovp .nvmov-tb > .nvmov-it[data-msg]:not([data-msg='']){cursor:pointer}",
+    "html body section.nvmovp .nvmov-tb > .nvmov-it.nvlk{background:#FBE9E0!important;box-shadow:inset 4px 0 0 #B7704F!important}",
+    "#nvmc .m[data-msg]{cursor:pointer;transition:box-shadow .2s}",
+    "#nvmc .m.nvlk{box-shadow:0 0 0 2px #B7704F;background:#FFF6F1}",
+    "#nvmc .m .nvlk-n{display:block;margin-top:5px;font-size:11.5px;color:#9A7B66}",
+    "#nvmc .l{scrollbar-width:thin;scrollbar-color:#CDB8A8 transparent}",
+    "#nvmc .l::-webkit-scrollbar{width:9px}",
+    "#nvmc .l::-webkit-scrollbar-track{background:#F6F0EA;border-radius:9px}",
+    "#nvmc .l::-webkit-scrollbar-thumb{background:#CDB8A8;border-radius:9px;border:2px solid #F6F0EA}",
+    "#nvmc .l::-webkit-scrollbar-thumb:hover{background:#B39A88}",
+    "@media(min-width:901px){",
+    "html:not(#nv1):not(#nv2) body.nvmov-on.nvmc-on{padding-left:84px!important}",
+    "html:not(#nv1):not(#nv2) body.nvmov-on.nvmc-on nav.tabs{width:84px!important;padding-left:8px!important;padding-right:8px!important;overflow-x:hidden!important}",
+    "html:not(#nv1):not(#nv2) body.nvmov-on.nvmc-on nav.tabs .lb,html:not(#nv1):not(#nv2) body.nvmov-on.nvmc-on nav.tabs .navsec{display:none!important}",
+    "html:not(#nv1):not(#nv2) body.nvmov-on.nvmc-on nav.tabs .tab{justify-content:center!important;padding-left:0!important;padding-right:0!important;width:100%!important}",
+    "html:not(#nv1):not(#nv2) body.nvmov-on.nvmc-on nav.tabs .tab .ic{margin:0!important;position:relative}",
+    "html:not(#nv1):not(#nv2) body.nvmov-on.nvmc-on nav.tabs .tab .n{position:absolute!important;top:-7px;right:-11px;margin:0!important;transform:scale(.85)}",
+    "html:not(#nv1):not(#nv2) body.nvmov-on.nvmc-on nav.tabs .nvyo{width:100%!important;padding:6px 0!important;justify-content:center!important}",
+    "html:not(#nv1):not(#nv2) body.nvmov-on.nvmc-on nav.tabs .nvyo > :not(:first-child){display:none!important}",
+    "}"
+  ].join("\n");
+  document.head.appendChild(st);
+  function titulos(){ [].forEach.call(document.querySelectorAll("nav.tabs .tab"), function(t){ if (!t.title){ var l = t.querySelector(".lb"); t.title = (l || t).textContent.trim(); } }); }
+  titulos(); setTimeout(titulos, 3000);
+  var SEL = "";
+  function esc(v){ return String(v).replace(/["\\]/g, "\\$&"); }
+  function fila(id){ var p = document.querySelector("section.nvmovp"); return p && id ? p.querySelector('.nvmov-it[data-msg="' + esc(id) + '"]') : null; }
+  function burbuja(id){ return id ? document.querySelector('#nvmc .m[data-msg="' + esc(id) + '"]') : null; }
+  function visible(e){ return e && e.getClientRects().length; }
+  function marcar(){
+    [].forEach.call(document.querySelectorAll(".nvlk"), function(e){ if (e.dataset.msg !== SEL) e.classList.remove("nvlk"); });
+    [].forEach.call(document.querySelectorAll(".nvlk-n"), function(e){ if (!e.parentNode || e.parentNode.dataset.msg !== SEL) e.remove(); });
+    if (!SEL) return; var f = fila(SEL), b = burbuja(SEL);
+    if (f) f.classList.add("nvlk"); if (b) b.classList.add("nvlk");
+  }
+  function verBurbuja(b){
+    var l = document.querySelector("#nvmc .l"); if (!l || !b) return;
+    var lr = l.getBoundingClientRect(), br = b.getBoundingClientRect();
+    l.scrollTo({ top: l.scrollTop + (br.top - lr.top) - (l.clientHeight - br.height) / 2, behavior: "smooth" });
+  }
+  function nota(b, txt){ var n = b.querySelector(".nvlk-n"); if (!n){ n = document.createElement("span"); n.className = "nvlk-n"; b.appendChild(n); } n.textContent = txt; }
+  document.addEventListener("click", function(ev){
+    if (!document.body.classList.contains("nvmov-on")) return;
+    var t = ev.target; if (t.closest("button,input,select,textarea,a,label,.nvmov-prods")) return;
+    var b = t.closest("#nvmc .m[data-msg]");
+    if (b){
+      var id = b.dataset.msg; if (SEL === id){ SEL = ""; marcar(); return; } SEL = id; marcar();
+      var f = fila(id);
+      if (!f){ nota(b, "Este mensaje no tiene nada pendiente en la lista."); return; }
+      var blq = f.closest(".nvmov-blq");
+      if (blq && blq.classList.contains("cerr")){ var hd = blq.querySelector(".nvmov-blqh"); if (hd) hd.click(); setTimeout(function(){ var g = fila(id); marcar(); if (visible(g)) g.scrollIntoView({ behavior: "smooth", block: "center" }); }, 120); return; }
+      if (visible(f)) f.scrollIntoView({ behavior: "smooth", block: "center" });
+      else nota(b, "Está en la lista · tocá «Lista» o «Las dos» para verlo.");
+      return;
+    }
+    var r = t.closest("section.nvmovp .nvmov-it[data-msg]");
+    if (r && r.dataset.msg){
+      var id2 = r.dataset.msg; if (SEL === id2){ SEL = ""; marcar(); return; } SEL = id2; marcar();
+      var bb = burbuja(id2); if (bb && visible(bb)) verBurbuja(bb);
+    }
+  }, true);
+  var tm = 0;
+  new MutationObserver(function(){ if (!SEL) return; clearTimeout(tm); tm = setTimeout(marcar, 60); }).observe(document.body, { childList: true, subtree: true });
 })();
