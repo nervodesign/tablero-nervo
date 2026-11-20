@@ -704,22 +704,39 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   document.addEventListener("focusout", function(){ setTimeout(upd, 120); });
 })();
 
-/* Chat en el celu fijo como WhatsApp: la pantalla no se mueve para los costados ni rebota; solo se desplazan los mensajes. */
+/* Chat en el celu como Slack/WhatsApp: pantalla fija, solo se desplazan los mensajes, el casillero queda abajo pegado al teclado. */
 (function(){
-  if (window.__nvChatFijo) return; window.__nvChatFijo = 1;
+  if (window.__nvChatFijo) return; window.__nvChatFijo = 2;
+  var P = "html.nv-chat:not(#nv1):not(#nv2) ";
   var st = document.createElement("style");
   st.textContent = "@media (max-width:760px){" +
-    "html.nv-chat,html.nv-chat body{overflow:hidden!important;overscroll-behavior:none!important;height:100%!important;width:100%!important}" +
-    "html.nv-chat body{position:fixed!important;left:0;right:0;top:0;bottom:0}" +
-    "html.nv-chat .chw{position:fixed!important;left:0!important;right:0!important;top:var(--chtop,64px)!important;bottom:var(--chbot,70px)!important;height:auto!important;max-height:none!important;width:auto!important;margin:0!important;border-radius:0!important;overflow:hidden!important;overscroll-behavior:contain;z-index:40;touch-action:pan-y}" +
-    "html.nv-chat .chw *{overscroll-behavior:contain}" +
-    "html.nv-chat .chw,html.nv-chat .chw *{overflow-x:hidden}" +
-    "html.nv-chat.nv-kb .chw{bottom:auto!important}" +
+    "html.nv-chat:not(#nv1):not(#nv2),html.nv-chat:not(#nv1):not(#nv2) body{overflow:hidden!important;overscroll-behavior:none!important;height:100%!important;width:100%!important}" +
+    "html.nv-chat:not(#nv1):not(#nv2) body{position:fixed!important;left:0;right:0;top:0;bottom:0}" +
+    P + ".chw{position:fixed!important;left:0!important;right:0!important;top:var(--chtop,64px)!important;bottom:var(--chbot,70px)!important;height:auto!important;max-height:none!important;width:auto!important;margin:0!important;border-radius:0!important;overflow:hidden!important;z-index:40;box-shadow:none!important}" +
+    P + ".chw,html.nv-chat:not(#nv1):not(#nv2) .chw *{overflow-x:hidden;overscroll-behavior:contain}" +
+    "html.nv-chat:not(#nv1):not(#nv2).nv-kb .chw{bottom:auto!important;top:var(--vvt,0px)!important;height:var(--vvh,100vh)!important;z-index:5000!important}" +
+    P + ".chw .chmain{display:flex!important;flex-direction:column!important;height:100%!important;min-height:0!important}" +
+    P + ".chw .chtt{flex:none!important}" +
+    P + ".chw .chlist{flex:1 1 auto!important;min-height:0!important;height:auto!important;max-height:none!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;touch-action:pan-y}" +
+    P + ".chw .nvmov-res{flex:none!important;display:flex!important;align-items:center;justify-content:space-between;gap:8px;padding:7px 12px!important;margin:6px 10px 0!important;border-radius:14px!important}" +
+    P + ".chw .nvmov-res .nvmov-rt small," + P + ".chw .nvmov-chk{display:none!important}" +
+    P + ".chw .nvmov-res .nvmov-rt b{font-size:13px!important}" +
+    P + ".chw .nvmov-rk{margin:0!important;flex-wrap:nowrap!important;gap:4px!important}" +
+    P + ".chw .nvmov-kp{padding:3px 8px!important}" +
+    P + ".chw .nvmov-ayuda{display:none!important}" +
+    P + ".chw .chf .nvtb{display:none!important}" +
+    P + ".chw .chf{flex:none!important;flex-wrap:nowrap!important;align-items:flex-end!important;gap:6px!important;padding:8px 10px 10px!important;margin:0!important}" +
+    P + ".chw .chf textarea{flex:1 1 auto!important;width:auto!important;min-width:0!important;min-height:40px!important;height:40px;max-height:120px!important;padding:9px 14px!important;line-height:1.35!important;resize:none!important;overflow-y:auto!important}" +
+    P + ".chw .chf > button{flex:none!important;width:38px!important;height:38px!important;min-width:38px!important;margin:0!important}" +
+    P + ".chw .chf > button.chsend{width:42px!important;height:42px!important}" +
     "}";
   document.head.appendChild(st);
+  function lista(){ return document.querySelector("html.nv-chat .chw .chlist"); }
+  function alFondo(){ var L = lista(); if (L) L.scrollTop = L.scrollHeight; }
+  var CLAVE = "";
   function medir(){
     var R = document.documentElement, chw = document.querySelector("main#list .chw");
-    var on = !!chw && innerWidth <= 760 && chw.offsetParent !== null;
+    var on = !!chw && innerWidth <= 760 && chw.getClientRects().length > 0;
     if (on && !R.classList.contains("nv-chat")){
       window.scrollTo(0, 0);
       var top = 0, hd = document.elementFromPoint(innerWidth / 2, 8);
@@ -727,8 +744,18 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
       if (!top) top = Math.max(0, chw.getBoundingClientRect().top);
       var nav = document.querySelector("nav.tabs"), bot = nav ? Math.max(0, innerHeight - nav.getBoundingClientRect().top) : 0;
       R.style.setProperty("--chtop", Math.round(top) + "px"); R.style.setProperty("--chbot", Math.round(bot) + "px");
+      CLAVE = "";
     }
     R.classList.toggle("nv-chat", on);
+    if (on){
+      var t = chw.querySelector(".chtt b"), k = (t ? t.textContent : "") + "|" + chw.className;
+      if (k !== CLAVE){ CLAVE = k; setTimeout(alFondo, 60); setTimeout(alFondo, 400); }
+    }
   }
   setInterval(medir, 400); window.addEventListener("resize", function(){ document.documentElement.classList.remove("nv-chat"); medir(); });
+  // el casillero crece al escribir (hasta 5 renglones) y vuelve a 1 al mandar
+  function crecer(ta){ if (!document.documentElement.classList.contains("nv-chat")) return; ta.style.height = "40px"; ta.style.height = Math.min(120, ta.scrollHeight + 2) + "px"; }
+  document.addEventListener("input", function(e){ var ta = e.target; if (ta && ta.tagName === "TEXTAREA" && ta.closest && ta.closest(".chw .chf")) crecer(ta); }, true);
+  document.addEventListener("submit", function(e){ var f = e.target; if (f && f.classList && f.classList.contains("chf")) setTimeout(function(){ var ta = f.querySelector("textarea"); if (ta) crecer(ta); alFondo(); }, 120); }, true);
+  document.addEventListener("focusin", function(e){ if (e.target && e.target.closest && e.target.closest(".chw .chf")) setTimeout(alFondo, 350); });
 })();
