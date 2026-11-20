@@ -109,6 +109,7 @@
 
   /* ---------- en el chat: etiqueta debajo de cada mensaje ---------- */
   function etiqueta(r){
+    if (/^\s*\/ojo/i.test(r.texto || "")) return (r.estado === "aprobado" || r.estado === "descartado") ? ["✓ Ojo resuelto", "ok"] : ["⚠ Ojo · para corregir", "pen"];
     if (/^web-/.test(r.msg_id || "")){ var wr = baseMin().find(function(x){ return "web-" + x.id === r.msg_id; }); return wr && !/REVISAR/i.test(wr.env || "") ? ["✓ Venta web revisada", "ok"] : ["● Venta web · para revisar en Movimientos", "pen"]; }
     if (r.estado === "procesando") return ["⏳ Leyendo…", "lee"];
     if (r.estado === "descartado") return ["✖ Descartado", "des"];
@@ -1136,3 +1137,301 @@
 
 /* mayoristas: clientes */
 (function(){ if (window.__nvCliCarga) return; window.__nvCliCarga = 1; var cs = document.currentScript, v = cs && /[?&]v=(\d+)/.exec(cs.src); var sc = document.createElement("script"); sc.src = "clientes.js" + (v ? "?v=" + v[1] : "?t=" + Date.now()); document.head.appendChild(sc); })();
+
+
+/* ===== Movimientos: chat al lado + comandos con / ===== */
+(function(){
+  if (window.__nvMovChat) return; window.__nvMovChat = 1;
+  var SB = function(){ return window.__sb; };
+  var QUIEN = { "eugeabdon@gmail.com": "euge", "mpauabdon@gmail.com": "pau", "nervodesigncordoba@gmail.com": "euge" };
+  var NOM = { euge: "Euge", pau: "Pau", web: "🛒 Venta web" };
+  var SOY = "";
+  try { SB().auth.getUser().then(function(r){ var e = r && r.data && r.data.user && r.data.user.email; SOY = QUIEN[e] || ""; }); } catch(e){}
+
+  /* ---------- comandos ---------- */
+  var CMDS = [
+    { c: "/pago Euge", d: "Euge pagó algo (transferencia o efectivo)", top: 1 },
+    { c: "/pago Pau", d: "Pau pagó algo (transferencia o efectivo)", top: 1 },
+    { c: "/nueva venta", d: "Pasar una venta minorista", top: 1 },
+    { c: "/ojo", d: "Hay que corregir un dato de una venta o compra" },
+    { c: "/cobro Euge", d: "Entró plata a la cuenta de Euge" },
+    { c: "/cobro Pau", d: "Entró plata a la cuenta de Pau" },
+    { c: "/seña", d: "Un cliente dejó una seña" },
+    { c: "/mayorista", d: "Venta mayorista" },
+    { c: "/sueldo", d: "Pago de sueldo (Damián, tejedoras…)" },
+    { c: "/envío", d: "Pago de un envío o flete" }
+  ];
+  function N(s){ return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
+  function leerCmd(txt){
+    var t = String(txt || ""), m = /^\s*\/\s*([a-záéíóúñ]+)(?:\s+(venta))?(?:\s+(euge|pau))?\b\s*/i.exec(t);
+    if (!m) return null;
+    var k = N(m[1]), quien = m[3] ? m[3].toLowerCase() : "", resto = t.slice(m[0].length);
+    if (k === "nueva" && m[2]) k = "venta";
+    var ok = { pago: 1, venta: 1, ojo: 1, cobro: 1, sena: 1, mayorista: 1, sueldo: 1, envio: 1 };
+    if (!ok[k]) return null;
+    return { k: k, quien: quien, resto: resto };
+  }
+  window.__nvLeerCmd = leerCmd;
+  // envuelve al lector: el comando manda sobre lo que adivina el lector
+  function envolver(){
+    var L = window.__nvLector; if (!L || !L.leer || L.leer.__cmd) return;
+    var orig = L.leer;
+    L.leer = function(m, pres){
+      var c = leerCmd(m && m.texto);
+      if (!c) return orig.apply(this, arguments);
+      if (c.k === "ojo") return Promise.resolve({ tipo: "otro", signo: null, monto: null, por: null, cuenta: null, concepto: "⚠ OJO: " + c.resto.trim(), falta: ["corregir lo que dice el mensaje"], leido: "comando /ojo" });
+      var m2 = Object.assign({}, m, { texto: c.resto });
+      return Promise.resolve(orig.call(this, m2, pres)).then(function(res){
+        res = res || {};
+        if (c.k === "pago"){ res.tipo = "pago"; res.signo = "egreso"; }
+        if (c.k === "venta"){ res.tipo = "venta"; res.signo = "ingreso"; }
+        if (c.k === "mayorista"){ res.tipo = "mayorista"; res.signo = "ingreso"; }
+        if (c.k === "sena"){ res.tipo = "sena"; res.signo = "ingreso"; }
+        if (c.k === "sueldo"){ res.tipo = "sueldo"; res.signo = "egreso"; }
+        if (c.k === "envio"){ res.tipo = "envio"; res.signo = "egreso"; }
+        if (c.k === "cobro"){ res.tipo = res.tipo && res.tipo !== "pago" ? res.tipo : "otro"; res.signo = "ingreso"; }
+        if (c.quien){ res.por = c.quien; res.cuenta = c.quien; if (res.falta) res.falta = res.falta.filter(function(f){ return !/qui[eé]n|cuenta|carga/i.test(f); }); }
+        return res;
+      });
+    };
+    L.leer.__cmd = 1;
+  }
+  setInterval(envolver, 800);
+
+  /* ---------- sugerencias al escribir / ---------- */
+  var css = document.createElement("style");
+  css.textContent = [
+    ".nvsl{position:fixed;z-index:9500;background:#FFFDFB;border:1px solid #E8DED4;border-radius:16px;box-shadow:0 14px 36px rgba(58,36,28,.18);padding:6px;width:300px;max-width:calc(100vw - 20px);font-family:Outfit,system-ui,sans-serif;color:#3B2418}",
+    ".nvsl button{display:flex;flex-direction:column;align-items:flex-start;width:100%;border:0;background:none;border-radius:11px;padding:8px 10px;font:inherit;text-align:left;cursor:pointer}",
+    ".nvsl button:hover,.nvsl button.sel{background:#F3EBE3}",
+    ".nvsl b{font-size:14px;font-weight:600}.nvsl small{font-size:12px;color:#8C7D71}",
+    ".nvsl .mas{font-size:12px;color:#9C7B62;padding:6px 10px 4px;border-top:1px solid #F0E8E0;margin-top:4px}",
+    ".nvcmd-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}",
+    ".nvcmd-bar button{border:1px solid #E4D9CE;background:#fff;border-radius:999px;padding:4px 11px;font:inherit;font-size:12.5px;color:#5A4638;cursor:pointer}",
+    ".nvcmd-bar button:hover{background:#F3EBE3}"
+  ].join("\n");
+  document.head.appendChild(css);
+  var POP = null, POPT = null, SEL = 0;
+  function cerrarPop(){ if (POP){ POP.remove(); POP = null; POPT = null; } }
+  function enMov(ta){
+    if (ta.closest("#nvmc")) return true;
+    var chw = ta.closest(".chw"); if (!chw) return false;
+    var t = chw.querySelector(".chtt b"); return !!t && /movimientos/i.test(t.textContent);
+  }
+  function poner(ta, c){
+    ta.value = c + " "; ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+    ta.dispatchEvent(new Event("input", { bubbles: true })); cerrarPop();
+  }
+  function sugerir(ta){
+    var v = ta.value;
+    if (!/^\/[^\n]*$/.test(v) || v.length > 16 || / \S+ \S/.test(v) || !enMov(ta)){ cerrarPop(); return; }
+    var q = N(v.slice(1)).trim();
+    var L = q ? CMDS.filter(function(x){ return N(x.c.slice(1)).indexOf(q) === 0 || N(x.c).indexOf(q) >= 0; }) : CMDS.filter(function(x){ return x.top; });
+    if (!L.length){ cerrarPop(); return; }
+    if (!POP){ POP = document.createElement("div"); POP.className = "nvsl"; document.body.appendChild(POP); }
+    POPT = ta; SEL = Math.min(SEL, L.length - 1); POP.innerHTML = "";
+    L.forEach(function(x, i){ var b = document.createElement("button"); b.type = "button"; if (i === SEL) b.className = "sel"; b.innerHTML = "<b></b><small></small>"; b.firstChild.textContent = x.c; b.lastChild.textContent = x.d; b.onmousedown = function(e){ e.preventDefault(); poner(ta, x.c); }; POP.appendChild(b); });
+    if (!q){ var m = document.createElement("div"); m.className = "mas"; m.textContent = "Seguí escribiendo para ver más: /ojo, /cobro, /seña, /sueldo…"; POP.appendChild(m); }
+    var r = ta.getBoundingClientRect();
+    POP.style.left = Math.max(10, Math.min(r.left, innerWidth - POP.offsetWidth - 10)) + "px";
+    POP.style.top = Math.max(10, r.top - POP.offsetHeight - 8) + "px";
+  }
+  document.addEventListener("input", function(e){ var ta = e.target; if (ta && ta.tagName === "TEXTAREA") sugerir(ta); }, true);
+  document.addEventListener("keydown", function(e){
+    if (!POP || e.target !== POPT) return;
+    var bs = POP.querySelectorAll("button");
+    if (e.key === "ArrowDown" || e.key === "ArrowUp"){ e.preventDefault(); SEL = (SEL + (e.key === "ArrowDown" ? 1 : bs.length - 1)) % bs.length; sugerir(POPT); }
+    else if (e.key === "Enter" || e.key === "Tab"){ e.preventDefault(); e.stopPropagation(); poner(POPT, bs[SEL].firstChild.textContent); }
+    else if (e.key === "Escape") cerrarPop();
+  }, true);
+  document.addEventListener("focusout", function(){ setTimeout(function(){ if (POPT && document.activeElement !== POPT) cerrarPop(); }, 150); });
+
+  // en el chat de Movimientos: lista de comandos en lugar de los ejemplos
+  setInterval(function(){
+    var a = document.querySelector(".chw .nvmov-ayuda");
+    if (a && !a.__cmd){
+      a.__cmd = 1; a.innerHTML = "<b>Comandos</b>";
+      var bar = document.createElement("div"); bar.className = "nvcmd-bar";
+      CMDS.slice(0, 6).forEach(function(x){ var b = document.createElement("button"); b.type = "button"; b.textContent = x.c; b.title = x.d; b.onclick = function(){ var ta = document.querySelector(".chw .chf textarea"); if (ta) poner(ta, x.c); }; bar.appendChild(b); });
+      a.appendChild(bar);
+    }
+    var ta = document.querySelector(".chw .chf textarea");
+    if (ta && enMov(ta) && !ta.__ph){ ta.__ph = 1; ta.placeholder = "Escribí… (con / ves los comandos)"; }
+  }, 700);
+
+  /* ---------- chat al lado en Movimientos ---------- */
+  var st = document.createElement("style");
+  st.textContent = [
+    "#nvmc{position:fixed;z-index:30;display:none;flex-direction:column;background:#FFFDFB;border:1px solid #EDE5DC;border-radius:20px;box-shadow:0 10px 30px rgba(58,36,28,.08);overflow:hidden;font-family:Outfit,system-ui,sans-serif;color:#3B2418}",
+    "body.nvmov-on.nvmc-on #nvmc{display:flex}",
+    "@media(min-width:901px){body.nvmov-on.nvmc-on section.nvmovp{margin-right:calc(min(420px,34vw) + 22px)!important}}",
+    "#nvmc .h{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #F0E8E0}",
+    "#nvmc .h b{font-size:15px}#nvmc .h small{display:block;font-size:12px;color:#8C7D71;font-weight:400}",
+    "#nvmc .f{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid #F0E8E0;flex-wrap:wrap}",
+    "#nvmc .f button{border:0;border-radius:999px;padding:4px 11px;font:inherit;font-size:12.5px;background:#F1EAE2;color:#6B5A4E;cursor:pointer}",
+    "#nvmc .f button.on{background:#3B2418;color:#fff}",
+    "#nvmc .l{flex:1;overflow-y:auto;overflow-x:hidden;padding:12px;display:flex;flex-direction:column;gap:9px;overscroll-behavior:contain}",
+    "#nvmc .m{background:#fff;border:1px solid #EDE5DC;border-radius:14px;padding:8px 11px;font-size:13.5px;line-height:1.45;max-width:94%;white-space:pre-wrap;word-break:break-word}",
+    "#nvmc .m.yo{align-self:flex-end;background:#F8EDEA}",
+    "#nvmc .m.falta{border:1.5px dashed #E0A994}",
+    "#nvmc .m .w{display:flex;justify-content:space-between;gap:10px;font-size:12px;font-weight:600;color:#9C7B62;margin-bottom:2px}#nvmc .m .w i{font-style:normal;font-weight:400;color:#A99A8E}",
+    "#nvmc .dia{align-self:center;font-size:11.5px;background:#F3EEE8;border-radius:999px;padding:3px 10px;color:#8C7D71}",
+    "#nvmc .chip{display:inline-block;margin-top:6px;font-size:11.5px;padding:3px 9px;border-radius:999px;white-space:normal}",
+    "#nvmc .c-ok{background:#E3EEDF;color:#3E6B3A}#nvmc .c-pen{background:#F6ECD5;color:#8A6420}#nvmc .c-no{background:#F3E2DC;color:#9A4B36}#nvmc .c-gr{background:#F1EAE2;color:#8C7D71}",
+    "#nvmc .cta{display:flex;gap:6px;margin-top:6px}#nvmc .cta button{border:1px solid #DCCFC2;background:#fff;border-radius:999px;padding:4px 11px;font:inherit;font-size:12px;cursor:pointer}#nvmc .cta button.p{background:#3B2418;color:#fff;border-color:#3B2418}",
+    "#nvmc form{display:flex;gap:8px;align-items:flex-end;padding:10px;border-top:1px solid #F0E8E0;background:#fff;margin:0}",
+    "#nvmc textarea{flex:1;min-width:0;border:0;outline:0;background:#F3EEE8;border-radius:20px;padding:10px 14px;font:inherit;font-size:14px;color:#3B2418;resize:none;height:40px;max-height:120px;line-height:1.35}",
+    "#nvmc form button{width:40px;height:40px;border-radius:50%;border:0;background:#3B2418;color:#fff;font-size:15px;cursor:pointer;flex:none}",
+    ".nvmc-sw{display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:#ECE6DF;margin-left:auto}",
+    ".nvmc-sw button{border:0;background:transparent;border-radius:999px;padding:6px 13px;font:inherit;font-size:13px;color:#7A5E50;cursor:pointer}",
+    ".nvmc-sw button.on{background:#fff;color:#3B2418;font-weight:600;box-shadow:0 1px 3px rgba(58,36,28,.1)}",
+    ".nvmov-cab{display:flex!important;align-items:center;gap:12px;flex-wrap:wrap}",
+    "@media(max-width:900px){",
+    "  #nvmc{left:0!important;right:0!important;border-radius:18px 18px 0 0;border-left:0;border-right:0}",
+    "  body.nvmov-on.nvmc-solo section.nvmovp > :not(.nvmov-cab){display:none!important}",
+    "  .nvmc-sw{margin-left:0;width:100%;justify-content:space-between}.nvmc-sw button{flex:1;padding:8px 6px;font-size:13.5px}",
+    "  #nvmc .m{font-size:14px}",
+    "}"
+  ].join("\n");
+  document.head.appendChild(st);
+
+  var MODO = (function(){ try { return localStorage.getItem("nv-mc-modo") || ""; } catch(e){ return ""; } })();
+  function modo(){ if (MODO) return MODO; return innerWidth > 900 ? "dos" : "lista"; }
+  function setModo(m){ MODO = m; try { localStorage.setItem("nv-mc-modo", m); } catch(e){} pintarSw(); acomodar(); if (m !== "lista") setTimeout(alFondo, 50); }
+  var FIL = "todo", ROWS = {}, ULTR = 0, BOX = null, LISTA = null, CL = "";
+
+  function caja(){
+    if (BOX) return BOX;
+    BOX = document.createElement("div"); BOX.id = "nvmc";
+    BOX.innerHTML = '<div class="h"><div><b># Movimientos</b><small>El chat entero, en orden</small></div></div><div class="f"></div><div class="l"></div>' +
+      '<form><textarea rows="1" placeholder="Escribí lo que falte… (con / ves los comandos)"></textarea><button type="submit" aria-label="Enviar">➤</button></form>';
+    document.body.appendChild(BOX);
+    LISTA = BOX.querySelector(".l");
+    var f = BOX.querySelector(".f");
+    [["todo", "Todo"], ["rev", "Sin revisar"], ["falta", "⚠ Falta cargar"]].forEach(function(x){ var b = document.createElement("button"); b.type = "button"; b.textContent = x[1]; b.dataset.k = x[0]; b.onclick = function(){ FIL = x[0]; pintar(true); }; f.appendChild(b); });
+    var fm = BOX.querySelector("form"), ta = fm.querySelector("textarea");
+    ta.addEventListener("input", function(){ ta.style.height = "40px"; ta.style.height = Math.min(120, ta.scrollHeight) + "px"; });
+    ta.addEventListener("keydown", function(e){ if (e.key === "Enter" && !e.shiftKey && !POP && innerWidth > 900){ e.preventDefault(); fm.requestSubmit ? fm.requestSubmit() : fm.dispatchEvent(new Event("submit", { cancelable: true })); } });
+    fm.onsubmit = function(e){
+      e.preventDefault(); var t = ta.value.trim(); if (!t) return;
+      if (!window.__nvLocal || !window.__nvLocal.chatEnviar){ alert("Todavía está cargando, probá en un segundo"); return; }
+      ta.value = ""; ta.style.height = "40px";
+      window.__nvLocal.chatEnviar([{ canal: "mov", texto: t, por: SOY || "euge" }]).then(function(){ setTimeout(function(){ pintar(); alFondo(); }, 300); }, function(err){ ta.value = t; alert("No se pudo mandar: " + (err && err.message || err)); });
+    };
+    return BOX;
+  }
+  function msgs(){
+    var S = window.__nv && window.__nv.S, M = (S && S.chat && S.chat.m) || [];
+    var desde = Date.now() - 45 * 864e5;
+    return M.filter(function(m){ return m.canal === "mov" && !m.borrado && !m.padre && !(m.reac && m.reac.__p) && Number(m.creado) >= desde; })
+      .sort(function(a, b){ return a.creado - b.creado; });
+  }
+  function cargarRows(){
+    if (Date.now() - ULTR < 8000) return; ULTR = Date.now();
+    SB().from("movimientos").select("msg_id,estado,tipo,monto,por,texto,cambiado").gte("msg_at", new Date(Date.now() - 46 * 864e5).toISOString()).then(function(r){
+      if (r.error) return; var o = {}; (r.data || []).forEach(function(x){ if (x.msg_id) o[x.msg_id] = x; }); ROWS = o; pintar();
+    });
+  }
+  function plata(n){ return "$" + String(Math.round(Math.abs(n))).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+  function estado(m){
+    var r = ROWS[m.id];
+    if (/^web-/.test(m.id)){ var w = ((window.__nv && window.__nv.S && window.__nv.S.bzData && window.__nv.S.bzData.min) || []).find(function(x){ return "web-" + x.id === m.id; }); return w && !/REVISAR/i.test(w.env || "") ? ["✓ Venta web revisada", "c-ok", "ok"] : ["● Venta web · para revisar", "c-pen", "rev"]; }
+    if (/^\s*\/ojo/i.test(m.texto || "")) return r && (r.estado === "aprobado" || r.estado === "descartado") ? ["✓ Ojo resuelto", "c-ok", "ok"] : ["⚠ Ojo · para corregir", "c-no", "rev"];
+    if (!r) return Date.now() - m.creado < 60000 ? ["⏳ Leyendo…", "c-gr", "rev"] : ["⚠ Falta cargar", "c-no", "falta"];
+    if (r.estado === "procesando") return ["⏳ Leyendo…", "c-gr", "rev"];
+    if (r.estado === "descartado") return ["✖ Descartado", "c-gr", "ok"];
+    var t = (r.monto ? " · " + plata(r.monto) : "") + (r.por ? " · " + (NOM[r.por] || r.por) : "");
+    return r.estado === "aprobado" ? ["✓ Aprobado" + t, "c-ok", "ok"] : ["● Pendiente" + t, "c-pen", "rev"];
+  }
+  function cargarAhora(m, btn){
+    btn.disabled = true; btn.textContent = "Leyendo…";
+    var L = window.__nvLector, S = window.__nv && window.__nv.S;
+    var lee = L && L.leer ? Promise.resolve(L.leer(m, (S && S.presupuestos) || [])) : Promise.resolve({});
+    lee.catch(function(){ return {}; }).then(function(res){
+      res = res || {}; var T = ["venta","mayorista","sena","pago","sueldo","envio","otro"];
+      return SB().from("movimientos").insert({ msg_id: m.id, msg_at: new Date(m.creado).toISOString(), autor: m.por, texto: m.texto || "", adj: m.adj || [], estado: "pendiente",
+        tipo: T.indexOf(res.tipo) >= 0 ? res.tipo : "otro", cat: res.cat || null, signo: /^(ingreso|egreso)$/.test(res.signo) ? res.signo : null, monto: Number(res.monto) || null,
+        fecha: /^\d{4}-\d{2}-\d{2}$/.test(res.fecha || "") ? res.fecha : new Date(Number(m.creado)).toISOString().slice(0, 10),
+        por: /^(euge|pau)$/.test(res.por) ? res.por : null, cuenta: /^(euge|pau)$/.test(res.cuenta) ? res.cuenta : null,
+        contraparte: res.contraparte || null, concepto: res.concepto || null, medio: res.medio || null, falta: res.falta || [], ia: { lector: res.leido || null, aMano: true } });
+    }).then(function(r){
+      if (r && r.error && !/duplicate|23505/i.test(r.error.message + r.error.code)){ btn.disabled = false; btn.textContent = "+ Cargar"; alert("No se pudo: " + r.error.message); return; }
+      ULTR = 0; cargarRows(); btn.textContent = "Listo: quedó en Movimientos para revisar";
+    });
+  }
+  function noEs(m, btn){
+    btn.disabled = true;
+    SB().from("movimientos").insert({ msg_id: m.id, msg_at: new Date(m.creado).toISOString(), autor: m.por, texto: m.texto || "", estado: "descartado" }).then(function(){ ULTR = 0; cargarRows(); });
+  }
+  function alFondo(){ if (LISTA) LISTA.scrollTop = LISTA.scrollHeight; }
+  function pintar(forzar){
+    if (!BOX || !document.body.classList.contains("nvmov-on")) return;
+    var M = msgs(), clave = FIL + "|" + M.length + "|" + M.map(function(m){ return estado(m)[0]; }).join(",");
+    if (clave === CL && !forzar) return; CL = clave;
+    [].forEach.call(BOX.querySelectorAll(".f button"), function(b){ b.classList.toggle("on", b.dataset.k === FIL); });
+    var abajo = LISTA.scrollHeight - LISTA.scrollTop - LISTA.clientHeight < 60;
+    LISTA.innerHTML = ""; var dia = "";
+    var V = M.filter(function(m){ var e = estado(m)[2]; return FIL === "todo" || (FIL === "rev" && e === "rev") || (FIL === "falta" && e === "falta"); });
+    if (!V.length){ var v = document.createElement("div"); v.className = "dia"; v.textContent = FIL === "todo" ? "Todavía no hay mensajes" : "Nada por acá ✓"; LISTA.appendChild(v); }
+    V.forEach(function(m){
+      var d = new Date(Number(m.creado)), dk = d.toDateString();
+      if (dk !== dia){ dia = dk; var x = document.createElement("div"); x.className = "dia"; x.textContent = dk === new Date().toDateString() ? "Hoy" : d.toLocaleDateString("es-AR", { weekday: "short", day: "numeric", month: "short" }); LISTA.appendChild(x); }
+      var e = estado(m), b = document.createElement("div");
+      b.className = "m" + (m.por === SOY ? " yo" : "") + (e[2] === "falta" ? " falta" : "");
+      var w = document.createElement("div"); w.className = "w"; w.innerHTML = "<span></span><i></i>";
+      w.firstChild.textContent = NOM[m.por] || m.por || ""; w.lastChild.textContent = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+      var tx = document.createElement("div"); tx.textContent = m.texto || ((m.adj || []).length ? "📎 Archivo" : "");
+      var ch = document.createElement("span"); ch.className = "chip " + e[1]; ch.textContent = e[0];
+      b.appendChild(w); b.appendChild(tx); b.appendChild(ch);
+      if (e[2] === "falta"){
+        var c = document.createElement("div"); c.className = "cta";
+        var b1 = document.createElement("button"); b1.type = "button"; b1.className = "p"; b1.textContent = "+ Cargar"; b1.onclick = function(){ cargarAhora(m, b1); };
+        var b2 = document.createElement("button"); b2.type = "button"; b2.textContent = "No es un movimiento"; b2.onclick = function(){ noEs(m, b2); };
+        c.appendChild(b1); c.appendChild(b2); b.appendChild(c);
+      }
+      LISTA.appendChild(b);
+    });
+    if (abajo || forzar) alFondo();
+  }
+  var SW = null;
+  function pintarSw(){ if (!SW) return; [].forEach.call(SW.children, function(b){ b.classList.toggle("on", b.dataset.m === modo()); }); }
+  function acomodar(){
+    var on = document.body.classList.contains("nvmov-on"), m = modo(), chico = innerWidth <= 900;
+    document.body.classList.toggle("nvmc-on", on && m !== "lista");
+    document.body.classList.toggle("nvmc-solo", on && chico && m === "chat");
+    if (!on || !BOX) return;
+    var sec = document.querySelector("section.nvmovp");
+    if (!chico){
+      var wrap = sec && sec.parentElement, r = wrap ? wrap.getBoundingClientRect() : { right: innerWidth - 20 };
+      var w = Math.min(420, innerWidth * 0.34);
+      BOX.style.width = w + "px"; BOX.style.left = "auto"; BOX.style.right = Math.max(12, innerWidth - r.right + 8) + "px";
+      BOX.style.top = "84px"; BOX.style.bottom = "16px"; BOX.style.height = "auto";
+      if (sec) sec.style.paddingBottom = "";
+    } else {
+      var nav = document.querySelector("nav.tabs"), bot = nav && nav.getBoundingClientRect().height ? innerHeight - nav.getBoundingClientRect().top : 0;
+      var cab = document.querySelector(".nvmov-cab"), top = cab ? Math.max(60, cab.getBoundingClientRect().bottom + 8) : 120;
+      BOX.style.width = "auto"; BOX.style.bottom = bot + "px";
+      if (m === "chat"){ BOX.style.top = top + "px"; BOX.style.height = "auto"; }
+      else { BOX.style.top = "auto"; BOX.style.height = Math.round((innerHeight - bot) * 0.5) + "px"; }
+      if (sec) sec.style.paddingBottom = m === "dos" ? Math.round((innerHeight - bot) * 0.5 + 20) + "px" : "";
+    }
+  }
+  function montar(){
+    var on = document.body.classList.contains("nvmov-on");
+    if (!on){ document.body.classList.remove("nvmc-on", "nvmc-solo"); return; }
+    caja();
+    var cab = document.querySelector("section.nvmovp .nvmov-cab");
+    if (cab && !cab.querySelector(".nvmc-sw")){
+      SW = document.createElement("div"); SW.className = "nvmc-sw";
+      [["lista", "Lista"], ["chat", "Chat"], ["dos", innerWidth > 900 ? "💬 Chat al lado" : "Las dos"]].forEach(function(x){
+        if (innerWidth > 900 && x[0] === "chat") return;
+        var b = document.createElement("button"); b.type = "button"; b.dataset.m = x[0]; b.textContent = x[1]; b.onclick = function(){ setModo(x[0]); }; SW.appendChild(b);
+      });
+      cab.appendChild(SW); pintarSw(); setTimeout(alFondo, 100);
+    }
+    if (innerWidth > 900 && MODO === "chat") MODO = "dos";
+    acomodar(); cargarRows(); pintar();
+  }
+  setInterval(montar, 700);
+  window.addEventListener("resize", function(){ if (SW){ SW.remove(); SW = null; } montar(); });
+})();
