@@ -626,7 +626,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
       if (sh && !sh.querySelector(".nvsh-x")){ var b = document.createElement("button"); b.type = "button"; b.className = "nvsh-x"; b.textContent = "×"; b.title = "Cerrar"; b.onclick = function(e){ e.preventDefault(); e.stopPropagation(); cerrar(); }; sh.insertBefore(b, sh.firstChild); }
       if (!abierto){ abierto = true; try { history.pushState({ nvSheet: 1 }, ""); } catch(e){} }
     } else if (abierto){
-      abierto = false; try { if (history.state && history.state.nvSheet) history.back(); } catch(e){}
+      abierto = false; try { if (history.state && history.state.nvSheet) history.replaceState(null, ""); } catch(e){}
     }
   }
   window.addEventListener("popstate", function(){ if (abierto && scrim()){ abierto = false; cerrar(); } });
