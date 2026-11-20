@@ -634,3 +634,37 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   function vigilar(){ var h = document.getElementById("sheetHost"); if (!h) return setTimeout(vigilar, 1000); new MutationObserver(revisar).observe(h, { childList: true, subtree: true }); }
   vigilar();
 })();
+
+
+/* ================= venta nueva de la web: suena la caja registradora y aparece un festejo (con la app abierta) ================= */
+(function(){
+  if (window.__nvCaja) return; window.__nvCaja = 1;
+  var ctx = null;
+  function audio(){ try { ctx = ctx || new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === "suspended") ctx.resume(); } catch(e){} return ctx; }
+  ["pointerdown", "keydown", "touchstart"].forEach(function(ev){ document.addEventListener(ev, function(){ audio(); }, { once: true, passive: true }); });
+  function campana(c, t, f, dur, vol){ var o = c.createOscillator(), g = c.createGain(); o.type = "sine"; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + 0.05); }
+  function cajon(c, t){ var n = Math.floor(c.sampleRate * 0.12), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0); for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); var s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(); f.type = "bandpass"; f.frequency.value = 2500; g.gain.value = 0.5; s.buffer = b; s.connect(f); f.connect(g); g.connect(c.destination); s.start(t); }
+  function chaChing(){ var c = audio(); if (!c) return; var t = c.currentTime + 0.05; cajon(c, t); campana(c, t + 0.12, 1568, 0.9, 0.35); campana(c, t + 0.12, 3136, 0.6, 0.12); campana(c, t + 0.24, 2093, 1.2, 0.35); campana(c, t + 0.24, 4186, 0.8, 0.1); }
+  function plata(n){ n = Math.round(Number(n) || 0); return n ? "$ " + n.toLocaleString("es-AR") : ""; }
+  function festejo(d){
+    var b = document.createElement("div");
+    b.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top, 0px) + 70px);transform:translate(-50%,-20px);opacity:0;transition:all .35s ease;z-index:99998;background:#F6F2ED;color:#4A3F37;border:1px solid #E2DAD1;border-radius:22px;padding:14px 20px;box-shadow:0 18px 40px rgba(74,63,55,.2);font-family:inherit;text-align:center;max-width:calc(100vw - 32px)";
+    b.innerHTML = '<div style="font-size:28px">💰</div><div style="font-weight:600;font-size:16px">¡Venta nueva en la web!</div><div style="font-size:13px;color:#8C7D71;margin-top:2px"></div>';
+    b.lastChild.textContent = [d.num, plata(d.facturar || d.cobrado), String(d.cliente || "").split("\n")[0]].filter(Boolean).join(" · ");
+    b.onclick = function(){ b.remove(); };
+    document.body.appendChild(b); requestAnimationFrame(function(){ b.style.opacity = "1"; b.style.transform = "translate(-50%,0)"; });
+    setTimeout(function(){ b.style.opacity = "0"; setTimeout(function(){ b.remove(); }, 400); }, 7000);
+  }
+  var vistos = {};
+  window.__nvProbarCaja = function(){ chaChing(); festejo({ num: "WEB #prueba", facturar: 150000, cliente: "Prueba" }); };
+  function iniciar(){
+    if (!window.__sb) return setTimeout(iniciar, 2000);
+    try {
+      window.__sb.channel("nervo-ventas-web").on("postgres_changes", { event: "INSERT", schema: "public", table: "registros", filter: "tabla=eq.base_min" }, function(p){
+        var r = p.new || {}, d = r.data || {}; if (r.por !== "web" && d.por !== "web") return; if (vistos[r.id]) return; vistos[r.id] = 1;
+        chaChing(); festejo(d);
+      }).subscribe();
+    } catch(e){}
+  }
+  setTimeout(iniciar, 3000);
+})();
