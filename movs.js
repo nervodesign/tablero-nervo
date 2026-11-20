@@ -504,6 +504,79 @@
     return { q: q, quien: q === "pau" ? "Pau" : q === "euge" ? "Euge" : "", f: f, cols: [["Concepto", f.concepto], ["Fecha", f.fecha ? f.fecha.split("-").reverse().join("/") : "—"], ["Categoría", f.cat], ["Total", f.total ? "$ " + Math.round(f.total).toLocaleString("es-AR") : "—"], ["Cuenta", GRUPOS_FIN[String(f.cat).split(".")[0]] || ""], ["Notas", f.notas || "Creado desde Movimientos (venta aprobada)"]] };
   }
   function filaVenta(it){
+    var row = (it.src !== "web" && tipoVentaDe(it) === "may") ? filaMayorista(it) : filaVenta0(it);
+    if (it.src === "web") return row;
+    var sw = h("div", "nvmay-sw"), act = tipoVentaDe(it);
+    [["min", "🛍️ Minorista"], ["may", "📦 Mayorista"]].forEach(function(o){
+      var b = h("button", o[0] === act ? "on" : "", o[1]); b.type = "button";
+      b.onclick = function(){ if (o[0] === act) return; guardarCliVenta(it, { tipoV: o[0] }); pintar(); };
+      sw.append(b);
+    });
+    row.prepend(sw);
+    return row;
+  }
+  function tipoVentaDe(it){ var c = (it.mov && it.mov.cliente) || {}; if (c.tipoV) return c.tipoV; return it.mov && it.mov.tipo === "mayorista" ? "may" : "min"; }
+  function guardarCliVenta(it, campos){
+    if (!it.mov) return;
+    var cl = Object.assign({}, it.mov.cliente || {}, campos); it.mov.cliente = cl;
+    SB.from("movimientos").update({ cliente: cl, cambiado: new Date().toISOString(), cambiado_por: SOY }).eq("id", it.mov.id).then(function(r){ if (r.error) toast("No se pudo guardar: " + r.error.message); });
+  }
+  (function(){
+    if (document.getElementById("nvmay-css")) return;
+    var s = document.createElement("style"); s.id = "nvmay-css";
+    s.textContent = ".nvmay-sw{display:inline-flex;gap:4px;margin:8px 0 6px 10px;padding:3px;border-radius:999px;background:#ECE6DF;box-shadow:inset 2px 2px 5px rgba(120,100,85,.16),inset -2px -2px 5px rgba(255,255,255,.8)}" +
+      ".nvmay-sw button{border:0;background:transparent;font:inherit;font-size:12.5px;padding:5px 12px;border-radius:999px;color:#8C7D71;cursor:pointer}.nvmay-sw button.on{background:#fff;color:#4A3F37;font-weight:600;box-shadow:0 1px 3px rgba(74,63,55,.12)}" +
+      ".nvmay-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 10px;padding:6px 10px 12px}.nvmay-g label{display:flex;flex-direction:column;gap:3px;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#9C7B62}" +
+      ".nvmay-g label.ancho{grid-column:span 2}.nvmay-g textarea{min-height:58px;resize:vertical;font:inherit;text-transform:none}.nvmay-g .nvmov-in{width:100%;box-sizing:border-box;text-transform:none;letter-spacing:0}" +
+      ".nvmay-pie{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 10px 12px;font-size:13px;color:#8C7D71}.nvmay-ok{border:0;border-radius:999px;padding:8px 16px;font:inherit;font-size:13px;background:#9C7B62;color:#fff;cursor:pointer}.nvmay-ok[disabled]{background:#D8CEC4;cursor:default}" +
+      "@media(max-width:700px){.nvmay-g{grid-template-columns:repeat(2,minmax(0,1fr))}}";
+    document.head.appendChild(s);
+  })();
+  function filaMayorista(it){
+    var v = it.row || {}, c = (it.mov && it.mov.cliente) || {};
+    var hoy = new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+    var m = Object.assign({ cliente: v.cliente || "", pedido: v.cant || "", total: Number(v.cobrado) || Number(v.facturar) || (it.mov && Number(it.mov.monto)) || "", sena: "", cobra: quienDeCobro(v.cobro) || "", fecha: v.fecha || hoy, limite: "", facturas: "no", canal: "WHATS" }, c.may || {});
+    var w = h("div", "nvmov-it nvmay");
+    function set(k, val){ m[k] = val; guardarCliVenta(it, { may: Object.assign({}, m) }); revisar(); }
+    function campo(t, el, ancho){ var l = h("label", ancho ? "ancho" : ""); l.append(h("span", null, t), el); return l; }
+    var cl = inp(m.cliente, "Nombre del mayorista", "", function(x){ set("cliente", x); });
+    var pe = h("textarea", "nvmov-in"); pe.value = m.pedido; pe.placeholder = "*2 firenze xl kraft tostado\n*1 toscana 65x40…"; pe.onchange = function(){ set("pedido", pe.value.trim()); };
+    var to = inp(plataN(m.total), "$ total del pedido", "tot", function(x){ set("total", numAR(x) || ""); });
+    var se = inp(plataN(m.sena), "$ seña (si dejó)", "tot in", function(x){ set("sena", numAR(x) || ""); });
+    var qu = sel(m.cobra === "pau" ? "Pau" : m.cobra === "euge" ? "Euge" : "", ["Euge", "Pau"], "¿Quién cobró la seña?", function(x){ set("cobra", x.toLowerCase()); });
+    var fe = h("input", "nvmov-in"); fe.type = "date"; fe.value = m.fecha; fe.onchange = function(){ set("fecha", fe.value); };
+    var li = h("input", "nvmov-in"); li.type = "date"; li.value = m.limite; li.onchange = function(){ set("limite", li.value); };
+    var fa = sel(m.facturas === "si" ? "Sí" : "No", ["Sí", "No"], "¿Factura?", function(x){ set("facturas", x === "Sí" ? "si" : "no"); });
+    var ca = inp(m.canal, "WHATS / INSTA / LOCAL", "up", function(x){ set("canal", x); });
+    var g = h("div", "nvmay-g");
+    g.append(campo("Mayorista", cl, true), campo("Fecha del pedido", fe), campo("Entregar antes del", li),
+      campo("Pedido", pe, true), campo("Total", to), campo("Seña", se),
+      campo("Cobró la seña", qu), campo("¿Lleva factura?", fa), campo("Canal", ca));
+    var pie = h("div", "nvmay-pie"), msg = h("span"), ok = h("button", "nvmay-ok", "✓ Aprobar como mayorista"); ok.type = "button";
+    pie.append(msg, ok); w.append(g, pie);
+    function faltan(){
+      var f = []; if (!m.cliente) f.push("mayorista"); if (!m.pedido) f.push("pedido"); if (!Number(m.total)) f.push("total"); if (!m.limite) f.push("fecha de entrega");
+      if (Number(m.sena) > 0 && !m.cobra) f.push("quién cobró la seña"); return f;
+    }
+    function revisar(){ var f = faltan(); ok.disabled = !!f.length; msg.textContent = f.length ? "Falta: " + f.join(", ") : (Number(m.sena) > 0 ? "Pasa a Mayoristas y la seña queda abajo para aprobar en Finanzas " + (m.cobra === "pau" ? "Pau" : "Euge") : "Pasa a Mayoristas (sin seña)"); }
+    revisar();
+    ok.onclick = function(){
+      if (faltan().length) return; ok.disabled = true; ok.textContent = "Guardando…";
+      var total = Number(m.total) || 0, sena = Math.min(Number(m.sena) || 0, total), now = Date.now(), id = "may" + now;
+      var fila = { id: id, fecha: m.fecha, cliente: m.cliente, pedido: m.pedido, sena: sena ? String(sena) : "", saldo: String(total - sena), limite: m.limite,
+        estado: JSON.stringify(["PARA HACER"]), pago: JSON.stringify(sena >= total ? ["COMPLETO"] : sena > 0 ? ["SÓLO SEÑA"] : ["NO ABONADO"]),
+        cobrado: JSON.stringify(sena > 0 ? [m.cobra === "pau" ? "PAU" : "EUGE"] : []), canal: m.canal || "", facturas: m.facturas, obs: "", orden: "", at: "", creado: String(now), cambiado: String(now), por: SOY };
+      new Promise(function(res, mal){ google.script.run.withSuccessHandler(res).withFailureHandler(mal).baseGuardarVarios("base_may", [fila]); })
+        .then(function(){ return guardar(it.mov, { estado: "aprobado", aprobado_por: SOY, aprobado_at: new Date().toISOString(), cargado: "base_may:" + id }); })
+        .then(function(){ if (!(sena > 0)) return null;
+          return crearPlata({ id: id, num: "MAY", cliente: m.cliente, cobro: JSON.stringify([m.cobra === "pau" ? "PAU" : "EUGE"]), cobrado: String(sena), fecha: m.fecha },
+            { cat: m.facturas === "si" ? "1.7 VENTA MAY. FACTURADA" : "1.6 VENTA MAY. NO FACTURADA", total: sena, fecha: m.fecha, concepto: (sena >= total ? "Venta mayorista · " : "Seña mayorista · ") + m.cliente }); })
+        .then(function(){ toast("Listo: pasó a Mayoristas" + (sena > 0 ? ". La seña quedó abajo para aprobar en Finanzas." : ".")); pintar(); },
+              function(e){ ok.disabled = false; ok.textContent = "✓ Aprobar como mayorista"; toast("No se pudo aprobar: " + (e && e.message || e)); });
+    };
+    return w;
+  }
+  function filaVenta0(it){
     var v = it.row, w = h("div", "nvmov-it"), f = h("div", "nvmov-tr nvmov-vr");
     var ck = h("input"); ck.type = "checkbox"; ck.className = "nvmov-ck"; ck.title = "Aprobar venta";
     ck.onchange = function(){ if (!ck.checked) return; ck.disabled = true; aprobarVenta(it).catch(function(e){ ck.checked = false; ck.disabled = false; if (e) toast("No se pudo aprobar: " + (e.message || e)); }); };
@@ -1056,3 +1129,6 @@
 
 /* resumen de la semana (lunes) */
 (function(){ if (window.__nvLunesCarga) return; window.__nvLunesCarga = 1; var cs = document.currentScript, v = cs && /[?&]v=(\d+)/.exec(cs.src); var sc = document.createElement("script"); sc.src = "lunes.js" + (v ? "?v=" + v[1] : "?t=" + Date.now()); document.head.appendChild(sc); })();
+
+/* buscador de categoría y cuenta */
+(function(){ if (window.__nvBCCarga) return; window.__nvBCCarga = 1; var cs = document.currentScript, v = cs && /[?&]v=(\d+)/.exec(cs.src); var sc = document.createElement("script"); sc.src = "buscacat.js" + (v ? "?v=" + v[1] : "?t=" + Date.now()); document.head.appendChild(sc); })();
