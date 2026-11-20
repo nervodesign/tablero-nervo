@@ -98,3 +98,48 @@
     } catch(e){}
   }, 2500);
 })();
+
+/* Nueva tarea desde cualquier lado: se ve entera en el celu y tiene objetivo y prioridad como en Tareas */
+(function(){
+  if (window.__nvTareaPlus) return; window.__nvTareaPlus = 1;
+  var st = document.createElement("style");
+  st.textContent = ".scrim{z-index:90!important}" +
+    "@media (max-width:760px){.scrim .sheet{max-height:calc(100dvh - 24px)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;padding-bottom:calc(18px + env(safe-area-inset-bottom))!important}}" +
+    ".nvtp-pr{display:flex;gap:6px}.nvtp-pr button{flex:1;border:1px solid #E6DCD2;background:#fff;border-radius:12px;padding:9px 6px;font:inherit;font-size:14px;color:#6B5A4E;cursor:pointer}" +
+    ".nvtp-pr button.on{background:#3B2418;border-color:#3B2418;color:#fff}";
+  document.head.appendChild(st);
+  function S(){ return (window.__nv && window.__nv.S) || {}; }
+  function el(t, c, x){ var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
+  function campo(t, input){ var l = el("label", "fld"); l.style.cssText = "display:flex;flex-direction:column;gap:6px;margin:10px 0"; var s = el("span", null, t); s.style.cssText = "font-size:14px;color:#6B5A4E"; l.append(s, input); return l; }
+  function armar(sh){
+    if (sh.__tp) return; sh.__tp = 1;
+    var h = sh.querySelector("h2"), editing = h && /Editar/.test(h.textContent);
+    var tit = sh.querySelector("#f-titulo"), it = null;
+    if (editing && tit) it = (S().tareas || []).find(function(t){ return t.titulo === tit.value; }) || null;
+    var val = { obj: (it && it.obj) || "", prio: (it && it.prio) || "media" };
+    var sel = el("select"); sel.style.cssText = "border:1px solid #E6DCD2;border-radius:12px;padding:10px 12px;font:inherit;font-size:16px;background:#fff;color:#3B2418";
+    var o0 = el("option", null, "Sin objetivo"); o0.value = ""; sel.append(o0);
+    (S().objetivos || []).filter(function(o){ return !o.arch || o.id === val.obj; }).forEach(function(o){ var op = el("option", null, o.nombre); op.value = o.id; sel.append(op); });
+    sel.value = val.obj; sel.onchange = function(){ val.obj = sel.value; };
+    var pr = el("div", "nvtp-pr");
+    [["baja", "Baja"], ["media", "Media"], ["alta", "Alta"]].forEach(function(x){ var b = el("button", x[0] === val.prio ? "on" : "", x[1]); b.type = "button"; b.onclick = function(){ val.prio = x[0]; [].forEach.call(pr.children, function(y){ y.classList.toggle("on", y === b); }); }; pr.append(b); });
+    // va antes de "Quién se encarga"
+    var ref = [].find.call(sh.children, function(c){ return /Quién se encarga/.test(c.textContent || "") && c.querySelector && c.querySelector("button"); });
+    var w = el("div"); w.append(campo("Objetivo", sel), campo("Prioridad", pr));
+    if (ref) sh.insertBefore(w, ref); else sh.append(w);
+    sh.addEventListener("submit", function(){
+      var titulo = tit ? tit.value.trim() : ""; if (!titulo) return;
+      var antes = Date.now() - 5000, intentos = 0;
+      (function buscar(){
+        var t = editing && it ? (S().tareas || []).find(function(x){ return x.id === it.id; }) : (S().tareas || []).filter(function(x){ return x.titulo === titulo && Number(x.creado || 0) >= antes; }).pop();
+        if (!t){ if (++intentos < 20) setTimeout(buscar, 400); return; }
+        if ((t.obj || "") === val.obj && (t.prio || "media") === val.prio) return;
+        t.obj = val.obj; t.prio = val.prio;
+        if (window.__nvLocal && window.__nvLocal.guardar) window.__nvLocal.guardar(["tareas", Object.assign({}, t, { obj: val.obj, prio: val.prio, cambiado: Date.now() })]).catch(function(){});
+      })();
+    }, true);
+  }
+  setInterval(function(){
+    [].forEach.call(document.querySelectorAll("form.sheet"), function(sh){ var h = sh.querySelector("h2"); if (h && /^(Nueva|Editar) tarea$/.test(h.textContent.trim()) && sh.querySelector("#f-titulo")) armar(sh); });
+  }, 300);
+})();
