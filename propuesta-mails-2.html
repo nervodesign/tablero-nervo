@@ -1,0 +1,142 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mails mayoristas · propuesta 2</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#E6DED4;font-family:Outfit,sans-serif;color:#2E2119;padding:28px 18px 50px}
+.top0{max-width:1340px;margin:0 auto 24px}.top0 h1{font-weight:300;font-size:30px;margin:0;letter-spacing:-.01em}.top0 p{margin:6px 0 0;color:#7E6E62;font-size:14px;font-weight:300}
+.row{display:flex;gap:30px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+.col{width:420px;max-width:100%}.lab{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#9A7E68;margin-bottom:6px}.col h2{font-weight:400;font-size:22px;margin:0 0 6px}.col p.d{font-size:13px;line-height:1.55;color:#6B5A4E;margin:0 0 14px;font-weight:300}
+.mail{width:420px;max-width:100%;overflow:hidden;box-shadow:0 24px 50px rgba(46,33,25,.18);background:#F4EEE6}
+img{display:block;width:100%}
+/* barra que corre */
+.tape{background:#2E2119;color:#F1E7DB;overflow:hidden;white-space:nowrap;padding:10px 0;font-size:12px;letter-spacing:.24em;text-transform:uppercase;font-weight:300}
+.tape span{display:inline-block;animation:mq 18s linear infinite}
+@keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+/* carrusel: cada foto aparece y se va (4 productos, 12s) */
+.car{position:relative;overflow:hidden}
+.car .sl{position:absolute;inset:0;opacity:0;animation:fade 12s infinite}
+.car .sl:nth-child(1){animation-delay:0s}.car .sl:nth-child(2){animation-delay:3s}.car .sl:nth-child(3){animation-delay:6s}.car .sl:nth-child(4){animation-delay:9s}
+.car .sl img{width:100%;height:100%;object-fit:cover;animation:kb 12s infinite}
+.car .sl:nth-child(2) img{animation-delay:3s}.car .sl:nth-child(3) img{animation-delay:6s}.car .sl:nth-child(4) img{animation-delay:9s}
+@keyframes fade{0%{opacity:0}4%{opacity:1}25%{opacity:1}30%{opacity:0}100%{opacity:0}}
+@keyframes kb{0%{transform:scale(1.08)}30%{transform:scale(1)}100%{transform:scale(1)}}
+.car .nm{position:absolute;left:14px;bottom:12px;background:rgba(246,240,232,.92);padding:7px 12px;border-radius:999px;font-size:12px;letter-spacing:.08em}
+.dots{display:flex;gap:6px;justify-content:center;padding:10px 0 0}.dots i{width:6px;height:6px;border-radius:50%;background:#CDBFAF;animation:dot 12s infinite}
+.dots i:nth-child(2){animation-delay:3s}.dots i:nth-child(3){animation-delay:6s}.dots i:nth-child(4){animation-delay:9s}
+@keyframes dot{0%,28%{background:#2E2119;width:18px;border-radius:9px}30%,100%{background:#CDBFAF;width:6px}}
+
+/* ===== 1 · Tarjeta flotante ===== */
+.m1 .bg{position:relative;background:url(https://nervomayorista.com/col_firenzexl_60x38cm_cg.webp) center/cover;padding:46px 26px 90px}
+.m1 .bg:before{content:"";position:absolute;inset:0;background:rgba(60,42,30,.28)}
+.m1 .card{position:relative;background:#FBF8F3;border-radius:30px;padding:24px 22px 20px}
+.m1 .brand{font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:#7E6E62}
+.m1 h3{font-weight:300;font-size:40px;line-height:1;margin:14px 0 10px;letter-spacing:-.02em}
+.m1 .card p{font-size:12.5px;line-height:1.6;color:#5C4A3D;margin:0 0 18px;font-weight:300;max-width:280px}
+.m1 .car{height:300px;border-radius:22px}
+.m1 .logo{position:relative;text-align:center;color:#F6EFE6;margin-top:34px}
+.m1 .logo b{display:block;font-weight:500;font-size:22px;letter-spacing:.42em;margin-left:.42em}
+.m1 .logo small{font-size:10px;letter-spacing:.24em;text-transform:uppercase;font-weight:300}
+.m1 .cta{display:flex;justify-content:space-between;align-items:center;padding:20px 24px 24px}
+.m1 .cta a{background:#2E2119;color:#F4EEE6;border-radius:999px;padding:13px 22px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;text-decoration:none}
+.m1 .cta span{font-size:12px;color:#7E6E62;font-weight:300}
+
+/* ===== 2 · Colección numerada ===== */
+.m2{background:#5E6B4E}
+.m2 .wrap{padding:30px 20px}
+.m2 .split{display:grid;grid-template-columns:1fr 1fr;background:#EFE9E0;min-height:360px}
+.m2 .car{height:100%;min-height:360px}
+.m2 .tx{padding:22px 16px;display:flex;flex-direction:column;justify-content:center;text-align:center}
+.m2 .tx .nmr{font-weight:200;font-size:30px;color:#7E6E62}
+.m2 .tx h3{font-weight:400;font-size:26px;line-height:1.05;margin:10px 0 12px;letter-spacing:-.01em}
+.m2 .tx p{font-size:11.5px;line-height:1.65;color:#5C4A3D;margin:0 0 14px;font-weight:300}
+.m2 .tx a{font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:#2E2119;border-bottom:1px solid #2E2119;align-self:center;padding-bottom:3px}
+.m2 .hd{display:flex;justify-content:space-between;align-items:center;color:#EFE9E0;padding:0 2px 16px}
+.m2 .hd b{font-weight:500;letter-spacing:.38em;font-size:18px}.m2 .hd span{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;font-weight:300}
+.m2 .strip{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.m2 .strip div{aspect-ratio:1;overflow:hidden;background:#E3DBCF}.m2 .strip img{height:100%;object-fit:cover}
+.m2 .ft{display:flex;justify-content:space-between;color:#D9D3C2;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;padding:18px 2px 0;font-weight:300}
+
+/* ===== 3 · Ambiente con etiquetas ===== */
+.m3 .scene{position:relative;height:520px;background:url(https://nervomayorista.com/col_perugia_cn.webp) center/cover}
+.m3 .scene:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(46,33,25,.45),rgba(46,33,25,0) 38%)}
+.m3 h3{position:absolute;left:24px;top:26px;z-index:2;color:#FBF7F1;font-weight:300;font-size:34px;line-height:1.05;margin:0;letter-spacing:-.01em}
+.m3 h3 b{font-weight:600;display:block}
+.m3 .pin{position:absolute;z-index:3;width:12px;height:12px;border-radius:50%;background:#FBF7F1;box-shadow:0 0 0 4px rgba(251,247,241,.35);animation:ping 2s ease-out infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(251,247,241,.7)}100%{box-shadow:0 0 0 14px rgba(251,247,241,0)}}
+.m3 .tag{position:absolute;z-index:3;display:flex;gap:10px;align-items:center;background:rgba(251,247,241,.88);backdrop-filter:blur(6px);border-radius:16px;padding:7px 12px 7px 7px;opacity:0;animation:pop 9s infinite}
+.m3 .tag img{width:46px;height:46px;border-radius:11px;object-fit:cover;background:#fff}
+.m3 .tag b{display:block;font-size:12.5px;font-weight:500}.m3 .tag small{font-size:11px;color:#9C6B4E}
+.m3 .t1{left:150px;top:150px}.m3 .t2{left:24px;top:330px;animation-delay:3s}.m3 .t3{right:20px;bottom:40px;animation-delay:6s}
+@keyframes pop{0%{opacity:0;transform:translateY(8px)}6%{opacity:1;transform:none}30%{opacity:1}36%{opacity:0}100%{opacity:0}}
+.m3 .note{position:absolute;z-index:3;color:#FBF7F1;font-weight:300;font-size:13px;line-height:1.25}
+.m3 .note svg{display:block;margin-top:4px}
+.m3 .body{padding:22px 24px 6px}.m3 .body p{font-size:13.5px;line-height:1.65;color:#5C4A3D;margin:0;font-weight:300}
+.m3 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:18px 24px 0}
+.m3 .grid div{background:#fff;border-radius:16px;overflow:hidden}.m3 .grid img{aspect-ratio:1;object-fit:cover}
+.m3 .grid span{display:block;font-size:11.5px;padding:8px 10px 10px}
+.m3 .cta{margin:20px 24px 24px;display:block;text-align:center;background:#2E2119;color:#F4EEE6;border-radius:999px;padding:14px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;text-decoration:none}
+
+.tip{max-width:1340px;margin:28px auto 0;background:#F7F2EB;padding:16px 20px;font-size:13.5px;line-height:1.6;font-weight:300;border-radius:14px}
+.tip b{font-weight:600}
+</style></head><body>
+<div class="top0"><h1>Mails mayoristas — propuesta 2</h1><p>Con tu letra (Outfit), la barra que corre arriba y las fotos de productos cambiando solas.</p></div>
+<div class="row">
+
+<div class="col"><div class="lab">Opción 1</div><h2>Tarjeta flotante</h2><p class="d">Foto de ambiente de fondo y encima una tarjeta blanca redondeada con el título. Adentro, los productos van pasando uno tras otro.</p>
+<div class="mail m1">
+  <div class="tape"><span>Nuevos ingresos · Reposición sin mínimo · Envíos a todo el país · Tejido a mano · Nuevos ingresos · Reposición sin mínimo · Envíos a todo el país · Tejido a mano ·&nbsp;</span></div>
+  <div class="bg">
+    <div class="card">
+      <div class="brand">Nervo Design · Mayoristas</div>
+      <h3>Luz que abriga</h3>
+      <p>Hola Lucía, sumamos colgantes y veladores tejidos a mano para esta temporada.</p>
+      <div class="car">
+        <div class="sl"><img src="https://nervomayorista.com/col_burano_pkn.webp"><span class="nm">Colgante Burano</span></div>
+        <div class="sl"><img src="https://nervomayorista.com/vel_cali_ch.webp"><span class="nm">Velador Cali</span></div>
+        <div class="sl"><img src="https://nervomayorista.com/col_toscana_pkn.webp"><span class="nm">Colgante Toscana</span></div>
+        <div class="sl"><img src="https://nervomayorista.com/pie_indi_pkn.webp"><span class="nm">Pie Indi</span></div>
+      </div>
+      <div class="dots"><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="logo"><b>NERVO</b><small>Tu casa, tu refugio</small></div>
+  </div>
+  <div class="cta"><a>Ver catálogo</a><span>Reposición sin mínimo</span></div>
+</div></div>
+
+<div class="col"><div class="lab">Opción 2</div><h2>Colección numerada</h2><p class="d">Como una revista: foto que va cambiando a la izquierda, "(04) Nueva colección" a la derecha, sobre un fondo de color. Abajo, una tira con los demás productos.</p>
+<div class="mail m2">
+  <div class="tape"><span>Colección de temporada · Reposición sin mínimo · Envíos a todo el país · Colección de temporada · Reposición sin mínimo · Envíos a todo el país ·&nbsp;</span></div>
+  <div class="wrap">
+    <div class="hd"><b>NERVO</b><span>Mayoristas · Noviembre</span></div>
+    <div class="split">
+      <div class="car">
+        <div class="sl"><img src="https://nervomayorista.com/vel_duomo.webp"></div>
+        <div class="sl"><img src="https://nervomayorista.com/col_firenze_mini_invertida_ch.webp"></div>
+        <div class="sl"><img src="https://nervomayorista.com/pie_palermo.webp"></div>
+        <div class="sl"><img src="https://nervomayorista.com/col_perugia_cn.webp"></div>
+      </div>
+      <div class="tx"><span class="nmr">(04)</span><h3>Nueva<br>colección</h3><p>Hola Lucía. Piezas tejidas a mano en fibras naturales, pensadas para que se vendan solas en tu local.</p><a>Ver más</a></div>
+    </div>
+    <div class="strip"><div><img src="https://nervomayorista.com/col_burano_pkn.webp"></div><div><img src="https://nervomayorista.com/vel_cali_ch.webp"></div><div><img src="https://nervomayorista.com/col_toscana_pkn.webp"></div><div><img src="https://nervomayorista.com/pie_amapola_pkn.webp"></div></div>
+    <div class="ft"><span>Nervo Design · Córdoba</span><span>Darme de baja</span></div>
+  </div>
+</div></div>
+
+<div class="col"><div class="lab">Opción 3</div><h2>Ambiente con etiquetas</h2><p class="d">Una foto grande y, encima, etiquetas que van apareciendo de a una y señalan cada producto, más una nota con flecha. Ideal para la foto de banner nueva.</p>
+<div class="mail m3">
+  <div class="tape"><span>Nuevos ingresos · Reposición sin mínimo · Envíos a todo el país · Nuevos ingresos · Reposición sin mínimo · Envíos a todo el país ·&nbsp;</span></div>
+  <div class="scene">
+    <h3>Directo del taller<b>a tu local.</b></h3>
+    <i class="pin" style="left:206px;top:226px"></i>
+    <div class="tag t1"><img src="https://nervomayorista.com/col_perugia_cn.webp"><div><b>Colgante Perugia</b><small>Ver producto →</small></div></div>
+    <div class="tag t2"><img src="https://nervomayorista.com/vel_cali_ch.webp"><div><b>Velador Cali</b><small>Ver producto →</small></div></div>
+    <div class="tag t3"><img src="https://nervomayorista.com/pie_amapola_pkn.webp"><div><b>Pie Amapola</b><small>Ver producto →</small></div></div>
+    <div class="note" style="right:24px;top:150px;text-align:right">tejido a mano,<br>pieza por pieza<svg width="70" height="34" viewBox="0 0 70 34" style="margin-left:auto"><path d="M66 3 C 50 6, 30 12, 12 26" fill="none" stroke="#FBF7F1" stroke-width="1.4" stroke-linecap="round"/><path d="M12 26 l9 -1 M12 26 l2 -9" stroke="#FBF7F1" stroke-width="1.4" stroke-linecap="round"/></svg></div>
+  </div>
+  <div class="body"><p>Hola Lucía, estas son las piezas que más se están moviendo. La reposición no tiene mínimo: armamos tu pedido cuando quieras.</p></div>
+  <div class="grid"><div><img src="https://nervomayorista.com/col_burano_pkn.webp"><span>Burano</span></div><div><img src="https://nervomayorista.com/col_toscana_pkn.webp"><span>Toscana</span></div><div><img src="https://nervomayorista.com/vel_duomo.webp"><span>Duomo</span></div></div>
+  <a class="cta">Armar mi pedido</a>
+</div></div>
+</div>
+<div class="tip"><b>Cómo se mueve en cada correo:</b> en el Mail del iPhone y de la Mac se ve igual que acá (barra que corre, fotos que cambian, etiquetas que aparecen). En Gmail las animaciones no andan, así que para que las fotos cambien ahí también, el carrusel se manda como imagen animada (GIF) que armamos automático con los productos que elijas. La barra en Gmail queda fija, mostrando el texto.</div>
+</body></html>
