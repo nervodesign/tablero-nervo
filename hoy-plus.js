@@ -214,8 +214,9 @@
     var c = document.querySelector(".nvmov-tab .nvmov-n"); if (!c) return;
     var n = parseInt(c.textContent, 10) || 0;
     var enMov = document.body.classList.contains("nvmov-on");
-    if (antes === null){ antes = n; if (n > 0 && !enMov) mostrar(n, false); return; }
-    if (n > antes && !enMov) mostrar(n, true);
+    /* el aviso sale una sola vez: solo vuelve si entra algo nuevo que todavía no se avisó hoy */
+    var V = 0, hoyK = new Date().toDateString(); try { var o = JSON.parse(localStorage.getItem("nv-av-visto") || "{}"); if (o.d === hoyK) V = o.n || 0; } catch(e){}
+    if (enMov || n > V){ if (!enMov && n > 0) mostrar(n, antes !== null && n > antes); try { localStorage.setItem("nv-av-visto", JSON.stringify({ d: hoyK, n: Math.max(n, V) })); } catch(e){} }
     antes = n;
   }, 2000);
 })();
