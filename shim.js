@@ -703,3 +703,32 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   document.addEventListener("focusin", function(){ setTimeout(upd, 60); setTimeout(upd, 400); });
   document.addEventListener("focusout", function(){ setTimeout(upd, 120); });
 })();
+
+/* Chat en el celu fijo como WhatsApp: la pantalla no se mueve para los costados ni rebota; solo se desplazan los mensajes. */
+(function(){
+  if (window.__nvChatFijo) return; window.__nvChatFijo = 1;
+  var st = document.createElement("style");
+  st.textContent = "@media (max-width:760px){" +
+    "html.nv-chat,html.nv-chat body{overflow:hidden!important;overscroll-behavior:none!important;height:100%!important;width:100%!important}" +
+    "html.nv-chat body{position:fixed!important;left:0;right:0;top:0;bottom:0}" +
+    "html.nv-chat .chw{position:fixed!important;left:0!important;right:0!important;top:var(--chtop,64px)!important;bottom:var(--chbot,70px)!important;height:auto!important;max-height:none!important;width:auto!important;margin:0!important;border-radius:0!important;overflow:hidden!important;overscroll-behavior:contain;z-index:40;touch-action:pan-y}" +
+    "html.nv-chat .chw *{overscroll-behavior:contain}" +
+    "html.nv-chat .chw,html.nv-chat .chw *{overflow-x:hidden}" +
+    "html.nv-chat.nv-kb .chw{bottom:auto!important}" +
+    "}";
+  document.head.appendChild(st);
+  function medir(){
+    var R = document.documentElement, chw = document.querySelector("main#list .chw");
+    var on = !!chw && innerWidth <= 760 && chw.offsetParent !== null;
+    if (on && !R.classList.contains("nv-chat")){
+      window.scrollTo(0, 0);
+      var top = 0, hd = document.elementFromPoint(innerWidth / 2, 8);
+      while (hd && hd !== document.body){ var cs = getComputedStyle(hd); if (cs.position === "fixed" || cs.position === "sticky"){ top = Math.max(top, hd.getBoundingClientRect().bottom); break; } hd = hd.parentElement; }
+      if (!top) top = Math.max(0, chw.getBoundingClientRect().top);
+      var nav = document.querySelector("nav.tabs"), bot = nav ? Math.max(0, innerHeight - nav.getBoundingClientRect().top) : 0;
+      R.style.setProperty("--chtop", Math.round(top) + "px"); R.style.setProperty("--chbot", Math.round(bot) + "px");
+    }
+    R.classList.toggle("nv-chat", on);
+  }
+  setInterval(medir, 400); window.addEventListener("resize", function(){ document.documentElement.classList.remove("nv-chat"); medir(); });
+})();
