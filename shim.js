@@ -715,7 +715,11 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
     P + ".chw{position:fixed!important;left:0!important;right:0!important;top:var(--chtop,64px)!important;bottom:var(--chbot,70px)!important;height:auto!important;max-height:none!important;width:auto!important;margin:0!important;border-radius:0!important;overflow:hidden!important;z-index:40;box-shadow:none!important}" +
     P + ".chw,html.nv-chat:not(#nv1):not(#nv2) .chw *{overflow-x:hidden;overscroll-behavior:contain}" +
     "html.nv-chat:not(#nv1):not(#nv2).nv-kb .chw{bottom:auto!important;top:var(--vvt,0px)!important;height:var(--vvh,100vh)!important;z-index:5000!important}" +
-    P + ".chw .chmain{display:flex!important;flex-direction:column!important;height:100%!important;min-height:0!important}" +
+    P + ".chw.vl .chmain{display:none!important}" +
+    P + ".chw.vl{display:block!important}" +
+    P + ".chw.vl .chc{height:100%!important;max-height:none!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;border-radius:0!important}" +
+    P + ".chw.vl .chc > *{flex-shrink:0!important;max-height:none!important}" +
+    P + ".chw.vc .chmain{display:flex!important;flex-direction:column!important;height:100%!important;min-height:0!important}" +
     P + ".chw .chtt{flex:none!important}" +
     P + ".chw .chlist{flex:1 1 auto!important;min-height:0!important;height:auto!important;max-height:none!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;touch-action:pan-y}" +
     P + ".chw .nvmov-res{flex:none!important;display:flex!important;align-items:center;justify-content:space-between;gap:8px;padding:7px 12px!important;margin:6px 10px 0!important;border-radius:14px!important}" +
