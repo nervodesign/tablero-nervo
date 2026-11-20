@@ -341,7 +341,9 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
       while (true){ var q = await SB().from("registros").select("tabla,id,data").in("tabla", BT).eq("borrado", false).range(from, from + 999); if (q.error) throw q.error; all = all.concat(q.data || []); if ((q.data || []).length < 1000) break; from += 1000; }
       var M = {}; BT.forEach(function(t){ M[t] = []; });
       all.forEach(function(r){ var d = r.data || {}; if (d.id == null || d.id === "") d.id = r.id; M[r.tabla].push(d); });
-      BT.forEach(function(t){ ord(M[t]); }); MEM = M; ULT = Date.now(); gls(); return M;
+      if (!all.length){ VACIOS++; if (VACIOS < 6) setTimeout(function(){ traer().then(avisarBase, function(){}); }, 2500); if (MEM && BT.some(function(t){ return (MEM[t] || []).length; })) return MEM; }
+      else VACIOS = 0;
+      BT.forEach(function(t){ ord(M[t]); }); MEM = M; if (all.length){ ULT = Date.now(); gls(); } return M;
     })();
     CARG.then(function(){ CARG = null; }, function(){ CARG = null; });
     return CARG;
@@ -358,11 +360,14 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   function subir(t, F){ var now = new Date().toISOString(); return SB().from("registros").upsert(F.map(function(d){ return { tabla: t, id: String(d.id), data: d, borrado: false, actualizado: now, por: quien() }; }), { onConflict: "tabla,id" }).then(function(r){ if (r.error) throw new Error("No se pudo guardar: " + r.error.message); }); }
   function copia(n, a){ ventasLocalOtraVez(); g(n, a).then(function(){ refrescarVentas(); }, function(e){ console.warn("copia en Google pendiente:", n, e && e.message); }); }
 
-  L.baseLeer = function(){
+  var VACIOS = 0, BCB = null;
+  function avisarBase(){ try { if (typeof ventasLocalOtraVez === "function") ventasLocalOtraVez(); } catch(e){} if (BCB && MEM) { try { BCB(salida()); } catch(e){} } }
+  L.baseLeer = function(a, otraVez){
+    if (otraVez) BCB = otraVez;
     return tok().then(function(){
       if (false && !ON_PEDIDO){ ON_PEDIDO = true; g("baseLeer", []).then(function(r){ if (r && typeof r.on === "boolean" && r.on !== ON){ ON = r.on; gls(); } }, function(){}); }
       if (MEM && ULT && Date.now() - ULT < 20000) return salida();
-      if (MEM){ var p = traer(); return Promise.race([p.then(salida), new Promise(function(ok){ setTimeout(function(){ ok(salida()); }, 1200); })]); }
+      if (MEM){ var p = traer(), tarde = false; p.then(function(){ if (tarde) avisarBase(); }, function(){}); return Promise.race([p.then(salida), new Promise(function(ok){ setTimeout(function(){ tarde = true; ok(salida()); }, 1200); })]); }
       return traer().then(salida);
     });
   };
