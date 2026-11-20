@@ -810,3 +810,55 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   }
   setInterval(tapar, 250);
 })();
+
+/* ---------- Chat: letra más chica en el celu + las ventas web aparecen como "Tienda Nube" con su logo ---------- */
+(function(){
+  if (window.__nvTnWeb) return; window.__nvTnWeb = 1;
+  var Q = "html.nv-chat:not(#nv1):not(#nv2) .chw.vc";
+  var LOGO = "https://www.google.com/s2/favicons?domain=tiendanube.com&sz=128";
+  var st = document.createElement("style");
+  st.textContent = "@media (max-width:760px){" +
+    Q + " .chtt{min-height:54px!important;padding-top:calc(env(safe-area-inset-top,0px) + 8px)!important;padding-bottom:8px!important}" +
+    Q + " .chtt b{font-size:17px!important}" +
+    Q + " .chtt .chback{font-size:28px!important}" +
+    Q + " .chmsg{padding:6px 14px 6px 56px!important}" +
+    Q + " .chmsg .chh .chav{left:12px!important;top:7px!important;width:34px!important;height:34px!important;font-size:14px!important}" +
+    Q + " .chmsg .chh b{font-size:14.5px!important}" +
+    Q + " .chmsg .chh > span:not(.chav){font-size:11.5px!important}" +
+    Q + " .chmsg .chx{font-size:15px!important;line-height:1.4!important}" +
+    Q + " .nvmovchip{font-size:11.5px!important}" +
+    "}" +
+    ".chmsg .chh .chav.nvtn,#nvmc .nvtn-av{background:#fff url(" + LOGO + ") center/78% no-repeat!important;color:transparent!important;box-shadow:0 0 0 1px #E3ECF7}" +
+    ".chmsg .chh b.nvtn{color:#2E5C9E!important}";
+  document.head.appendChild(st);
+  function marcar(){
+    [].forEach.call(document.querySelectorAll(".chmsg .chh b"), function(b){
+      if (b.dataset.nvtn) return;
+      if (b.textContent.trim().toLowerCase() !== "web") return;
+      b.dataset.nvtn = "1"; b.textContent = "Tienda Nube"; b.classList.add("nvtn");
+      var av = b.parentNode.querySelector(".chav"); if (av) av.classList.add("nvtn");
+    });
+    [].forEach.call(document.querySelectorAll("#nvmc .m .w span"), function(s){
+      if (s.textContent.trim().toLowerCase() === "web") s.textContent = "🛒 Tienda Nube";
+    });
+  }
+  var t = 0;
+  new MutationObserver(function(){ clearTimeout(t); t = setTimeout(marcar, 80); }).observe(document.documentElement, { childList: true, subtree: true });
+  setTimeout(marcar, 500);
+})();
+
+/* ---------- Chat en el celu: sin audio y casillero para escribir más grande ---------- */
+(function(){
+  if (window.__nvChatEsc) return; window.__nvChatEsc = 1;
+  var P = "html.nv-chat:not(#nv1):not(#nv2) .chw ";
+  var st = document.createElement("style");
+  st.textContent = "@media (max-width:760px){" +
+    P + ".chf .chmic{display:none!important}" +
+    P + ".chf .nvemo," + P + ".chf .chatt{width:34px!important;height:34px!important;min-width:34px!important;padding:0!important}" +
+    P + ".chf{gap:6px!important;align-items:flex-end!important}" +
+    P + ".chf textarea{min-height:50px!important;max-height:170px!important;font-size:16px!important;padding:13px 16px!important;border-radius:24px!important}" +
+    P + ".chf textarea::placeholder{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
+    "}";
+  document.head.appendChild(st);
+  setInterval(function(){ if (innerWidth > 760) return; [].forEach.call(document.querySelectorAll(".chw .chf textarea"), function(t){ if (t.placeholder && t.placeholder !== "Escribí… ( / comandos)") t.placeholder = "Escribí… ( / comandos)"; }); }, 1000);
+})();
