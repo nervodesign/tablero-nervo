@@ -672,11 +672,14 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
 /* Teclado del celu: que la pantalla no salte al escribir. Sin zoom al tocar un casillero, se esconde la barra de abajo mientras escribís y el chat queda fijo como en WhatsApp. */
 (function(){
   if (window.__nvKb) return; window.__nvKb = 1;
+  /* sin zoom automático del iPhone: la pantalla queda siempre del ancho del celu */
+  try { var mv = document.querySelector("meta[name=viewport]"); if (!mv){ mv = document.createElement("meta"); mv.name = "viewport"; document.head.appendChild(mv); } mv.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"); } catch(e){}
   var st = document.createElement("style");
   st.textContent = "@media (max-width:760px){input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),textarea,select{font-size:16px!important}}" +
     "html.nv-kb nav.tabs,html.nv-kb #nvupd{display:none!important}" +
     "html.nv-kb .chw.nvkb-fix{position:fixed!important;left:0!important;right:0!important;top:var(--vvt,0px)!important;height:var(--vvh,100vh)!important;max-height:none!important;z-index:5000;margin:0!important;border-radius:0!important;background:#FBF8F5}" +
-    "html.nv-kb body{overscroll-behavior:none}";
+    "html.nv-kb body{overscroll-behavior:none}" +
+    "@media (max-width:760px){html,body{overflow-x:clip;max-width:100vw}}";
   document.head.appendChild(st);
   var vv = window.visualViewport; if (!vv) return;
   function escribiendo(){ var a = document.activeElement; return !!a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable); }
