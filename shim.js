@@ -668,3 +668,35 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   }
   setTimeout(iniciar, 3000);
 })();
+
+/* Teclado del celu: que la pantalla no salte al escribir. Sin zoom al tocar un casillero, se esconde la barra de abajo mientras escribís y el chat queda fijo como en WhatsApp. */
+(function(){
+  if (window.__nvKb) return; window.__nvKb = 1;
+  var st = document.createElement("style");
+  st.textContent = "@media (max-width:760px){input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),textarea,select{font-size:16px!important}}" +
+    "html.nv-kb nav.tabs,html.nv-kb #nvupd{display:none!important}" +
+    "html.nv-kb .chw.nvkb-fix{position:fixed!important;left:0!important;right:0!important;top:var(--vvt,0px)!important;height:var(--vvh,100vh)!important;max-height:none!important;z-index:5000;margin:0!important;border-radius:0!important;background:#FBF8F5}" +
+    "html.nv-kb body{overscroll-behavior:none}";
+  document.head.appendChild(st);
+  var vv = window.visualViewport; if (!vv) return;
+  function escribiendo(){ var a = document.activeElement; return !!a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable); }
+  function alFondo(chw){ [].forEach.call(chw.querySelectorAll("*"), function(x){ var o = getComputedStyle(x).overflowY; if ((o === "auto" || o === "scroll") && x.scrollHeight > x.clientHeight + 4 && !x.contains(document.activeElement)) x.scrollTop = x.scrollHeight; }); }
+  var abierto = false;
+  function upd(){
+    var kb = escribiendo() && vv.height < window.innerHeight - 120 && innerWidth <= 760;
+    var R = document.documentElement;
+    R.classList.toggle("nv-kb", kb);
+    R.style.setProperty("--vvh", Math.round(vv.height) + "px");
+    R.style.setProperty("--vvt", Math.round(vv.offsetTop) + "px");
+    var chw = document.querySelector(".chw");
+    if (chw){
+      var dentro = kb && chw.contains(document.activeElement);
+      chw.classList.toggle("nvkb-fix", dentro);
+      if (dentro && !abierto){ abierto = true; setTimeout(function(){ alFondo(chw); }, 30); window.scrollTo(0, 0); }
+      if (!dentro) abierto = false;
+    }
+  }
+  vv.addEventListener("resize", upd); vv.addEventListener("scroll", upd);
+  document.addEventListener("focusin", function(){ setTimeout(upd, 60); setTimeout(upd, 400); });
+  document.addEventListener("focusout", function(){ setTimeout(upd, 120); });
+})();
