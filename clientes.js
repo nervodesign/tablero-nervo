@@ -59,7 +59,7 @@
     var L = J(c.hist).map(function(x){ return { f: String(x[0] || "").slice(0, 10), t: Number(x[1]) || 0, d: String(x[2] || "").replace(/\s*·\s*·\s*/g, " · ").trim() }; });
     var nombres = [N(c.nombre)].concat(J(c.alias).map(N)).filter(Boolean);
     ((BASE && BASE.base_may) || []).forEach(function(r){
-      var cl = N(r.cliente); if (!cl || !nombres.some(function(n){ return n === cl || cl.indexOf(n) === 0 || n.indexOf(cl) === 0; })) return;
+      var cl = N(r.cliente); if (!cl || !nombres.some(function(n){ return n === cl || (n.length >= 6 && cl.length >= 6 && (cl.indexOf(n) === 0 || n.indexOf(cl) === 0)); })) return;
       if (/CANCEL/i.test(r.estado)) return;
       var t = (Number(r.sena) || 0) + (Number(r.saldo) || 0), f = String(r.fecha || "").slice(0, 10);
       if (L.some(function(x){ return x.f === f && Math.abs(x.t - t) < 2; })) return;

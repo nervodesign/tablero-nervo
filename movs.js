@@ -1132,3 +1132,6 @@
 
 /* buscador de categoría y cuenta */
 (function(){ if (window.__nvBCCarga) return; window.__nvBCCarga = 1; var cs = document.currentScript, v = cs && /[?&]v=(\d+)/.exec(cs.src); var sc = document.createElement("script"); sc.src = "buscacat.js" + (v ? "?v=" + v[1] : "?t=" + Date.now()); document.head.appendChild(sc); })();
+
+/* mayoristas: clientes */
+(function(){ if (window.__nvCliCarga) return; window.__nvCliCarga = 1; var cs = document.currentScript, v = cs && /[?&]v=(\d+)/.exec(cs.src); var sc = document.createElement("script"); sc.src = "clientes.js" + (v ? "?v=" + v[1] : "?t=" + Date.now()); document.head.appendChild(sc); })();
