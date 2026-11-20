@@ -1,0 +1,142 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mails mayoristas · estilo deco</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#E7E0D7;font-family:Outfit,sans-serif;color:#2E2119;padding:30px 26px 50px}
+.hd0{max-width:1300px;margin:0 auto 26px}.hd0 h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:34px;margin:0}.hd0 p{margin:4px 0 0;color:#7E6E62;font-size:14px}
+.row{display:flex;gap:30px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+.col{width:410px}.lab{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}.lab b{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:500}.lab span{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#9A7E68}
+.col p.d{font-size:13px;line-height:1.55;color:#6B5A4E;margin:0 0 14px}
+.mail{width:410px;box-shadow:0 22px 50px rgba(46,33,25,.18);overflow:hidden}
+img{display:block;width:100%}
+.serif{font-family:'Cormorant Garamond',serif}
+@keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes zoom{from{transform:scale(1.08)}to{transform:scale(1)}}
+@keyframes glow{0%,100%{opacity:.35}50%{opacity:.9}}
+@keyframes line{from{width:0}to{width:64px}}
+
+/* ===== A · Revista ===== */
+.A{background:#F5F0E8;color:#2E2119}
+.A .mast{text-align:center;padding:26px 24px 14px;border-bottom:1px solid #2E2119;margin:0 22px}
+.A .mast .n{font-family:'Cormorant Garamond',serif;font-size:46px;letter-spacing:.42em;font-weight:500;margin-left:.42em;line-height:1}
+.A .mast .s{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.24em;text-transform:uppercase;margin-top:12px;color:#7A6656}
+.A .cover{position:relative;margin:22px 22px 0;overflow:hidden;height:330px}
+.A .cover img{height:100%;object-fit:cover;animation:zoom 6s ease-out both}
+.A .cover .cap{position:absolute;left:0;bottom:0;background:#F5F0E8;padding:12px 16px 0 0;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:#7A6656}
+.A .body{padding:22px 22px 6px;display:grid;grid-template-columns:62px 1fr;gap:14px}
+.A .num{font-family:'Cormorant Garamond',serif;font-size:54px;line-height:.85;color:#B08A6E;font-style:italic}
+.A h3{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:34px;line-height:1.02;margin:0 0 10px}
+.A h3 i{font-weight:400}
+.A .rule{height:1px;background:#2E2119;width:64px;margin:0 0 12px;animation:line 1.2s ease both}
+.A p{font-size:13.5px;line-height:1.7;color:#4B3A2E;margin:0 0 10px;font-weight:300}
+.A .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 14px;padding:14px 22px 6px}
+.A .pr{animation:rise .9s ease both}.A .pr:nth-child(2){animation-delay:.2s}
+.A .pr .ph{aspect-ratio:4/5;overflow:hidden;background:#E8DFD3}.A .pr img{height:100%;object-fit:cover}
+.A .pr .t{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;border-top:1px solid #CDBFAF;padding-top:7px}
+.A .pr b{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:500}.A .pr span{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#9A7E68}
+.A .cta{margin:22px 22px 0;border:1px solid #2E2119;text-align:center;padding:15px;font-size:11px;letter-spacing:.3em;text-transform:uppercase}
+.A .sig{text-align:center;padding:20px 22px 8px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:21px;color:#6B5444}
+.A .ft{display:flex;justify-content:space-between;margin:12px 22px 0;padding:14px 0 22px;border-top:1px solid #CDBFAF;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#9A887A}
+
+/* ===== B · Arcos y tierra ===== */
+.B{background:#EFE6DA}
+.B .top{background:#B9785A;color:#F6EDE3;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;font-size:10.5px;letter-spacing:.24em;text-transform:uppercase}
+.B .top .n{font-family:'Cormorant Garamond',serif;font-size:24px;letter-spacing:.3em;text-transform:none}
+.B .tape{background:#2E2119;color:#EFE6DA;overflow:hidden;white-space:nowrap;padding:10px 0;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:19px}
+.B .tape span{display:inline-block;animation:mq 16s linear infinite}
+.B .hero{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:26px 22px 8px;align-items:end}
+.B .arch{border-radius:999px 999px 0 0;overflow:hidden;aspect-ratio:3/4;background:#DCC9B6}
+.B .arch img{height:100%;object-fit:cover}
+.B h3{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:40px;line-height:.98;margin:0 0 14px;color:#2E2119}
+.B h3 i{color:#9C5B3F}
+.B .hero p{font-size:13px;line-height:1.65;color:#5C4636;margin:0;font-weight:300}
+.B .trio{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:22px 22px 0}
+.B .trio div{animation:rise .9s ease both}.B .trio div:nth-child(2){animation-delay:.15s}.B .trio div:nth-child(3){animation-delay:.3s}
+.B .trio .ph{border-radius:999px;aspect-ratio:1;overflow:hidden;background:#DCC9B6;border:5px solid #F6EFE6}
+.B .trio img{height:100%;object-fit:cover}
+.B .trio b{display:block;text-align:center;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;margin-top:9px;font-weight:500;color:#5C4636}
+.B .band{margin:24px 0 0;display:grid;grid-template-columns:1fr 1fr 1fr}
+.B .band div{padding:16px 10px;text-align:center;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;line-height:1.5}
+.B .band div:nth-child(1){background:#C9A47F;color:#2E2119}.B .band div:nth-child(2){background:#8E9A7C;color:#F3EEE4}.B .band div:nth-child(3){background:#2E2119;color:#E9D9C6}
+.B .band em{display:block;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;letter-spacing:0;text-transform:none;margin-bottom:2px}
+.B .cta{display:flex;gap:10px;padding:22px}
+.B .cta a{flex:1;text-align:center;padding:14px 8px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;text-decoration:none}
+.B .c1{background:#2E2119;color:#EFE6DA}.B .c2{border:1px solid #2E2119;color:#2E2119}
+.B .ft{text-align:center;padding:0 22px 22px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#8E7A6A}
+
+/* ===== C · Nocturno ===== */
+.C{background:#1F1611;color:#EADBC9}
+.C .hd{text-align:center;padding:26px 22px 0}
+.C .hd .n{font-family:'Cormorant Garamond',serif;font-size:30px;letter-spacing:.5em;margin-left:.5em}
+.C .hd .s{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:#A88B6F;margin-top:6px}
+.C .orn{display:flex;align-items:center;gap:12px;justify-content:center;margin:16px 0;color:#C9A272;font-size:11px}
+.C .orn i{display:block;height:1px;width:70px;background:linear-gradient(90deg,transparent,#C9A272,transparent)}
+.C .frame{margin:0 34px;border:1px solid rgba(201,162,114,.45);padding:10px;position:relative}
+.C .frame .im{position:relative;overflow:hidden;height:330px}
+.C .frame img{height:100%;object-fit:cover;filter:brightness(.78) contrast(1.05)}
+.C .frame .gl{position:absolute;left:50%;top:34%;width:220px;height:220px;margin:-110px 0 0 -110px;border-radius:50%;background:radial-gradient(circle,rgba(255,200,130,.6),rgba(255,200,130,0) 65%);mix-blend-mode:screen;animation:glow 3.2s ease-in-out infinite}
+.C h3{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:38px;line-height:1.05;text-align:center;margin:22px 30px 10px}
+.C h3 i{color:#E2BE8E}
+.C p{text-align:center;font-size:13.5px;line-height:1.75;color:#C7B39E;margin:0 40px 6px;font-weight:300}
+.C .duo{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:22px 34px 0}
+.C .duo div{animation:rise 1s ease both}.C .duo div:nth-child(2){animation-delay:.25s}
+.C .duo .ph{aspect-ratio:3/4;overflow:hidden;border:1px solid rgba(201,162,114,.35)}
+.C .duo img{height:100%;object-fit:cover;filter:brightness(.85)}
+.C .duo b{display:block;font-family:'Cormorant Garamond',serif;font-weight:400;font-size:19px;text-align:center;margin-top:9px}
+.C .duo span{display:block;text-align:center;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:#A88B6F}
+.C .cta{display:block;margin:26px 34px 0;text-align:center;padding:15px;border:1px solid #C9A272;color:#E2BE8E;font-size:11px;letter-spacing:.3em;text-transform:uppercase}
+.C .ft{text-align:center;padding:22px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#7D6957}
+
+.note{max-width:1300px;margin:30px auto 0;background:#F7F2EB;padding:18px 22px;font-size:13.5px;line-height:1.6;color:#4B3A2E}
+.note b{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600}
+</style></head><body>
+<div class="hd0"><h1>Mails mayoristas — tres direcciones de diseño</h1><p>Con fotos reales del catálogo. Las animaciones (fotos que aparecen, cinta que corre, luz que titila) se ven en este mockup.</p></div>
+<div class="row">
+
+<div class="col"><div class="lab"><b>A</b><span>Revista de deco</span></div><p class="d">Como una revista impresa: nombre grande y espaciado, foto de portada, texto editorial con número de "edición", productos con su nombre en letra con serif y firma a mano al final.</p>
+<div class="mail A">
+  <div class="mast"><div class="n">NERVO</div><div class="s"><span>Edición 11</span><span>Mayoristas</span><span>Noviembre</span></div></div>
+  <div class="cover"><img src="https://nervomayorista.com/col_firenzexl_60x38cm_cg.webp"><div class="cap">En portada · Firenze XL</div></div>
+  <div class="body"><div class="num">01</div><div><h3>Fibras naturales,<br><i>luz cálida</i></h3><div class="rule"></div><p>Hola Lucía, esta temporada sumamos piezas tejidas a mano que ya se están moviendo en los locales. Te las mostramos primero a vos.</p></div></div>
+  <div class="grid">
+    <div class="pr"><div class="ph"><img src="https://nervomayorista.com/col_burano_pkn.webp"></div><div class="t"><b>Burano</b><span>Colgante</span></div></div>
+    <div class="pr"><div class="ph"><img src="https://nervomayorista.com/pie_indi_pkn.webp"></div><div class="t"><b>Indi</b><span>De pie</span></div></div>
+  </div>
+  <div class="cta">Ver la colección completa</div>
+  <div class="sig">Pau &amp; Euge</div>
+  <div class="ft"><span>Nervo Design · Córdoba</span><span>Darme de baja</span></div>
+</div></div>
+
+<div class="col"><div class="lab"><b>B</b><span>Arcos y tierra</span></div><p class="d">Colores tierra (terracota, salvia, arena), fotos con forma de arco como ventanas, una cinta que corre con frases en cursiva y una franja de tres colores con los beneficios.</p>
+<div class="mail B">
+  <div class="top"><span class="n">NERVO</span><span>Novedades · Nov</span></div>
+  <div class="tape"><span>Nuevos ingresos · tejido a mano · reposición sin mínimo · envíos a todo el país · Nuevos ingresos · tejido a mano · reposición sin mínimo · envíos a todo el país ·&nbsp;</span></div>
+  <div class="hero"><div><h3>Hecho a<br>mano, <i>con<br>tiempo</i></h3><p>Hola Lucía, llegaron las piezas nuevas. Elegimos tres para que las veas primero.</p></div><div class="arch"><img src="https://nervomayorista.com/col_perugia_cn.webp"></div></div>
+  <div class="trio">
+    <div><div class="ph"><img src="https://nervomayorista.com/col_toscana_pkn.webp"></div><b>Toscana</b></div>
+    <div><div class="ph"><img src="https://nervomayorista.com/vel_cali_ch.webp"></div><b>Cali</b></div>
+    <div><div class="ph"><img src="https://nervomayorista.com/pie_amapola_pkn.webp"></div><b>Amapola</b></div>
+  </div>
+  <div class="band"><div><em>sin mínimo</em>Reposición</div><div><em>todo el país</em>Envíos</div><div><em>a medida</em>Asesoramos</div></div>
+  <div class="cta"><a class="c1">Ver catálogo</a><a class="c2">Pedir por WhatsApp</a></div>
+  <div class="ft">Nervo Design · Tu casa, tu refugio · Darme de baja</div>
+</div></div>
+
+<div class="col"><div class="lab"><b>C</b><span>Nocturno</span></div><p class="d">Fondo café profundo, marcos finos dorados, la luz de la lámpara que titila suave y todo centrado como una invitación. Para Navidad, fin de año o lanzamientos.</p>
+<div class="mail C">
+  <div class="hd"><div class="n">NERVO</div><div class="s">Colección de temporada</div></div>
+  <div class="orn"><i></i>✦<i></i></div>
+  <div class="frame"><div class="im"><img src="https://nervomayorista.com/col_firenze_50x30cm_ch.webp"><div class="gl"></div></div></div>
+  <h3>La luz que <i>arma</i><br>el ambiente</h3>
+  <p>Hola Lucía, preparamos una selección para que tus vidrieras brillen estas fiestas.</p>
+  <div class="duo">
+    <div><div class="ph"><img src="https://nervomayorista.com/col_firenze_mini_invertida_ch.webp"></div><b>Mini Firenze</b><span>Colgante</span></div>
+    <div><div class="ph"><img src="https://nervomayorista.com/vel_duomo.webp"></div><b>Duomo</b><span>Veladores · set x2</span></div>
+  </div>
+  <span class="cta">Hacer mi pedido</span>
+  <div class="ft">Nervo Design · Córdoba · Darme de baja</div>
+</div></div>
+</div>
+<div class="note"><b>Sobre el movimiento</b><br>En el Mail del iPhone y de la Mac, las fotos aparecen suaves, la cinta corre y la luz titila. En Gmail se ven quietas pero igual de prolijas: nunca quedan rotas. Si queremos movimiento en todos los correos, se suma un banner animado (GIF), por ejemplo la cinta de frases o las lámparas cambiando una tras otra.</div>
+</body></html>
