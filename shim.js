@@ -765,3 +765,48 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   document.addEventListener("submit", function(e){ var f = e.target; if (f && f.classList && f.classList.contains("chf")) setTimeout(function(){ var ta = f.querySelector("textarea"); if (ta) crecer(ta); alFondo(); }, 120); }, true);
   document.addEventListener("focusin", function(e){ if (e.target && e.target.closest && e.target.closest(".chw .chf")) setTimeout(alFondo, 350); });
 })();
+
+/* ---------- Chat a pantalla completa en el celu (como WhatsApp / Slack): dentro de un canal solo se ve el chat ---------- */
+(function(){
+  if (window.__nvChatFull) return; window.__nvChatFull = 1;
+  var Q = "html.nv-chat:not(#nv1):not(#nv2) .chw.vc";
+  var st = document.createElement("style");
+  st.textContent = "@media (max-width:760px){" +
+    Q + "{top:0!important;bottom:0!important;z-index:4000!important;background:#FBF8F5!important}" +
+    "html.nv-chat:not(#nv1):not(#nv2).nv-kb .chw.vc{top:var(--vvt,0px)!important;height:var(--vvh,100vh)!important;bottom:auto!important;z-index:6000!important}" +
+    Q + " .chmain{background:#FBF8F5!important;border:0!important;border-radius:0!important;box-shadow:none!important}" +
+    Q + " .chtt{display:flex!important;align-items:center!important;gap:12px!important;padding:calc(env(safe-area-inset-top,0px) + 12px) 12px 12px 6px!important;background:#fff!important;border-bottom:1px solid #EFE7DF!important;margin:0!important;border-radius:0!important;min-height:64px}" +
+    Q + " .chtt .chback{width:40px!important;height:40px!important;min-width:40px!important;border:0!important;background:transparent!important;box-shadow:none!important;font-size:34px!important;line-height:1!important;color:#3B2418!important;padding:0 0 4px!important;display:flex!important;align-items:center;justify-content:center}" +
+    Q + " .chtt .chi{width:12px!important;height:12px!important;min-width:12px!important;border-radius:50%!important;margin:0 -4px 0 0!important;display:block!important}" +
+    Q + " .chtt b{font-size:20px!important;font-weight:600!important;color:#3B2418!important;flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
+    Q + " .chtt .nvacts{gap:2px!important;flex:none}" +
+    Q + " .chtt .nvacts .nvib{border:0!important;background:transparent!important;box-shadow:none!important;padding:6px!important;font-size:16px!important}" +
+    Q + " .chtt .nvacts .nvtkb{display:none!important}" +
+    Q + " .chtt .nvacts > :not(button){display:none!important}" +
+    Q + " .chtt .nvacts .nvib::before," + Q + " .chtt .nvacts .nvib::after{display:none!important}" +
+    Q + " .chlist{padding:8px 0 12px!important;background:#FBF8F5!important}" +
+    Q + " .chmsg{position:relative!important;background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;max-width:none!important;width:auto!important;margin:0!important;padding:8px 16px 8px 70px!important;align-self:stretch!important}" +
+    Q + " .chmsg .chh{background:transparent!important;display:flex!important;align-items:baseline!important;gap:8px!important;padding:0!important;margin:0 0 2px!important}" +
+    Q + " .chmsg .chh .chav{position:absolute!important;left:14px!important;top:8px!important;width:44px!important;height:44px!important;border-radius:50%!important;font-size:17px!important;display:flex!important;align-items:center;justify-content:center;color:#fff!important}" +
+    Q + " .chmsg .chh b{font-size:17px!important;font-weight:700!important}" +
+    Q + " .chmsg .chh > span:not(.chav){font-size:13px!important;color:#A39385!important}" +
+    Q + " .chmsg .chh button{display:none!important;border:0!important;background:transparent!important;box-shadow:none!important;font-size:12px!important;padding:2px 6px!important;color:#8C7D71!important}" +
+    Q + " .chmsg:hover .chh button," + Q + " .chmsg:focus-within .chh button{display:inline-block!important}" +
+    Q + " .chmsg .chh button::before," + Q + " .chmsg .chh button::after{display:none!important}" +
+    Q + " .chmsg .chh button:first-of-type{margin-left:auto!important}" +
+    Q + " .chmsg .chx{font-size:17px!important;line-height:1.45!important;color:#2E2119!important}" +
+    Q + " .chd{align-self:center!important}" +
+    Q + " .nvmov-res{margin:8px 12px 0!important}" +
+    Q + " .chf{background:#fff!important;border-top:1px solid #EFE7DF!important;padding:10px 10px calc(env(safe-area-inset-bottom,0px) + 10px)!important}" +
+    Q + " .chf textarea{border:1.5px solid #E6DCD2!important;background:#fff!important;border-radius:22px!important;font-size:16px!important;height:44px;min-height:44px!important}" +
+    Q + " .chf > button.chsend{width:48px!important;height:48px!important;min-width:48px!important;border-radius:50%!important}" +
+    "}";
+  document.head.appendChild(st);
+  var OC = ["nav.tabs", ".fab", "#nvupd"], ANT = false;
+  function tapar(){
+    var on = innerWidth <= 760 && document.documentElement.classList.contains("nv-chat") && !!document.querySelector(".chw.vc");
+    if (on === ANT) return; ANT = on;
+    OC.forEach(function(q){ [].forEach.call(document.querySelectorAll(q), function(e){ if (on) e.style.setProperty("visibility", "hidden", "important"); else e.style.removeProperty("visibility"); }); });
+  }
+  setInterval(tapar, 250);
+})();
