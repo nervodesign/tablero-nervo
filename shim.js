@@ -966,7 +966,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   if (window.__nvPresAncho) return; window.__nvPresAncho = 1;
   var P = "html.nv-presd:not(#nv1):not(#nv2) body main#list > .pz-top";
   var st = document.createElement("style");
-  st.textContent = "@media(min-width:1300px){html.nv-mini:not(#nv1):not(#nv2) body .p3{grid-template-columns:minmax(380px,32%) minmax(0,1fr) 280px!important}" +
+  st.textContent = "@media(min-width:1300px){html.nv-mini:not(#nv1):not(#nv2) body .p3{grid-template-columns:minmax(440px,42%) minmax(0,1fr) 250px!important}" +
     "html.nv-mini:not(#nv1):not(#nv2) body .p3 .p3-card.p3-l{width:auto!important;max-width:none!important}}" +
     "@media(min-width:1000px){" + P + "{margin-top:-78px!important;padding-left:200px!important;padding-right:360px!important;flex-wrap:nowrap!important;gap:10px!important;align-items:center!important;min-height:45px;position:relative;z-index:3;pointer-events:none}" +
     P + " > *{pointer-events:auto}" + P + " .seg button{padding:7px 14px!important}" + P + " .p3-new{white-space:nowrap;padding:8px 14px!important}}";
