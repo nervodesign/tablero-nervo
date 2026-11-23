@@ -1023,7 +1023,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
 })();
 
 /* Tienda web sin solapa Revisar */
-;(function(){if(window.__nvWebSinRev)return;window.__nvWebSinRev=1;var st=document.createElement('style');st.textContent='.seg.web-sw > button:first-child{display:none !important}';document.head.appendChild(st);function fix(){var s=document.querySelector('.seg.web-sw');if(!s)return;var b=s.children;if(b[0]&&b[0].getAttribute('aria-pressed')==='true'&&b[1])b[1].click();}new MutationObserver(fix).observe(document.body,{childList:true,subtree:true});fix();})();
+;(function(){if(window.__nvWebSinRev)return;window.__nvWebSinRev=1;var st=document.createElement('style');st.textContent='.seg.web-sw > button:first-child{display:none !important}';document.head.appendChild(st);function fix(){var s=document.querySelector('.seg.web-sw');if(!s)return;var b=s.children;if(b[0]&&b[0].getAttribute('aria-pressed')==='true'&&b[1])b[1].click();}new MutationObserver(fix).observe(document.documentElement,{childList:true,subtree:true});fix();})();
 
 /* Movimientos: cabecera en una fila, boton chico, bloques cuadrados neutros */
 ;(function(){if(window.__nvMovCab)return;window.__nvMovCab=1;
@@ -1045,7 +1045,7 @@ var css='@media (min-width:900px){html.nv-movd header.top{display:none !importan
 var st=document.createElement('style');st.id='nvmovcab';st.textContent=css;document.head.appendChild(st);
 function tick(){var on=!!document.querySelector('#tab-mov[aria-selected="true"]');document.documentElement.classList.toggle('nv-movd',on);
 var b=document.querySelector('.nvmov-cab .nvfin-btn');if(b&&!b.parentElement.classList.contains('nvfin-w')){var w=document.createElement('span');w.className='nvfin-w';b.parentElement.insertBefore(w,b);w.appendChild(b);var s=document.createElement('small');s.textContent='al terminar de revisar, marcá acá';w.appendChild(s);b.textContent='✓ Todo actualizado';}}
-new MutationObserver(tick).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-selected']});tick();})();
+new MutationObserver(tick).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-selected']});tick();})();
 /* Nervo 2026: titulo en la fila del buscador + tarjeta Movimientos primero */
 ;(function(){if(window.__nvBase2)return;window.__nvBase2=1;var st=document.createElement('style');st.textContent='@media (min-width:900px){html.nv-based header.top h2.sec{margin:-35px 0 0 0 !important;width:max-content !important;max-width:40%;line-height:33px !important}html.nv-based:not(#a):not(#b) body main#list > .bz-top{margin-top:-46px !important}}';document.head.appendChild(st);
 setInterval(function(){var h=document.querySelector('.bz-host');if(!h||!h.shadowRoot)return;var c=h.shadowRoot.querySelector('.edash .edt.nvmovcard');if(c&&c.parentElement.firstElementChild!==c)c.parentElement.insertBefore(c,c.parentElement.firstElementChild);},700);})();
@@ -1066,3 +1066,9 @@ function run(){roots().forEach(function(r){sheets(r).forEach(function(s){try{var
 var st=document.createElement('style');st.textContent='input:focus,textarea:focus,select:focus{outline:none !important;box-shadow:none !important}.p3-f:focus-within{box-shadow:none !important;border-color:#C9B3A3 !important}html body .p3-in:focus,html body .p3 input:focus,html body .p3 textarea:focus{border-color:transparent !important;background:transparent !important;box-shadow:none !important;outline:none !important}';document.head.appendChild(st);
 var t=0;function soon(){if(t)return;t=setTimeout(function(){t=0;run();},400);}
 run();new MutationObserver(soon).observe(document.documentElement,{childList:true,subtree:true});setInterval(run,3000);})();
+
+/* Hoy: fecha + clima + boton en una fila; fondo blanco */
+;(function(){if(window.__nvHoyFila)return;window.__nvHoyFila=1;
+var st=document.createElement('style');st.textContent='html,body{background:#FFFFFF !important}nav.tabs{background:#FFFFFF !important;border-right:1px solid #EEE6DF !important}.hello p.dt{display:flex !important;align-items:center;gap:22px;flex-wrap:wrap}.hello p.dt .pz-wx{margin:0 0 0 8px !important;display:inline-flex !important;align-items:baseline;gap:16px;width:auto !important;padding:0 !important}.hello p.dt .nvl-btn{margin:0 !important}';document.head.appendChild(st);
+function tick(){var p=document.querySelector('.hp-hero .hello p.dt'),w=document.querySelector('.hp-hero > .pz-wx');if(p&&w){var b=p.querySelector('.nvl-btn');p.insertBefore(w,b||null);}}
+new MutationObserver(tick).observe(document.documentElement,{childList:true,subtree:true});tick();})();
