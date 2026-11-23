@@ -6,6 +6,7 @@
   var CUENTAS = [["euge", "Euge"], ["pau", "Pau"]];
   var MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   var NERVO = { mail: "nervodesigncordoba@gmail.com", tel: "+54 9 3518 62-2392", dir: "Córdoba Capital, CP 5000", web: "www.nervodesign.com", lema: "Tu casa, tu refugio." };
+  var ARCA_LISTO = { euge: true }; /* cuentas con certificado ARCA conectado */
   var F = {}, CFG = {}, CARG = false, ESPERA = 0, MES = mesHoy(), FILTRO = "pend", TIPO = "todas", QUIEN = "todas", BUS = "";
 
   function h(t, c, x){ var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
@@ -87,7 +88,7 @@
   /* ---------- documento (factura / remito) ---------- */
   function docHTML(f, tipo, paraMail){
     var d = f.datos || {}, c = d.cliente || {}, cfg = CFG[f.cuenta] || {}, esFac = tipo === "factura";
-    var nro = esFac ? (f.nro ? String(cfg.ptoVta || 1).padStart(5, "0") + "-" + String(f.nro).padStart(8, "0") : "Se asigna al emitir") : (f.remito_nro ? "R-" + String(f.remito_nro).padStart(6, "0") : "R-" + String(siguienteRemito()).padStart(6, "0"));
+    var nro = esFac ? (f.nro ? String(f.pv || cfg.ptoVta || 1).padStart(5, "0") + "-" + String(f.nro).padStart(8, "0") : "Se asigna al emitir") : (f.remito_nro ? "R-" + String(f.remito_nro).padStart(6, "0") : "R-" + String(siguienteRemito()).padStart(6, "0"));
     var logo = paraMail ? '<div style="font-family:Georgia,serif;font-size:30px;color:#3B2418;line-height:1">n.</div>' : '<img src="' + ((document.querySelector("img.logo") || {}).src || "") + '" style="width:54px;height:54px;object-fit:contain">';
     var filas = (d.items || []).map(function(i){ return '<tr><td style="padding:8px 6px;border-bottom:1px solid #F0E8E2">' + esc(i.d) + '</td><td style="padding:8px 6px;border-bottom:1px solid #F0E8E2;text-align:center">' + esc(i.c) + '</td>' + (esFac || true ? '<td style="padding:8px 6px;border-bottom:1px solid #F0E8E2;text-align:right">' + plata(i.p) + '</td><td style="padding:8px 6px;border-bottom:1px solid #F0E8E2;text-align:right">' + plata((Number(i.c) || 0) * (Number(i.p) || 0)) + '</td>' : '') + '</tr>'; }).join("");
     if (d.conEnvio && Number(d.envio)) filas += '<tr><td style="padding:8px 6px;border-bottom:1px solid #F0E8E2">Envío</td><td style="padding:8px 6px;border-bottom:1px solid #F0E8E2;text-align:center">1</td><td style="padding:8px 6px;border-bottom:1px solid #F0E8E2;text-align:right">' + plata(d.envio) + '</td><td style="padding:8px 6px;border-bottom:1px solid #F0E8E2;text-align:right">' + plata(d.envio) + '</td></tr>';
@@ -126,6 +127,60 @@
     var w = window.open("", "_blank"); if (!w) { toast("Permití ventanas emergentes para descargar el PDF"); return; }
     w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + (tipo === "factura" ? "Factura" : "Remito") + ' Nervo Design</title><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&display=swap" rel="stylesheet"><style>body{margin:0;padding:24px;background:#fff}@media print{body{padding:0}}</style></head><body>' + docHTML(f, tipo, false) + '<script>setTimeout(function(){print()},600)<\/script></body></html>');
     w.document.close();
+  }
+
+  /* ---------- confirmar y emitir en ARCA (solo a mano, con PIN) ---------- */
+  function confirmarEmision(f, cerrarEditor){
+    var d = f.datos || {}, c = d.cliente || {};
+    var cap = h("div", "nvf-cap nvf-conf"), p = h("div", "nvf-ed"); cap.append(p);
+    p.style.maxWidth = "460px"; p.style.padding = "22px";
+    function cerrar(){ cap.classList.remove("on"); setTimeout(function(){ cap.remove(); }, 220); }
+    cap.onclick = function(e){ if (e.target === cap && !enviando) cerrar(); };
+    p.append(h("h3", null, "Revisá antes de emitir"));
+    var doc = String(c.doc || "").replace(/\D/g, "");
+    var lineas = [
+      ["Factura", "C · punto de venta 5 · a nombre de " + (f.cuenta === "pau" ? "Pau" : "Euge")],
+      ["Cliente", (c.nombre || "—") + (doc ? (doc.length > 8 ? " · CUIT " : " · DNI ") + doc : "")],
+      ["Condición", c.cond || "Consumidor Final"],
+      ["Productos", (d.items || []).map(function(i){ return (i.c || 1) + " × " + (i.d || "—"); }).join(", ") + (d.conEnvio && Number(d.envio) ? " + envío" : "")],
+      ["Total", plata(f.total)],
+      ["Fecha", "Hoy"]
+    ];
+    var tb = h("div"); tb.style.cssText = "display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13.5px;margin:12px 0 16px";
+    lineas.forEach(function(l){ var a = h("span", null, l[0]); a.style.color = "#8A8380"; var b = h("b", null, l[1]); b.style.fontWeight = "500"; tb.append(a, b); });
+    p.append(tb);
+    var av = h("p", null, "Al confirmar, la factura se emite en ARCA y no se puede deshacer."); av.style.cssText = "font-size:12.5px;color:#8E3C5E;background:#FCE4EE;padding:8px 10px;border-radius:6px;margin:0 0 12px";
+    p.append(av);
+    var lab = h("label", "nvf-fl"); lab.append(h("span", null, "PIN de facturación"));
+    var pin = h("input", "nvf-in"); pin.type = "password"; pin.inputMode = "numeric"; pin.autocomplete = "off"; lab.append(pin); p.append(lab);
+    var acc = h("div", "nvf-acc"); acc.style.marginTop = "14px";
+    var bc = h("button", "nvf-bt sec", "Cancelar"); bc.type = "button"; bc.onclick = function(){ if (!enviando) cerrar(); };
+    var be = h("button", "nvf-bt pri", "Confirmar y emitir"); be.type = "button";
+    var enviando = false;
+    be.onclick = function(){
+      if (enviando) return;
+      if (!pin.value){ toast("Poné el PIN de facturación"); pin.focus(); return; }
+      enviando = true; be.disabled = true; bc.disabled = true; be.textContent = "Emitiendo en ARCA…";
+      SB.functions.invoke("arca", { body: { accion: "emitir", cuenta: f.cuenta, factura_id: f.id, total: f.total, doc: doc, cond: c.cond || "Consumidor Final", pin: pin.value, por: soy() || "" } }).then(function(r){
+        var res = r && r.data;
+        if (!res && r && r.error && r.error.context && r.error.context.json) return r.error.context.json().then(function(j){ return { data: j }; });
+        return r;
+      }).then(function(r){
+        var res = (r && r.data) || {};
+        if (!res.ok){ throw new Error(res.error || "No se pudo emitir"); }
+        f.estado = "emitida"; f.pv = res.pv; f.nro = res.nro; f.cae = res.cae; f.cae_vto = res.cae_vto; f.emitida_at = f.emitida_at || new Date().toISOString();
+        return guardarF(f).then(function(){
+          cerrar(); if (cerrarEditor) cerrarEditor();
+          toast("Factura emitida ✓ N° " + String(res.pv).padStart(5, "0") + "-" + String(res.nro).padStart(8, "0"));
+          pintar();
+        });
+      }).catch(function(e){
+        enviando = false; be.disabled = false; bc.disabled = false; be.textContent = "Confirmar y emitir";
+        toast(String((e && e.message) || e || "No se pudo emitir").slice(0, 160));
+      });
+    };
+    acc.append(bc, be); p.append(acc);
+    document.body.append(cap); requestAnimationFrame(function(){ cap.classList.add("on"); pin.focus(); });
   }
 
   /* ---------- editor de una venta ---------- */
@@ -183,8 +238,9 @@
       var be = boton("Facturar", "pri", function(){
         if (!f.cuenta){ toast("Elegí si factura Euge o Pau"); return; }
         var c2 = CFG[f.cuenta] || {};
-        if (!c2.conectado){ toast("Falta conectar ARCA para " + (f.cuenta === "pau" ? "Pau" : "Euge") + " (certificado). Mientras, quedó guardada para facturar."); f.total = totalDe(f); f.estado = "lista"; guardarF(f).then(pintar); return; }
-        toast("Emitiendo…");
+        if (!c2.conectado && !ARCA_LISTO[f.cuenta]){ toast("Falta conectar ARCA para " + (f.cuenta === "pau" ? "Pau" : "Euge") + " (certificado). Mientras, quedó guardada para facturar."); f.total = totalDe(f); f.estado = "lista"; guardarF(f).then(pintar); return; }
+        f.total = totalDe(f);
+        confirmarEmision(f, cerrar);
       });
     }
     boton("Enviar remito", "sec", function(){
