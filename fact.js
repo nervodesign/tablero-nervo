@@ -6,6 +6,7 @@
   var CUENTAS = [["euge", "Euge"], ["pau", "Pau"]];
   var MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   var NERVO = { mail: "nervodesigncordoba@gmail.com", tel: "+54 9 3518 62-2392", dir: "Córdoba Capital, CP 5000", web: "www.nervodesign.com", lema: "Tu casa, tu refugio." };
+  (function(){ var s = document.createElement("style"); s.id = "nvtema-keep"; s.textContent = "html:not(#a) body .nvf-tot b{color:#fff !important}.nvf-tr .c small{display:block;font-size:11px;margin-top:2px;color:#8D827C}.nvf-tr .c small i{font-style:normal;padding:1px 6px;border-radius:4px;margin-left:4px}.nvf-tr .c small i.euge{background:#FCE4EE;color:#8E3C5E}.nvf-tr .c small i.pau{background:#E3EDF6;color:#46627B}"; document.head.append(s); })();
   var ARCA_LISTO = { euge: true }; /* cuentas con certificado ARCA conectado */
   var F = {}, CFG = {}, CARG = false, ESPERA = 0, MES = mesHoy(), FILTRO = "pend", TIPO = "todas", QUIEN = "todas", BUS = "";
 
@@ -106,9 +107,9 @@
     var titulo = esNC ? "NOTA DE CRÉDITO" : esFac ? "FACTURA" : "REMITO";
     var logo = paraMail || !NLOGO ? '<div style="font-family:Georgia,serif;font-size:40px;line-height:1;color:' + INK + '">n.</div>' : '<svg viewBox="0 0 501 425" width="46" height="39" style="display:block"><path fill="' + INK + '" d="' + NLOGO + '"/></svg>';
     var lbl = function(t){ return '<div style="font-size:9.5px;letter-spacing:.18em;color:' + MOKA + ';margin-bottom:6px">' + t + '</div>'; };
-    var celda = "padding:9px 4px;border-bottom:1px solid " + LIN + ";";
-    var filas = (d.items || []).map(function(i){ return '<tr><td style="' + celda + '">' + esc(i.d) + '</td><td style="' + celda + 'text-align:center;color:' + MUT + '">' + esc(i.c) + '</td><td style="' + celda + 'text-align:right;color:' + MUT + '">' + plata(i.p) + '</td><td style="' + celda + 'text-align:right">' + plata((Number(i.c) || 0) * (Number(i.p) || 0)) + '</td></tr>'; }).join("");
-    if (d.conEnvio && Number(d.envio)) filas += '<tr><td style="' + celda + '">Envío</td><td style="' + celda + 'text-align:center;color:' + MUT + '">1</td><td style="' + celda + 'text-align:right;color:' + MUT + '">' + plata(d.envio) + '</td><td style="' + celda + 'text-align:right">' + plata(d.envio) + '</td></tr>';
+    var celda = "padding:9px 4px;border-bottom:1px solid " + LIN + ";"; var nw = "white-space:nowrap;";
+    var filas = (d.items || []).map(function(i){ return '<tr><td style="' + celda + '">' + esc(i.d) + '</td><td style="' + celda + 'text-align:center;color:' + MUT + '">' + esc(i.c) + '</td><td style="' + celda + nw + 'text-align:right;color:' + MUT + '">' + plata(i.p) + '</td><td style="' + celda + nw + 'text-align:right">' + plata((Number(i.c) || 0) * (Number(i.p) || 0)) + '</td></tr>'; }).join("");
+    if (d.conEnvio && Number(d.envio)) filas += '<tr><td style="' + celda + '">Envío</td><td style="' + celda + 'text-align:center;color:' + MUT + '">1</td><td style="' + celda + nw + 'text-align:right;color:' + MUT + '">' + plata(d.envio) + '</td><td style="' + celda + nw + 'text-align:right">' + plata(d.envio) + '</td></tr>';
     var total = esNC ? (Number(cb.total) || totalDe(f)) : totalDe(f);
     var emisor = esFac
       ? '<b style="font-weight:500">' + esc(cfg.razon || "—") + '</b><br>CUIT ' + esc(cfg.cuit || "—") + '<br>Responsable Monotributo<br>' + esc(cfg.dom || NERVO.dir) + (cfg.iibb ? '<br>IIBB ' + esc(cfg.iibb) : '') + (cfg.inicio ? '<br>Inicio de actividades ' + esc(fechaTx(cfg.inicio)) : '')
@@ -136,7 +137,7 @@
       '</tr></table>' + ref +
       '<table style="width:100%;border-collapse:collapse;margin-top:24px;border-top:1px solid ' + LIN + ';border-bottom:1px solid ' + LIN + '"><tr><td style="vertical-align:top;width:50%;padding:16px 16px 16px 0">' + lbl(esFac ? "EMISOR" : "DE") + emisor + '</td><td style="vertical-align:top;padding:16px 0 16px 16px;border-left:1px solid ' + LIN + '">' + lbl("CLIENTE") + cliente + '</td></tr></table>' +
       '<table style="width:100%;border-collapse:collapse;margin-top:20px;font-size:12.5px"><tr style="font-size:9.5px;letter-spacing:.16em;color:' + MUT + ';text-align:left"><th style="padding:0 4px 8px;font-weight:400;border-bottom:1px solid ' + INK + '">DETALLE</th><th style="padding:0 4px 8px;font-weight:400;text-align:center;border-bottom:1px solid ' + INK + '">CANT.</th><th style="padding:0 4px 8px;font-weight:400;text-align:right;border-bottom:1px solid ' + INK + '">PRECIO</th><th style="padding:0 4px 8px;font-weight:400;text-align:right;border-bottom:1px solid ' + INK + '">SUBTOTAL</th></tr>' + filas + '</table>' +
-      '<table style="width:100%;border-collapse:collapse;margin-top:14px"><tr><td></td><td style="width:240px;padding:12px 4px 0;border-top:1px solid ' + INK + ';text-align:right"><span style="font-size:9.5px;letter-spacing:.18em;color:' + MUT + ';margin-right:14px">TOTAL</span><span style="font-size:20px;color:' + MOKA + '">' + plata(total) + '</span></td></tr></table>' +
+      '<table style="width:100%;border-collapse:collapse;margin-top:14px"><tr><td></td><td style="width:240px;padding:12px 4px 0;border-top:1px solid ' + INK + ';text-align:right"><span style="font-size:9.5px;letter-spacing:.18em;color:' + MUT + ';margin-right:14px">TOTAL</span><span style="font-size:20px;white-space:nowrap;color:' + MOKA + '">' + plata(total) + '</span></td></tr></table>' +
       pie +
       '<div style="margin-top:22px;font-size:10.5px;letter-spacing:.06em;color:' + MUT + ';text-align:center">' + NERVO.web + ' · ' + NERVO.lema + '</div></div>';
   }
@@ -146,6 +147,7 @@
     var intro = tipo === "factura" ? "Te enviamos la factura de tu compra." : tipo === "nc" ? "Te enviamos la nota de crédito que anula tu factura." : "Te enviamos el remito de tu compra.";
     return '<div style="background:#F7F2EE;padding:24px 12px;font-family:Helvetica,Arial,sans-serif;color:#3B2418"><div style="max-width:640px;margin:0 auto 16px;font-size:15px;line-height:1.6">Hola ' + esc(nom) + '! Gracias por elegirnos 🤎<br>' + intro + '<br>Cualquier cosa que necesites, respondé este mail o escribinos al ' + NERVO.tel + '.</div>' + docHTML(f, tipo, true) + '</div>';
   }
+  window.__nvfDemo = { doc: function(f, t){ return docHTML(f, t, false); }, mail: function(f, t){ return mailHTML(f, t); } };
   function mandar(f, tipo){
     var c = (f.datos || {}).cliente || {};
     if (!/@/.test(c.email || "")) { toast("Falta el mail del cliente"); return Promise.reject(); }
@@ -221,6 +223,7 @@
   /* ---------- editor de una venta ---------- */
   function editor(x){
     var f = JSON.parse(JSON.stringify(filaF(x))), d = f.datos;
+    if (x.cli && d && d.cliente){ if (!d.cliente.email && x.cli.email) d.cliente.email = x.cli.email; if (!d.cliente.doc && x.cli.doc) d.cliente.doc = x.cli.doc; if (!d.cliente.dir && x.cli.dir) d.cliente.dir = x.cli.dir; }
     var cap = h("div", "nvf-cap"), p = h("div", "nvf-ed"); cap.append(p);
     function cerrar(){ cap.classList.remove("on"); setTimeout(function(){ cap.remove(); }, 220); }
     cap.onclick = function(e){ if (e.target === cap) cerrar(); };
@@ -387,7 +390,7 @@
     lista.forEach(function(x){
       var f = F[x.id], est = f ? f.estado : "borrador", cu = (f && f.cuenta) || x.cuenta;
       var r = h("div", "nvf-tr");
-      r.append(h("span", "f", fechaTx(x.fecha)), h("span", "n", x.origen === "may" ? "Mayorista" : (x.num || "")), h("span", "c", x.cliente || "—"), h("span", "t", x.origen === "may" ? "Mayorista" : "Minorista"));
+      r.append(h("span", "f", fechaTx(x.fecha)), h("span", "n", x.origen === "may" ? "Mayorista" : (x.num || "")), (function(){ var s = h("span", "c", x.cliente || "—"); var v = x.v || {}; var met = [].concat(v.metodo || []).join(", "), quien = [].concat(v.cobro || []).join(" ").trim(); if (met || quien){ var sm = h("small", null, met); if (quien){ var q = h("i", /PAU/i.test(quien) ? "pau" : "euge", /PAU/i.test(quien) ? "Pau" : "Euge"); sm.append(q); } s.append(sm); } return s; })(), h("span", "t", x.origen === "may" ? "Mayorista" : "Minorista"));
       var sc = h("select", "nvf-in nvf-sel"); [["", "Elegir"], ["euge", "Euge"], ["pau", "Pau"]].forEach(function(o){ var op = h("option", null, o[1]); op.value = o[0]; sc.append(op); }); sc.value = cu || ""; sc.disabled = est === "emitida";
       sc.onchange = function(){ var ff = filaF(x); ff.cuenta = sc.value; ff.total = totalDe(ff); guardarF(ff).then(pintar); };
       var scw = h("span", "cu"); scw.append(sc); r.append(scw);
