@@ -875,3 +875,43 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
     "}";
   document.head.appendChild(st);
 })();
+
+/* ---------- Menú lateral achicable en todas las solapas (en Nervo Design 2026 y Movimientos arranca achicado) ---------- */
+(function(){
+  if (window.__nvNavMini) return; window.__nvNavMini = 1;
+  var M = "html.nv-mini:not(#nv1):not(#nv2) body";
+  var st = document.createElement("style");
+  st.textContent = "@media(min-width:901px){" +
+    M + "{padding-left:84px!important}" +
+    M + " nav.tabs{width:84px!important;padding-left:8px!important;padding-right:8px!important;overflow-x:hidden!important}" +
+    M + " nav.tabs .lb," + M + " nav.tabs .navsec{display:none!important}" +
+    M + " nav.tabs .tab{justify-content:center!important;padding-left:0!important;padding-right:0!important;width:100%!important}" +
+    M + " nav.tabs .tab .ic{margin:0!important;position:relative}" +
+    M + " nav.tabs .tab .n{position:absolute!important;top:-7px;right:-11px;margin:0!important;transform:scale(.85)}" +
+    M + " nav.tabs .nvyo{width:100%!important;padding:6px 0!important;justify-content:center!important}" +
+    M + " nav.tabs .nvyo > :not(:first-child){display:none!important}" +
+    M + " nav.tabs::before{font-size:0!important;color:transparent!important;margin:0 auto 10px!important;width:60px!important;background-position:center top!important;background-size:auto 36px!important;padding-top:42px!important}" +
+    ".nvmini-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:0 0 8px;border:1px solid #E6D9CE;background:#FBF7F3;color:#7A5E50;border-radius:10px;padding:6px 8px;font:inherit;font-size:12.5px;cursor:pointer}" +
+    ".nvmini-btn:hover{background:#F3EAE2;color:#3B2418}" +
+    M + " .nvmini-btn{padding:6px 0;font-size:15px}" +
+    "}" +
+    "@media(max-width:900px){.nvmini-btn{display:none!important}}";
+  document.head.appendChild(st);
+  var R = document.documentElement, AUTO = { "tab-base": 1, "tab-mov": 1 };
+  function pref(){ try { return localStorage.getItem("nv-nav-mini") === "1"; } catch(e){ return false; } }
+  function poner(on){ R.classList.toggle("nv-mini", !!on); var b = document.querySelector(".nvmini-btn"); if (b){ b.textContent = on ? "»" : "« Achicar menú"; b.title = on ? "Agrandar el menú" : "Achicar el menú"; } }
+  var ACT = null;
+  function boton(){
+    var nav = document.querySelector("nav.tabs"); if (!nav || nav.querySelector(".nvmini-btn")) return;
+    var b = document.createElement("button"); b.type = "button"; b.className = "nvmini-btn";
+    b.onclick = function(){ var on = !R.classList.contains("nv-mini"); poner(on); if (!AUTO[ACT]){ try { localStorage.setItem("nv-nav-mini", on ? "1" : "0"); } catch(e){} } };
+    nav.insertBefore(b, nav.firstChild); poner(R.classList.contains("nv-mini"));
+  }
+  function revisar(){
+    boton();
+    var sel = document.querySelector('nav.tabs .tab[aria-selected="true"]'), id = sel ? sel.id : "";
+    if (id === ACT) return; ACT = id;
+    poner(AUTO[id] ? true : pref());
+  }
+  setInterval(revisar, 300); revisar();
+})();
