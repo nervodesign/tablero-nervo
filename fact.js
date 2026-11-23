@@ -312,7 +312,7 @@
       c("Ingresos Brutos", "iibb", "N° o 'Exento'");
       c("Inicio de actividades", "inicio", "", "date");
       c("Punto de venta (web service)", "ptoVta", "Ej: 3");
-      var est = h("p", "nvf-nota " + (d.conectado ? "ok" : ""), d.conectado ? "ARCA conectado ✓" : "ARCA todavía no está conectado: falta el certificado. Mientras tanto se puede revisar, ver la vista previa y mandar remitos.");
+      var est = h("p", "nvf-nota " + ((d.conectado || ARCA_LISTO[o[0]]) ? "ok" : ""), (d.conectado || ARCA_LISTO[o[0]]) ? "ARCA conectado ✓" : "ARCA todavía no está conectado: falta el certificado. Mientras tanto se puede revisar, ver la vista previa y mandar remitos.");
       box.append(est); cols.append(box);
     });
     p.append(cols);
@@ -351,7 +351,7 @@
       var cu = o[0], cfg = CFG[cu] || {}, tope = Number(cfg.tope) || 0, anio = emitidasAnio(cu) + (Number(cfg.previo) || 0), mes = emitidasMes(cu);
       var pend = V.filter(function(x){ var f = F[x.id]; var c = (f && f.cuenta) || x.cuenta; return c === cu && !(f && f.estado === "emitida"); }).reduce(function(s, x){ var f = F[x.id]; return s + (f ? totalDe(f) : x.monto); }, 0);
       var c = h("div", "nvf-tope " + cu);
-      var hd = h("div", "nvf-toph"); hd.append(h("b", null, o[1]), h("span", null, cfg.conectado ? "ARCA conectado" : "ARCA sin conectar"));
+      var hd = h("div", "nvf-toph"); hd.append(h("b", null, o[1]), h("span", null, (cfg.conectado || ARCA_LISTO[cu]) ? "ARCA conectado ✓" : "ARCA sin conectar"));
       var pct = tope ? Math.min(100, Math.round(anio / tope * 100)) : 0;
       var bar = h("div", "nvf-bar"); var fill = h("i"); fill.style.width = pct + "%"; if (pct >= 90) bar.classList.add("alto"); bar.append(fill);
       var ks = h("div", "nvf-ks");
