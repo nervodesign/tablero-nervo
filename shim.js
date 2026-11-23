@@ -1007,3 +1007,17 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   }
   setInterval(tick, 700); tick();
 })();
+
+/* ---------- Presupuestos: carga de datos en color chocolate y la boleta más chica (de referencia, sigue editable) ---------- */
+(function(){
+  if (window.__nvPresChoco) return; window.__nvPresChoco = 1;
+  var L = "html:not(#nv1):not(#nv2) body .p3 .p3-card.p3-l";
+  var st = document.createElement("style");
+  st.textContent = L + " .p3-h4{color:#6B4330!important;font-weight:700!important}" +
+    L + " input," + L + " textarea," + L + " select{color:#3B2418!important;font-weight:500}" +
+    L + " input::placeholder," + L + " textarea::placeholder{color:#A88A76!important}" +
+    L + " label," + L + " .p3-f span," + L + " small{color:#7A5240!important}" +
+    L + " .p3-pick b," + L + " .p3-pick strong{color:#3B2418!important}" +
+    "@media(min-width:1300px){html.nv-mini:not(#nv1):not(#nv2) body .p3 .p3-docw .p3-doc{zoom:.82}}";
+  document.head.appendChild(st);
+})();
