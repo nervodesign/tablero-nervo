@@ -376,7 +376,7 @@
     return f ? "1.2 VENTA MIN. TARJETA FACTURADA" : "1.3 VENTA MIN. TARJETA NO FACTURADA";
   }
   function baseMin(){ var S = window.__nv && window.__nv.S; return (S && S.bzData && S.bzData.min) || []; }
-  function ventasWeb(){ return baseMin().filter(function(r){ if (!/REVISAR/i.test(r.env || "")) return false; if (!Number(r.cobrado) && Number(r.facturar)) r.cobrado = String(r.facturar); return true; }); }
+  function ventasWeb(){ return baseMin().filter(function(r){ if (!/REVISAR/i.test(r.env || "")) return false; return true; }); }
   function ventasTodas(){
     var w = ventasWeb().map(function(r){ return { src: "web", id: "w" + r.id, row: r }; });
     var ch = ROWS.filter(function(r){ return esBorradorVenta(r) && (r.estado === "pendiente" || r.estado === "procesando"); }).map(function(m){
