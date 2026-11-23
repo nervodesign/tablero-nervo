@@ -409,7 +409,11 @@
     return SB.from("movimientos").insert({ msg_id: "venta:" + v.id, msg_at: new Date().toISOString(), autor: SOY, texto: "Venta " + (v.num || "") + " · " + (v.cliente || ""), adj: [],
       tipo: "venta", signo: "ingreso", monto: f.total || monto, fecha: f.fecha || v.fecha || null, por: q, cuenta: q, contraparte: f.concepto || ("Venta #" + (v.num || "") + " · " + (v.cliente || "")),
       concepto: f.notas || null, cat: f.cat || catVenta(v.metodo, v.fact), falta: [], estado: "pendiente" }).select().then(function(r){
-      if (r.error && !/duplicate|23505/i.test(r.error.message + r.error.code)) throw r.error; if (r.data && r.data[0]) upsertLocal(r.data[0]);
+      if (r.error && !/duplicate|23505/i.test(r.error.message + r.error.code)) throw r.error; if (r.data && r.data[0]){ upsertLocal(r.data[0]); return r.data[0]; } return null;
+    }).then(function(row){
+      /* al aprobar la venta, el cobro entra directo en Finanzas (un solo paso) */
+      if (!row || !row.por || !Number(row.monto) || row.cargado) return row;
+      return cargarFinanzas(row).then(function(idFin){ return guardar(row, { estado: "aprobado", aprobado_por: SOY, aprobado_at: new Date().toISOString(), cargado: "fin_" + row.por + ":" + idFin }); }).then(function(){ return row; });
     });
   }
   function aprobarVenta(it){
@@ -431,7 +435,7 @@
         .then(function(){ baseMin().push(fila); return guardar(it.mov, { estado: "aprobado", aprobado_por: SOY, aprobado_at: new Date().toISOString(), cargado: "base_min:" + id }); })
         .then(function(){ return conFin ? crearPlata(Object.assign({}, fila), finFinal(it)) : null; });
     }
-    return paso.then(function(){ toast(conFin ? "Venta aprobada: pasó a Ventas minoristas · " + dest + ". El cobro quedó abajo para aprobarlo en Finanzas." : "Venta aprobada: pasó a Ventas minoristas · " + dest + " (sin Finanzas)."); pintar(); });
+    return paso.then(function(){ toast(conFin ? "Venta aprobada: pasó a Ventas minoristas · " + dest + " y se cargó en Finanzas " + (NOM[quienDeCobro(v.cobro)] || "") + "." : "Venta aprobada: pasó a Ventas minoristas · " + dest + " (sin Finanzas)."); pintar(); });
   }
   function pintarVentas(p, lista){
     if (!lista.length){ var v = h("div", "nvmov-vacio"); v.append(h("b", null, "No hay ventas para revisar 🎉"), h("small", null, "Las de Tienda Nube aparecen solas. Las de WhatsApp o Instagram mandalas a #movimientos, por ejemplo: “Venta Juana Pérez $85.000 transferencia por Pau”.")); p.append(v); return; }
@@ -611,7 +615,7 @@
     /* debajo: a Finanzas sí/no + cómo queda + aprobar */
     var sub = h("div", "nvmov-sub");
     var fw = h("label", "nvmov-fin"); var fc = h("input"); fc.type = "checkbox"; fc.checked = FIN[it.id] !== false; var ft = h("span");
-    fw.title = "Si está tildado, al aprobar también se crea el cobro para Finanzas (queda abajo para aprobarlo)."; fw.append(fc, ft);
+    fw.title = "Si está tildado, al aprobar la venta el cobro entra directo en Finanzas."; fw.append(fc, ft);
     var lf = h("div", "nvmov-lfin"); var fa = h("span", "nvmov-al nvmov-falt");
     var lfEm = h("em"), lfCon = h("input", "nvmov-in"), lfFe = h("input", "nvmov-in"), lfCat = h("select", "nvmov-in"), lfTot = h("input", "nvmov-in"), lfCta = h("b"), lfNot = h("input", "nvmov-in"), lfVol = h("button", "nvmov-lfvol", "↺"), lfArm = false;
     lfFe.type = "date"; lfTot.inputMode = "decimal"; lfNot.placeholder = "Notas"; lfVol.type = "button"; lfVol.title = "Volver a lo que sale de la venta";
@@ -666,7 +670,7 @@
       if (!si){ vf.append(h("b", null, "Esta venta no va a Finanzas"), h("p", null, "Tildá “También a Finanzas” si querés que se cargue.")); return; }
       vf.append(h("b", null, "Así se carga en Finanzas " + (d.quien || "(elegí quién cobró)")));
       var g = h("div", "nvmov-vfg"); d.cols.forEach(function(c){ var e = h("div"); e.append(h("small", null, c[0]), h("span", null, c[1])); g.append(e); });
-      vf.append(g, h("p", null, "Al aprobar la venta, este cobro queda abajo en “Movimientos de plata”; cuando lo aprobás, entra en Finanzas."));
+      vf.append(g, h("p", null, "Al aprobar la venta, este cobro entra directo en Finanzas."));
     };
     fc.onchange = function(){ FIN[it.id] = fc.checked; refrescar(); };
     refrescar();
