@@ -952,3 +952,11 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
     ".chmsg:has(.nvmovchip.ok):not(.nvfin) .chx::before{content:none!important}";
   document.head.appendChild(st);
 })();
+
+/* ---------- Con el menú achicado, la pantalla usa todo el ancho (más columnas de la tabla a la vista) ---------- */
+(function(){
+  if (window.__nvAncho) return; window.__nvAncho = 1;
+  var st = document.createElement("style");
+  st.textContent = "@media(min-width:901px){html.nv-mini:not(#nv1):not(#nv2) body .wrap{max-width:none!important;padding-left:18px!important;padding-right:18px!important}}";
+  document.head.appendChild(st);
+})();
