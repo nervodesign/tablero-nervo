@@ -105,7 +105,7 @@
     var nro = esFac ? (cb.nro ? String(pv).padStart(5, "0") + "-" + String(cb.nro).padStart(8, "0") : "Se asigna al emitir") : "R-" + String(f.remito_nro || siguienteRemito()).padStart(6, "0");
     var fch = esFac && cb.fecha ? cb.fecha.slice(6, 8) + "/" + cb.fecha.slice(4, 6) + "/" + cb.fecha.slice(0, 4) : fechaTx(esFac && f.emitida_at ? f.emitida_at : d.fecha);
     var titulo = esNC ? "NOTA DE CRÉDITO" : esFac ? "FACTURA" : "REMITO";
-    var logo = paraMail || !NLOGO ? '<div style="font-family:Georgia,serif;font-size:40px;line-height:1;color:' + INK + '">n.</div>' : '<svg viewBox="0 0 501 425" width="46" height="39" style="display:block"><path fill="' + INK + '" d="' + NLOGO + '"/></svg>';
+    var logo = paraMail || !NLOGO ? '<img src="https://nervodesign.github.io/tablero-nervo/img/n-logo.png" width="44" height="38" alt="n." style="display:block;border:0;width:44px;height:38px">' : '<svg viewBox="0 0 501 425" width="46" height="39" style="display:block"><path fill="' + INK + '" d="' + NLOGO + '"/></svg>';
     var lbl = function(t){ return '<div style="font-size:9.5px;letter-spacing:.18em;color:' + MOKA + ';margin-bottom:6px">' + t + '</div>'; };
     var celda = "padding:9px 4px;border-bottom:1px solid " + LIN + ";"; var nw = "white-space:nowrap;";
     var filas = (d.items || []).map(function(i){ return '<tr><td style="' + celda + '">' + esc(i.d) + '</td><td style="' + celda + 'text-align:center;color:' + MUT + '">' + esc(i.c) + '</td><td style="' + celda + nw + 'text-align:right;color:' + MUT + '">' + plata(i.p) + '</td><td style="' + celda + nw + 'text-align:right">' + plata((Number(i.c) || 0) * (Number(i.p) || 0)) + '</td></tr>'; }).join("");
@@ -113,9 +113,9 @@
     var total = esNC ? (Number(cb.total) || totalDe(f)) : totalDe(f);
     var emisor = esFac
       ? '<b style="font-weight:500">' + esc(cfg.razon || "—") + '</b><br>CUIT ' + esc(cfg.cuit || "—") + '<br>Responsable Monotributo<br>' + esc(cfg.dom || NERVO.dir) + (cfg.iibb ? '<br>IIBB ' + esc(cfg.iibb) : '') + (cfg.inicio ? '<br>Inicio de actividades ' + esc(fechaTx(cfg.inicio)) : '')
-      : '<b style="font-weight:500">Nervo Design</b><br>' + NERVO.mail + '<br>' + NERVO.tel + '<br>' + NERVO.dir;
+      : '<b style="font-weight:500">Nervo Design</b><br><span style="white-space:nowrap">' + NERVO.mail + '</span><br><span style="white-space:nowrap">' + NERVO.tel + '</span><br>' + NERVO.dir;
     var docC = String(c.doc || "").replace(/\D/g, "");
-    var cliente = '<b style="font-weight:500">' + esc(c.nombre || "—") + '</b>' + (docC ? '<br>' + (docC.length > 8 ? "CUIT " : "DNI ") + esc(c.doc) : '') + '<br>' + esc(c.cond || "Consumidor Final") + (c.dir ? '<br>' + esc(c.dir) : '');
+    var cliente = '<b style="font-weight:500">' + esc(c.nombre || "—") + '</b>' + (docC ? '<br>' + (docC.length > 8 ? "CUIT " : "DNI ") + esc(c.doc) : '') + '<br>' + esc(c.cond || "Consumidor Final") + (c.email ? '<br><span style="white-space:nowrap">' + esc(c.email) + '</span>' : '') + (c.dir ? '<br>' + esc(c.dir) : '');
     var letra = esFac
       ? '<div style="display:inline-block;border:1px solid ' + MOKA + ';width:44px;height:44px;line-height:44px;text-align:center;font-size:24px;color:' + MOKA + '">C</div><div style="font-size:8.5px;letter-spacing:.14em;color:' + MUT + ';margin-top:5px">COD. ' + (esNC ? "013" : "011") + '</div>'
       : '<div style="display:inline-block;border:1px solid ' + LIN + ';width:44px;height:44px;line-height:44px;text-align:center;font-size:24px;color:' + MUT + '">X</div><div style="font-size:8.5px;letter-spacing:.1em;color:' + MUT + ';margin-top:5px">NO VÁLIDO<br>COMO FACTURA</div>';
@@ -129,17 +129,30 @@
     } else if (!esFac){
       pie = '<div style="margin-top:24px;padding-top:14px;border-top:1px solid ' + LIN + ';font-size:11.5px;color:' + MUT + '">Documento no válido como factura.</div>';
     } else pie = '';
+    var marca = '<div style="font-size:10.5px;letter-spacing:.14em;margin-top:10px;white-space:nowrap">NERVO DESIGN</div><div style="font-size:8.5px;letter-spacing:.12em;color:' + MUT + ';margin-top:3px;white-space:nowrap">ILUMINACIÓN &amp; DECO</div>';
+    var nroTx = '<div style="font-size:15px;margin-top:8px;white-space:nowrap">N° ' + esc(nro) + '</div><div style="font-size:11.5px;color:' + MUT + ';margin-top:2px;white-space:nowrap">Fecha ' + esc(fch) + '</div>';
+    if (paraMail){
+      var badge = esFac ? '<span style="display:inline-block;border:1px solid ' + MOKA + ';color:' + MOKA + ';font-size:12px;line-height:20px;width:22px;text-align:center;margin-left:8px;vertical-align:middle">C</span>' : '';
+      var cod = esFac ? '<div style="font-size:9px;letter-spacing:.1em;color:' + MUT + ';margin-top:4px;white-space:nowrap">COD. ' + (esNC ? "013" : "011") + '</div>' : '<div style="font-size:9px;letter-spacing:.06em;color:' + MUT + ';margin-top:4px;white-space:nowrap">No válido como factura</div>';
+      var bloque = function(t, x, ult){ return '<tr><td style="padding:14px 0;' + (ult ? '' : 'border-bottom:1px solid ' + LIN + ';') + '">' + lbl(t) + x + '</td></tr>'; };
+      return '<div style="font-family:Helvetica,Arial,sans-serif;color:' + INK + ';max-width:600px;margin:0 auto;background:#fff;padding:26px 22px 22px;border:1px solid ' + LIN + ';font-size:13px;line-height:1.6">' + aviso +
+        '<table style="width:100%;border-collapse:collapse"><tr><td style="vertical-align:top">' + logo + marca + '</td>' +
+        '<td style="vertical-align:top;text-align:right"><div style="font-size:11px;letter-spacing:.14em;white-space:nowrap">' + titulo + badge + '</div>' + cod + nroTx + '</td></tr></table>' + ref +
+        '<table style="width:100%;border-collapse:collapse;margin-top:20px;border-top:1px solid ' + LIN + ';border-bottom:1px solid ' + LIN + '">' + bloque(esFac ? "EMISOR" : "DE", emisor) + bloque("CLIENTE", cliente, true) + '</table>' +
+        cuerpo();
+    }
     return '<div style="font-family:Outfit,Helvetica,Arial,sans-serif;color:' + INK + ';max-width:680px;margin:0 auto;background:#fff;padding:34px 36px 26px;border:1px solid ' + LIN + ';font-size:12.5px;line-height:1.55">' + aviso +
       '<table style="width:100%;border-collapse:collapse"><tr>' +
-        '<td style="vertical-align:top;width:38%">' + logo + '<div style="font-size:11px;letter-spacing:.24em;margin-top:10px">NERVO DESIGN</div><div style="font-size:8.5px;letter-spacing:.2em;color:' + MUT + ';margin-top:2px">ILUMINACIÓN &amp; DECO</div></td>' +
+        '<td style="vertical-align:top;width:38%">' + logo + marca + '</td>' +
         '<td style="vertical-align:top;text-align:center;width:24%">' + letra + '</td>' +
-        '<td style="vertical-align:top;text-align:right;width:38%"><div style="font-size:11px;letter-spacing:.24em">' + titulo + '</div><div style="font-size:15px;margin-top:8px">N° ' + esc(nro) + '</div><div style="font-size:11.5px;color:' + MUT + ';margin-top:2px">Fecha ' + esc(fch) + '</div></td>' +
+        '<td style="vertical-align:top;text-align:right;width:38%"><div style="font-size:11px;letter-spacing:.18em;white-space:nowrap">' + titulo + '</div>' + nroTx + '</td>' +
       '</tr></table>' + ref +
       '<table style="width:100%;border-collapse:collapse;margin-top:24px;border-top:1px solid ' + LIN + ';border-bottom:1px solid ' + LIN + '"><tr><td style="vertical-align:top;width:50%;padding:16px 16px 16px 0">' + lbl(esFac ? "EMISOR" : "DE") + emisor + '</td><td style="vertical-align:top;padding:16px 0 16px 16px;border-left:1px solid ' + LIN + '">' + lbl("CLIENTE") + cliente + '</td></tr></table>' +
-      '<table style="width:100%;border-collapse:collapse;margin-top:20px;font-size:12.5px"><tr style="font-size:9.5px;letter-spacing:.16em;color:' + MUT + ';text-align:left"><th style="padding:0 4px 8px;font-weight:400;border-bottom:1px solid ' + INK + '">DETALLE</th><th style="padding:0 4px 8px;font-weight:400;text-align:center;border-bottom:1px solid ' + INK + '">CANT.</th><th style="padding:0 4px 8px;font-weight:400;text-align:right;border-bottom:1px solid ' + INK + '">PRECIO</th><th style="padding:0 4px 8px;font-weight:400;text-align:right;border-bottom:1px solid ' + INK + '">SUBTOTAL</th></tr>' + filas + '</table>' +
+      cuerpo();
+    function cuerpo(){ return '<table style="width:100%;border-collapse:collapse;margin-top:20px;font-size:12.5px"><tr style="font-size:9.5px;letter-spacing:.16em;color:' + MUT + ';text-align:left"><th style="padding:0 4px 8px;font-weight:400;border-bottom:1px solid ' + INK + '">DETALLE</th><th style="padding:0 4px 8px;font-weight:400;text-align:center;border-bottom:1px solid ' + INK + '">CANT.</th><th style="padding:0 4px 8px;font-weight:400;text-align:right;border-bottom:1px solid ' + INK + '">PRECIO</th><th style="padding:0 4px 8px;font-weight:400;text-align:right;border-bottom:1px solid ' + INK + '">SUBTOTAL</th></tr>' + filas + '</table>' +
       '<table style="width:100%;border-collapse:collapse;margin-top:14px"><tr><td></td><td style="width:240px;padding:12px 4px 0;border-top:1px solid ' + INK + ';text-align:right"><span style="font-size:9.5px;letter-spacing:.18em;color:' + MUT + ';margin-right:14px">TOTAL</span><span style="font-size:20px;white-space:nowrap;color:' + MOKA + '">' + plata(total) + '</span></td></tr></table>' +
       pie +
-      '<div style="margin-top:22px;font-size:10.5px;letter-spacing:.06em;color:' + MUT + ';text-align:center">' + NERVO.web + ' · ' + NERVO.lema + '</div></div>';
+      '<div style="margin-top:22px;font-size:10.5px;letter-spacing:.06em;color:' + MUT + ';text-align:center">' + NERVO.web + ' · ' + NERVO.lema + '</div></div>'; }
   }
   function siguienteRemito(){ var m = 0; Object.keys(F).forEach(function(k){ m = Math.max(m, Number(F[k].remito_nro) || 0); }); return m + 1; }
   function mailHTML(f, tipo){
