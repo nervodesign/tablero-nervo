@@ -897,7 +897,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
     "}" +
     "@media(max-width:900px){.nvmini-btn{display:none!important}}";
   document.head.appendChild(st);
-  var R = document.documentElement, AUTO = { "tab-base": 1, "tab-mov": 1 };
+  var R = document.documentElement, AUTO = { "tab-base": 1, "tab-mov": 1, "tab-chat": 1 };
   function pref(){ try { return localStorage.getItem("nv-nav-mini") === "1"; } catch(e){ return false; } }
   function poner(on){ R.classList.toggle("nv-mini", !!on); var b = document.querySelector(".nvmini-btn"); if (b){ b.textContent = on ? "»" : "« Achicar menú"; b.title = on ? "Agrandar el menú" : "Achicar el menú"; } }
   var ACT = null;
@@ -914,4 +914,41 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
     poner(AUTO[id] ? true : pref());
   }
   setInterval(revisar, 300); revisar();
+})();
+
+/* ---------- Solapa Chat en la compu: más grande, sin barra de arriba y con fondos distintos ---------- */
+(function(){
+  if (window.__nvChatDesk) return; window.__nvChatDesk = 1;
+  var C = "html.nv-chatd:not(#nv1):not(#nv2) body";
+  var st = document.createElement("style");
+  st.textContent = "@media(min-width:901px){" +
+    C + " header.top{display:none!important}" +
+    C + " .wrap{max-width:none!important;padding-left:14px!important;padding-right:14px!important}" +
+    C + " main#list{margin-top:10px!important}" +
+    C + " main#list .chw{height:calc(100vh - 22px)!important;max-height:none!important;margin-top:0!important;border-radius:16px!important;border:1px solid #E4D6CA!important;overflow:hidden!important}" +
+    C + " .chw .chc{background:#EFE5DA!important;border-right:1px solid #E0D0C2!important}" +
+    C + " .chw .chmain{background:#FFFDFB!important}" +
+    C + " .chw .chtt{background:#FFFFFF!important;border-bottom:1px solid #EADDD2!important}" +
+    C + " .chw .chlist{background:#F6EFE7!important}" +
+    C + " .chw .chmsg{background:#FFFFFF!important;border:1px solid #EADDD2!important;box-shadow:0 1px 2px rgba(58,36,28,.05)!important}" +
+    C + " .chw .chf{background:#FFFFFF!important;border-top:1px solid #EADDD2!important}" +
+    C + " .chw .chrp{background:#FBF7F3!important}" +
+    "}";
+  document.head.appendChild(st);
+  setInterval(function(){
+    var sel = document.querySelector('nav.tabs .tab[aria-selected="true"]');
+    document.documentElement.classList.toggle("nv-chatd", !!sel && sel.id === "tab-chat");
+  }, 300);
+})();
+
+/* ---------- Chat: lupa más grande y el chat de la solapa Chat marca el tilde igual que el de Movimientos ---------- */
+(function(){
+  if (window.__nvChatIgual) return; window.__nvChatIgual = 1;
+  var st = document.createElement("style");
+  st.textContent = ".chw .chtt .nvacts .nvib{font-size:16px!important;min-width:34px;min-height:34px}" +
+    ".chw .chtt .nvacts .nvib[title=\"Buscar en el chat\"]{font-size:21px!important;font-weight:700}" +
+    ".chmsg:has(.nvmovchip.ok):not(.nvfin){position:relative!important;background:#F2F8EF!important;border-color:#CFE3C8!important}" +
+    ".chmsg:has(.nvmovchip.ok):not(.nvfin)::after{content:\"✓\";position:absolute;right:-8px;top:-8px;width:24px;height:24px;border-radius:50%;background:#4E8A45;color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.15);z-index:2}" +
+    ".chmsg:has(.nvmovchip.ok):not(.nvfin) .chx::before{content:none!important}";
+  document.head.appendChild(st);
 })();
