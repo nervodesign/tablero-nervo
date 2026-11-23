@@ -966,10 +966,44 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   if (window.__nvPresAncho) return; window.__nvPresAncho = 1;
   var P = "html.nv-presd:not(#nv1):not(#nv2) body main#list > .pz-top";
   var st = document.createElement("style");
-  st.textContent = "@media(min-width:1100px){html.nv-mini:not(#nv1):not(#nv2) body .p3{grid-template-columns:minmax(400px,38%) minmax(0,1fr)!important}" +
+  st.textContent = "@media(min-width:1300px){html.nv-mini:not(#nv1):not(#nv2) body .p3{grid-template-columns:minmax(380px,32%) minmax(0,1fr) 280px!important}" +
     "html.nv-mini:not(#nv1):not(#nv2) body .p3 .p3-card.p3-l{width:auto!important;max-width:none!important}}" +
     "@media(min-width:1000px){" + P + "{margin-top:-78px!important;padding-left:200px!important;padding-right:360px!important;flex-wrap:nowrap!important;gap:10px!important;align-items:center!important;min-height:45px;position:relative;z-index:3;pointer-events:none}" +
     P + " > *{pointer-events:auto}" + P + " .seg button{padding:7px 14px!important}" + P + " .p3-new{white-space:nowrap;padding:8px 14px!important}}";
   document.head.appendChild(st);
   setInterval(function(){ var s = document.querySelector('nav.tabs .tab[aria-selected="true"]'); document.documentElement.classList.toggle("nv-presd", !!s && s.id === "tab-pres"); }, 300);
+})();
+
+/* ---------- Nervo Design 2026: encabezado en una línea, menú completo (sin "Más") y tarjeta de Movimientos ---------- */
+(function(){
+  if (window.__nvBaseUx) return; window.__nvBaseUx = 1;
+  var B = "html.nv-based:not(#nv1):not(#nv2) body main#list > .bz-top";
+  var st = document.createElement("style");
+  st.textContent = "@media(min-width:1000px){" + B + "{margin-top:-66px!important;padding-left:250px!important;padding-right:330px!important;position:relative;z-index:3;pointer-events:none;min-height:28px}" +
+    B + " > *{pointer-events:auto}" +
+    "html.nv-based:not(#nv1):not(#nv2) body main#list .bz-host{margin-top:14px!important}}";
+  document.head.appendChild(st);
+  var SCSS = "nav.tabs.nv2 .nv2-mas{display:none!important}nav.tabs.nv2 .nv2-mw{display:contents!important}nav.tabs.nv2 .nv2-menu{display:contents!important}nav.tabs.nv2 .nv2-menu > button{display:inline-flex!important;width:auto!important;margin:0!important}" +
+    "nav.tabs.nv2{flex-wrap:wrap!important;row-gap:6px}" +
+    ".edash{grid-template-columns:repeat(6,minmax(0,1fr))!important}" +
+    ".edt.nvmovcard{cursor:pointer}.edt.nvmovcard span{line-height:1.25}";
+  function cuenta(){ var n = document.querySelector("#tab-mov .nvmov-n"); return n ? (parseInt(n.textContent, 10) || 0) : 0; }
+  function tick(){
+    var sel = document.querySelector('nav.tabs .tab[aria-selected="true"]');
+    var on = !!sel && sel.id === "tab-base";
+    document.documentElement.classList.toggle("nv-based", on);
+    if (!on) return;
+    var host = document.querySelector(".bz-host"), sr = host && host.shadowRoot; if (!sr) return;
+    if (!sr.querySelector("style.nvbase")){ var s = document.createElement("style"); s.className = "nvbase"; s.textContent = SCSS; sr.appendChild(s); }
+    var ed = sr.querySelector(".edash"); if (!ed) return;
+    var c = ed.querySelector(".nvmovcard");
+    if (!c){
+      c = document.createElement("button"); c.type = "button"; c.className = "edt nvmovcard"; c.style.setProperty("--c", "#EADFF0");
+      c.innerHTML = "<b></b><span>Para revisar en Movimientos</span>"; c.title = "Ir a Movimientos";
+      c.onclick = function(){ var t = document.getElementById("tab-mov"); if (t) t.click(); };
+      ed.appendChild(c);
+    }
+    var n = String(cuenta()); if (c.firstChild.textContent !== n) c.firstChild.textContent = n;
+  }
+  setInterval(tick, 700); tick();
 })();
