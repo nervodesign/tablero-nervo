@@ -34,7 +34,7 @@
     var o = {}, s = String(txt || "");
     s.split(/\n/).forEach(function(l){ var m = l.match(/^\s*([A-Za-zÁÉÍÓÚáéíóúñ ]+)\s*:\s*(.+)$/); if (m) o[m[1].trim().toLowerCase()] = m[2].trim(); });
     var mail = o.mail || o.email || (s.match(/[\w.+-]+@[\w-]+\.[\w.]+/) || [""])[0];
-    var dni = o.dni || o.cuit || o.cuil || (s.match(/\b\d{7,8}\b|\b\d{2}-?\d{8}-?\d\b/) || [""])[0];
+    var dni = o.dni || o.cuit || o.cuil || (s.match(/\b\d{2}-?\d{8}-?\d\b/) || s.match(/\b\d{2}\.?\d{3}\.?\d{3}\b|\b\d{7}\b/) || [""])[0];
     return { nombre: o.nombre || "", doc: String(dni || "").replace(/\D/g, ""), email: String(mail || "").toLowerCase(), dir: o["dirección"] || o.direccion || o.domicilio || "", tel: o.celular || o.tel || o["teléfono"] || "" };
   }
   function itemsMin(v){
@@ -69,7 +69,7 @@
       if (!v.fecha || String(v.fecha).slice(0, 7) !== MES) return;
       if (/CANCELAD/i.test(v.estado || "")) return;
       var mc = (S.mayclientes || []).find(function(x){ return x.nombre && v.cliente && x.nombre.trim().toLowerCase() === String(v.cliente).trim().toLowerCase(); }) || {};
-      out.push({ id: "may:" + v.id, origen: "may", v: v, num: "MAY", fecha: v.fecha, cliente: v.cliente || "", cuenta: "", monto: num(v.sena) + num(v.saldo), envio: 0, cli: { nombre: v.cliente || "", doc: "", email: (mc.email || "").toLowerCase(), dir: mc.ciu || "", tel: mc.tel || "" }, items: itemsMay });
+      out.push({ id: "may:" + v.id, origen: "may", v: v, num: "MAY", fecha: v.fecha, cliente: v.cliente || "", cuenta: "", monto: num(v.sena) + num(v.saldo), envio: 0, cli: (function(){ var dc = datosCli(mc.datos); return { nombre: v.cliente || "", doc: dc.doc, email: (mc.email || dc.email || "").toLowerCase(), dir: mc.ciu || dc.dir || "", tel: mc.tel || dc.tel || "" }; })(), items: itemsMay });
     });
     out.sort(function(a, b){ return String(b.fecha).localeCompare(String(a.fecha)); });
     return out;
