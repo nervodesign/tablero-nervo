@@ -1021,3 +1021,6 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
     "@media(min-width:1300px){html.nv-mini:not(#nv1):not(#nv2) body .p3 .p3-docw .p3-doc{zoom:.82}}";
   document.head.appendChild(st);
 })();
+
+/* Tienda web sin solapa Revisar */
+;(function(){if(window.__nvWebSinRev)return;window.__nvWebSinRev=1;var st=document.createElement('style');st.textContent='.seg.web-sw > button:first-child{display:none !important}';document.head.appendChild(st);function fix(){var s=document.querySelector('.seg.web-sw');if(!s)return;var b=s.children;if(b[0]&&b[0].getAttribute('aria-pressed')==='true'&&b[1])b[1].click();}new MutationObserver(fix).observe(document.body,{childList:true,subtree:true});fix();})();
