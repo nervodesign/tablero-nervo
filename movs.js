@@ -81,7 +81,7 @@
     var N = window.__nv, S = N && N.S; if (!LISTO || !S || !S.chat || !S.chat.m || !SOY) return;
     var ahora = Date.now();
     var nuevos = S.chat.m.filter(function(m){
-      return m.canal === CANAL && !m.borrado && !m.padre && !(m.reac && m.reac.__p) && m.creado >= DESDE && ahora - m.creado > 6000 && !ENCURSO[m.id];
+      return m.canal === CANAL && !m.borrado && !m.padre && !(m.reac && m.reac.__p) && m.creado >= DESDE && ahora - m.creado > 6000 && !ENCURSO[m.id] && !/^\s*✅\s*TODO ACTUALIZADO/i.test(m.texto || "");
     });
     nuevos.forEach(function(m){
       var row = ROWS.find(function(x){ return x.msg_id === m.id; });
@@ -263,8 +263,8 @@
     }
     var dias = {};
     lista.forEach(function(r){ var k = diaDe(r.msg_at || r.creado); (dias[k] = dias[k] || []).push(r); });
-    Object.keys(dias).sort().reverse().forEach(function(k){
-      var rs = dias[k], np = rs.filter(function(r){ return r.estado !== "aprobado"; }).length;
+    Object.keys(dias).sort().forEach(function(k){
+      var rs = dias[k].slice().sort(function(a, b){ return String(a.msg_at || a.creado || "").localeCompare(String(b.msg_at || b.creado || "")); }), np = rs.filter(function(r){ return r.estado !== "aprobado"; }).length;
       var ing = 0, egr = 0; rs.forEach(function(r){ var s = signoDe(r); if (s === "+") ing += Number(r.monto) || 0; else if (s === "-") egr += Number(r.monto) || 0; });
       var g = h("div", "nvmov-dia");
       var gh = h("div", "nvmov-diah");
@@ -376,7 +376,7 @@
     return f ? "1.2 VENTA MIN. TARJETA FACTURADA" : "1.3 VENTA MIN. TARJETA NO FACTURADA";
   }
   function baseMin(){ var S = window.__nv && window.__nv.S; return (S && S.bzData && S.bzData.min) || []; }
-  function ventasWeb(){ return baseMin().filter(function(r){ return /REVISAR/i.test(r.env || ""); }); }
+  function ventasWeb(){ return baseMin().filter(function(r){ if (!/REVISAR/i.test(r.env || "")) return false; if (!Number(r.cobrado) && Number(r.facturar)) r.cobrado = String(r.facturar); return true; }); }
   function ventasTodas(){
     var w = ventasWeb().map(function(r){ return { src: "web", id: "w" + r.id, row: r }; });
     var ch = ROWS.filter(function(r){ return esBorradorVenta(r) && (r.estado === "pendiente" || r.estado === "procesando"); }).map(function(m){
@@ -386,7 +386,7 @@
         cobro: JSON.stringify(cobroDeQuien(m.por)), menv: "", tipo: "", suc: "", fact: "" }; }
       return { src: "chat", id: "c" + m.id, row: v, mov: m };
     });
-    return w.concat(ch).sort(function(a, b){ return String(b.row.fecha || "").localeCompare(String(a.row.fecha || "")); });
+    return w.concat(ch).sort(function(a, b){ return String(a.row.fecha || "").localeCompare(String(b.row.fecha || "")) || String(a.row.num || "").localeCompare(String(b.row.num || ""), "es", { numeric: true }); });
   }
   var tVen = {};
   function guardarVenta(it, campos){
@@ -420,7 +420,7 @@
     var dest = DEST[it.id] || "PARA HACER";
     var paso, conFin = FIN[it.id] !== false;
     if (it.src === "web"){
-      paso = new Promise(function(ok, mal){ google.script.run.withSuccessHandler(ok).withFailureHandler(mal).baseGuardarVarios("base_min", [{ id: v.id, env: dest, cambiado: Date.now(), por: SOY }]); })
+      paso = new Promise(function(ok, mal){ google.script.run.withSuccessHandler(ok).withFailureHandler(mal).baseGuardarVarios("base_min", [{ id: v.id, env: dest, cobrado: v.cobrado || "", cambiado: Date.now(), por: SOY }]); })
         .then(function(){ v.env = dest; return conFin ? crearPlata(v, finFinal(it)) : null; });
     } else {
       var id = "min" + Date.now(), num = v.num || proxNumWhats();
@@ -1336,7 +1336,7 @@
     });
   }
   function plata(n){ return "$" + String(Math.round(Math.abs(n))).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
-  function estado(m){
+  function estado(m){ if (/^\s*✅\s*TODO ACTUALIZADO/i.test(m.texto || "")) return ["✅ Revisión cerrada hasta acá", "c-ok", "ok"];
     var r = ROWS[m.id];
     if (/^web-/.test(m.id)){ var w = ((window.__nv && window.__nv.S && window.__nv.S.bzData && window.__nv.S.bzData.min) || []).find(function(x){ return "web-" + x.id === m.id; }); return w && !/REVISAR/i.test(w.env || "") ? ["✓ Venta web revisada", "c-ok", "ok"] : ["● Venta web · para revisar", "c-pen", "rev"]; }
     if (/^\s*\/ojo/i.test(m.texto || "")) return r && (r.estado === "aprobado" || r.estado === "descartado") ? ["✓ Ojo resuelto", "c-ok", "ok"] : ["⚠ Ojo · para corregir", "c-no", "rev"];
@@ -1497,7 +1497,7 @@
     if (b){
       var id = b.dataset.msg; if (SEL === id){ SEL = ""; marcar(); return; } SEL = id; marcar();
       var f = fila(id);
-      if (!f){ nota(b, "Este mensaje no tiene nada pendiente en la lista."); return; }
+      if (!f){ var cer = document.querySelectorAll("section.nvmovp .nvmov-blq.cerr .nvmov-blqh"); if (cer.length && !b.dataset.nvab){ b.dataset.nvab = "1"; [].forEach.call(cer, function(x){ x.click(); }); setTimeout(function(){ delete b.dataset.nvab; SEL = ""; b.click(); }, 250); return; } nota(b, "Esta ya está revisada: no queda nada pendiente en la lista."); return; }
       var blq = f.closest(".nvmov-blq");
       if (blq && blq.classList.contains("cerr")){ var hd = blq.querySelector(".nvmov-blqh"); if (hd) hd.click(); setTimeout(function(){ var g = fila(id); marcar(); if (visible(g)) g.scrollIntoView({ behavior: "smooth", block: "center" }); }, 120); return; }
       if (visible(f)) f.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1512,4 +1512,103 @@
   }, true);
   var tm = 0;
   new MutationObserver(function(){ if (!SEL) return; clearTimeout(tm); tm = setTimeout(marcar, 60); }).observe(document.body, { childList: true, subtree: true });
+})();
+
+/* ---------- Movimientos: cada lista se desliza sola, sin "Nueva tarea", logo Tienda Nube en el chat de al lado y botón "Todo actualizado" ---------- */
+(function(){
+  if (window.__nvMovUx3) return; window.__nvMovUx3 = 1;
+  var TN = "https://www.google.com/s2/favicons?domain=tiendanube.com&sz=128";
+  var FIN = /^\s*✅\s*TODO ACTUALIZADO/i;
+  var st = document.createElement("style");
+  st.textContent = [
+    "html body.nvmov-on .fab{display:none!important}",
+    "@media(min-width:901px){html body.nvmov-on.nvmc-on #nvmc{bottom:16px!important}}",
+    "@media(min-width:901px){",
+    "  section.nvmovp .nvmov-blq:first-of-type .nvmov-vt .nvmov-tb{max-height:calc(100vh - 290px)!important;overflow:auto!important;overscroll-behavior:contain}",
+    "  section.nvmovp .nvmov-blq:first-of-type .nvmov-vt .nvmov-tb > .nvmov-th{position:sticky!important;top:0;z-index:5;background:#FBF7F4!important}",
+    "  section.nvmovp .nvmov-blq:not(:first-of-type) .nvmov-blqb{max-height:calc(100vh - 230px)!important;overflow-y:auto!important;overscroll-behavior:contain}",
+    "}",
+    "section.nvmovp .nvmov-tb,section.nvmovp .nvmov-blqb{scrollbar-width:auto;scrollbar-color:#C9B3A3 #F3ECE5}",
+    "section.nvmovp .nvmov-tb::-webkit-scrollbar,section.nvmovp .nvmov-blqb::-webkit-scrollbar{width:12px;height:12px}",
+    "section.nvmovp .nvmov-tb::-webkit-scrollbar-track,section.nvmovp .nvmov-blqb::-webkit-scrollbar-track{background:#F3ECE5;border-radius:12px}",
+    "section.nvmovp .nvmov-tb::-webkit-scrollbar-thumb,section.nvmovp .nvmov-blqb::-webkit-scrollbar-thumb{background:#C9B3A3;border-radius:12px;border:3px solid #F3ECE5}",
+    "section.nvmovp .nvmov-tb::-webkit-scrollbar-thumb:hover,section.nvmovp .nvmov-blqb::-webkit-scrollbar-thumb:hover{background:#A88C78}",
+    "#nvmc .nvtn-av{display:inline-block;width:16px;height:16px;border-radius:50%;vertical-align:-3px;margin-right:6px;background:#fff url(" + TN + ") center/80% no-repeat;box-shadow:0 0 0 1px #DCE6F3}",
+    "#nvmc .m .w span.nvtn{color:#2E5C9E}",
+    ".chmsg.nvfin,#nvmc .m.nvfin{background:#E7F1E3!important;border:1px solid #BCD6B4!important;border-radius:14px!important;align-self:stretch!important;max-width:none!important}",
+    ".chmsg.nvfin .chx,#nvmc .m.nvfin > div:nth-child(2){font-weight:600!important;color:#2F5A2A!important}",
+    ".chmsg.nvfin .nvmovchip,#nvmc .m.nvfin .chip,#nvmc .m.nvfin .cta{display:none!important}",
+    ".nvfin-btn{border:1px solid #BCD6B4;background:#E7F1E3;color:#2F5A2A;border-radius:999px;padding:7px 14px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer}",
+    ".nvfin-btn:hover{background:#D9EAD3}",
+    "html body section.nvmovp .nvmov-blq,html body section.nvmovp .nvmov-blqb,html body section.nvmovp .nvmov-dia,html body section.nvmovp .nvmov-tb,html body section.nvmovp .nvmov-vt,html body section.nvmovp .nvmov-it,html body section.nvmovp .nvmov-tr{border-radius:0!important}",
+    "html body section.nvmovp .nvmov-tb{border:1px solid #D8C3B3!important}",
+    "html body section.nvmovp .nvmov-tb > .nvmov-th{border-bottom:2px solid #C9AE9B!important}",
+    "html body section.nvmovp .nvmov-tb > .nvmov-it{border-top:2px solid #D8C3B3!important}",
+    "html body section.nvmovp .nvmov-tr > *{border-right:1px solid #EADCD0!important}",
+    "html body section.nvmovp .nvmov-tr > *:last-child{border-right:0!important}"
+  ].join("\n");
+  document.head.appendChild(st);
+
+  function quien(){
+    var b = [].find.call(document.querySelectorAll("button"), function(x){ return /^\s*Sos\s/.test(x.textContent || ""); });
+    var n = b ? b.textContent.replace(/^\s*Sos\s*/, "").trim() : "";
+    return n || "Euge";
+  }
+  function terminar(btn){
+    var n = quien(), d = new Date();
+    var cuando = d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" }) + " " + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+    if (!confirm("¿Mandar al chat de movimientos “✅ TODO ACTUALIZADO”?\nAsí queda marcado que revisaste todo hasta acá.")) return;
+    if (!window.__nvLocal || !window.__nvLocal.chatEnviar){ alert("Todavía está cargando, probá en un segundo"); return; }
+    btn.disabled = true;
+    window.__nvLocal.chatEnviar([{ canal: "mov", texto: "✅ TODO ACTUALIZADO — revisado hasta acá por " + n + " · " + cuando, por: n.toLowerCase() }])
+      .then(function(){ btn.disabled = false; btn.textContent = "✅ Listo, quedó marcado"; setTimeout(function(){ btn.textContent = "✅ Todo actualizado"; }, 4000); },
+            function(e){ btn.disabled = false; alert("No se pudo mandar: " + (e && e.message || e)); });
+  }
+  var POS = {};
+  function clave(e){
+    var blq = e.closest("section.nvmovp .nvmov-blq"); if (!blq) return null;
+    var i = [].indexOf.call(blq.parentNode.querySelectorAll(".nvmov-blq"), blq);
+    return i + (e.classList.contains("nvmov-blqb") ? "b" : "t");
+  }
+  document.addEventListener("scroll", function(ev){
+    var e = ev.target; if (!e || !e.classList || !(e.classList.contains("nvmov-tb") || e.classList.contains("nvmov-blqb"))) return;
+    var k = clave(e); if (k && (e.classList.contains("nvmov-blqb") || e.closest(".nvmov-vt"))) POS[k] = [e.scrollTop, e.scrollLeft];
+  }, true);
+  function restaurar(){
+    [].forEach.call(document.querySelectorAll("section.nvmovp .nvmov-blqb, section.nvmovp .nvmov-vt .nvmov-tb"), function(e){
+      if (e.dataset.nvpos) return; e.dataset.nvpos = "1";
+      var k = clave(e), p = k && POS[k]; if (p){ e.scrollTop = p[0]; e.scrollLeft = p[1]; }
+    });
+  }
+  function marcar(){
+    var cab = document.querySelector("section.nvmovp .nvmov-cab");
+    if (cab && !cab.querySelector(".nvfin-btn")){
+      var b = document.createElement("button"); b.type = "button"; b.className = "nvfin-btn"; b.textContent = "✅ Todo actualizado";
+      b.title = "Manda un mensaje al chat de movimientos marcando que revisaste todo hasta acá";
+      b.onclick = function(){ terminar(b); };
+      var sw = cab.querySelector(".nvmc-sw"); if (sw) cab.insertBefore(b, sw); else cab.appendChild(b);
+    }
+    [].forEach.call(document.querySelectorAll(".chmsg:not(.nvfin) .chx"), function(x){ if (FIN.test(x.textContent || "")) x.closest(".chmsg").classList.add("nvfin"); });
+    [].forEach.call(document.querySelectorAll("#nvmc .m:not(.nvfin)"), function(m){ var t = m.children[1]; if (t && FIN.test(t.textContent || "")) m.classList.add("nvfin"); });
+    [].forEach.call(document.querySelectorAll("#nvmc .m .w span:not(.nvtn)"), function(s){
+      if (/^(🛒\s*)?(venta web|web|tienda nube)$/i.test((s.textContent || "").trim())){ s.classList.add("nvtn"); s.innerHTML = '<i class="nvtn-av"></i>Tienda Nube'; }
+    });
+    restaurar();
+  }
+  var t = 0;
+  new MutationObserver(function(){ clearTimeout(t); t = setTimeout(marcar, 40); }).observe(document.body, { childList: true, subtree: true });
+  setTimeout(marcar, 600);
+})();
+
+/* ---------- Chat de movimientos: tilde grande cuando el movimiento o la venta ya está aprobado ---------- */
+(function(){
+  if (window.__nvCheckOk) return; window.__nvCheckOk = 1;
+  var st = document.createElement("style");
+  st.textContent = "#nvmc .m{position:relative}" +
+    "#nvmc .m:has(.chip.c-ok):not(.nvfin){background:#F2F8EF!important;border-color:#CFE3C8!important}" +
+    "#nvmc .m:has(.chip.c-ok):not(.nvfin)::after{content:\"✓\";position:absolute;right:-8px;top:-8px;width:24px;height:24px;border-radius:50%;background:#4E8A45;color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.15)}" +
+    ".chmsg:has(.nvmovchip.ok):not(.nvfin){position:relative}" +
+    ".chmsg:has(.nvmovchip.ok):not(.nvfin) .chx::before{content:\"✓ \";color:#4E8A45;font-weight:800}" +
+    ".nvmovchip.ok{background:#E3EEDF!important;color:#3E6B3A!important;font-weight:600}";
+  document.head.appendChild(st);
 })();
