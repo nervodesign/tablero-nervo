@@ -1083,3 +1083,6 @@ document.querySelectorAll('main#list > .lnk').forEach(function(l){var a=l.queryS
 var p=document.createElement('a');p.className='lnk-prev';p.href=u;p.target='_blank';p.rel='noopener';var im=document.createElement('img');im.loading='lazy';im.alt='';var tries=0;im.onload=function(){if(im.naturalWidth!==640&&tries<6){tries++;setTimeout(function(){im.src=shot(u,Date.now());},5000);}};im.src=shot(u);p.appendChild(im);l.insertBefore(p,l.firstChild);
 var ic=l.querySelector('.lnk-ic');var h=host(u);if(ic&&h&&!ic.querySelector('img')){var f=document.createElement('img');f.src='https://www.google.com/s2/favicons?domain='+h+'&sz=64';f.alt='';f.onerror=function(){f.remove()};ic.textContent='';ic.appendChild(f);}});}
 new MutationObserver(tick).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-selected']});tick();})();
+
+/* Links: tarjetas del mismo alto */
+;(function(){if(window.__nvLnkEq)return;window.__nvLnkEq=1;var st=document.createElement('style');st.textContent='html.nv-lnkd main#list{align-items:stretch !important}html.nv-lnkd main#list > .lnk{align-content:start;height:100%}html.nv-lnkd .lnk-b{min-width:0}html.nv-lnkd .lnk-b a,html.nv-lnkd .lnk-host{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}';document.head.appendChild(st);})();
