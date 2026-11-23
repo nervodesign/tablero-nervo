@@ -897,7 +897,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
     "}" +
     "@media(max-width:900px){.nvmini-btn{display:none!important}}";
   document.head.appendChild(st);
-  var R = document.documentElement, AUTO = { "tab-base": 1, "tab-mov": 1, "tab-chat": 1 };
+  var R = document.documentElement, AUTO = { "tab-base": 1, "tab-mov": 1, "tab-chat": 1, "tab-pres": 1 };
   function pref(){ try { return localStorage.getItem("nv-nav-mini") === "1"; } catch(e){ return false; } }
   function poner(on){ R.classList.toggle("nv-mini", !!on); var b = document.querySelector(".nvmini-btn"); if (b){ b.textContent = on ? "»" : "« Achicar menú"; b.title = on ? "Agrandar el menú" : "Achicar el menú"; } }
   var ACT = null;
@@ -959,4 +959,17 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   var st = document.createElement("style");
   st.textContent = "@media(min-width:901px){html.nv-mini:not(#nv1):not(#nv2) body .wrap{max-width:none!important;padding-left:18px!important;padding-right:18px!important}}";
   document.head.appendChild(st);
+})();
+
+/* ---------- Presupuestos: cuadro de carga más ancho y el menú (Nuevo, Historial…) arriba al lado del título ---------- */
+(function(){
+  if (window.__nvPresAncho) return; window.__nvPresAncho = 1;
+  var P = "html.nv-presd:not(#nv1):not(#nv2) body main#list > .pz-top";
+  var st = document.createElement("style");
+  st.textContent = "@media(min-width:1100px){html.nv-mini:not(#nv1):not(#nv2) body .p3{grid-template-columns:minmax(400px,38%) minmax(0,1fr)!important}" +
+    "html.nv-mini:not(#nv1):not(#nv2) body .p3 .p3-card.p3-l{width:auto!important;max-width:none!important}}" +
+    "@media(min-width:1000px){" + P + "{margin-top:-78px!important;padding-left:200px!important;padding-right:360px!important;flex-wrap:nowrap!important;gap:10px!important;align-items:center!important;min-height:45px;position:relative;z-index:3;pointer-events:none}" +
+    P + " > *{pointer-events:auto}" + P + " .seg button{padding:7px 14px!important}" + P + " .p3-new{white-space:nowrap;padding:8px 14px!important}}";
+  document.head.appendChild(st);
+  setInterval(function(){ var s = document.querySelector('nav.tabs .tab[aria-selected="true"]'); document.documentElement.classList.toggle("nv-presd", !!s && s.id === "tab-pres"); }, 300);
 })();
