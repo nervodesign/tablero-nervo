@@ -510,6 +510,31 @@
     var v = it.row, q = quienDeCobro(v.cobro), f = finFinal(it);
     return { q: q, quien: q === "pau" ? "Pau" : q === "euge" ? "Euge" : "", f: f, cols: [["Concepto", f.concepto], ["Fecha", f.fecha ? f.fecha.split("-").reverse().join("/") : "—"], ["Categoría", f.cat], ["Total", f.total ? "$ " + Math.round(f.total).toLocaleString("es-AR") : "—"], ["Cuenta", GRUPOS_FIN[String(f.cat).split(".")[0]] || ""], ["Notas", f.notas || "Creado desde Movimientos (venta aprobada)"]] };
   }
+  /* ver la venta completa en un recuadro, todo entero y fácil de leer */
+  function verCompleta(it){
+    var v = it.row, d = datosFin(it);
+    var cap = h("div", "nvvc-cap"), p = h("div", "nvvc"); cap.append(p);
+    var x = h("button", "nvvc-x", "✕"); x.type = "button";
+    function cerrar(){ cap.remove(); document.removeEventListener("keydown", esc); }
+    function esc(e){ if (e.key === "Escape") cerrar(); }
+    x.onclick = cerrar; cap.onclick = function(e){ if (e.target === cap) cerrar(); }; document.addEventListener("keydown", esc);
+    var tit = h("div", "nvvc-t"); tit.append(h("b", null, (v.num || "Venta") + " · " + (v.cliente || "—")), h("small", null, (it.src === "web" ? "Tienda Nube" : "WhatsApp / IG") + (v.fecha ? " · " + v.fecha.split("-").reverse().join("/") : "")));
+    p.append(x, tit);
+    function sec(nom, filas){ var s = h("div", "nvvc-s"); s.append(h("h4", null, nom)); var g = h("div", "nvvc-g"); filas.forEach(function(f){ if (!f) return; var e = h("div", f[2] ? "full" : ""); e.append(h("small", null, f[0])); var sp = h("span", null, f[1] == null || f[1] === "" ? "—" : String(f[1])); if (!f[1]) sp.className = "vac"; e.append(sp); g.append(e); }); s.append(g); p.append(s); }
+    var ps = arr(v.prods), cs = String(v.cant || "").replace(/\[.?\]\s*/g, "").split(/\n/);
+    var lp = h("div", "nvvc-s"); lp.append(h("h4", null, "Productos"));
+    if (!ps.length) lp.append(h("p", "vac", "Sin productos cargados"));
+    ps.forEach(function(pr, i){ var r = h("div", "nvvc-p"); r.append(h("span", "q", (String(cs[i] || "1").trim() || "1") + " ×"), h("span", null, pr)); lp.append(r); });
+    p.append(lp);
+    var pesos = function(n){ return Number(n) ? "$ " + plataN(n) : ""; };
+    sec("Cliente", [["Nombre", v.cliente], ["Datos personales", v.datos, 1]]);
+    sec("Plata", [["Total cobrado", pesos(v.cobrado)], ["Total a facturar", pesos(v.facturar)], ["Costo de envío", pesos(v.costoEnv)], ["Pago", v.pago], ["Método de pago", arr(v.metodo).join(", ")], ["Cobró", d.quien]]);
+    sec("Envío", [["Método de envío", v.menv], ["Tipo de envío", v.tipo], ["Etiqueta", arr(v.etq).join(", ")], ["Estado", v.env], ["Sucursal / retiro", v.suc, 1], ["Observaciones", v.obs, 1]]);
+    if (v.fact) sec("Factura", [["Datos de factura", v.fact, 1]]);
+    sec("Así entra en Finanzas " + (d.quien || ""), d.cols.map(function(c){ return [c[0], c[1]]; }));
+    if (!document.getElementById("nvvc-css")){ var st = h("style"); st.id = "nvvc-css"; st.textContent = ".nvvc-cap{position:fixed;inset:0;background:rgba(43,32,28,.35);z-index:9999;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:40px 16px}.nvvc{position:relative;background:#fff;border-radius:8px;max-width:640px;width:100%;padding:22px 24px 18px;box-shadow:0 10px 40px rgba(0,0,0,.18);font-size:14px;color:#2B201C}.nvvc-x{position:absolute;right:12px;top:10px;border:0;background:none;font-size:18px;cursor:pointer;color:#8D827C}.nvvc-t b{display:block;font-size:18px;font-weight:600}.nvvc-t small{color:#8D827C}.nvvc-s{border-top:1px solid #ECE5E0;margin-top:14px;padding-top:12px}.nvvc-s h4{margin:0 0 8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6B5047;font-weight:600}.nvvc-g{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}.nvvc-g>div.full{grid-column:1/-1}.nvvc-g small{display:block;font-size:11px;color:#8D827C;margin-bottom:2px}.nvvc-g span{white-space:pre-wrap;word-break:break-word}.nvvc .vac{color:#B9AFA9}.nvvc-p{display:flex;gap:8px;padding:5px 0;border-bottom:1px dashed #F0EAE6}.nvvc-p .q{min-width:34px;color:#6B5047;font-weight:600}@media(max-width:560px){.nvvc-g{grid-template-columns:1fr}}"; document.head.append(st); }
+    document.body.append(cap);
+  }
   function filaVenta(it){
     var row = (it.src !== "web" && tipoVentaDe(it) === "may") ? filaMayorista(it) : filaVenta0(it);
     if (it.src === "web") return row;
@@ -675,6 +700,8 @@
     fc.onchange = function(){ FIN[it.id] = fc.checked; refrescar(); };
     refrescar();
     ab.onclick = function(){ det.hidden = !det.hidden; ab.classList.toggle("on", !det.hidden); ab.textContent = det.hidden ? "Abrir" : "Cerrar"; };
+    var vc = h("button", "nvmov-mas nvmov-vc", "Ver venta"); vc.type = "button"; vc.title = "Ver la venta completa en un recuadro"; vc.onclick = function(){ verCompleta(it); };
+    if (ab.parentNode){ ab.parentNode.append(vc); vc.style.marginTop = "6px"; vc.style.display = "block"; }
     return w;
   }
 
