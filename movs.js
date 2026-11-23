@@ -444,7 +444,8 @@
   var FIN = {}, DEST = {};
   /* ===== Ventas: mismas columnas que el tablero de Ventas minoristas ===== */
   var PAGOS = ["Finalizado", "Pendiente", "PARCIAL", "FALTA ENVIO"];
-  var MENVS = ["Vía Cargo", "Andreani", "Acordar envío", "Retira depósito cliente", "Retira depósito transporte", "BUSPACK"];
+  var MENVS = ["Vía Cargo", "Andreani", "Retira en Nervo", "Acordar envío", "Retira depósito cliente", "Retira depósito transporte", "BUSPACK", "Sendbox"];
+  var ETQS = ["VIA CARGO", "CREADA", "ENVIO NUBE ANDREANI A DOMICILIO", "ENVIO NUBE A SUCURSAL ANDREANI", "COORDINAR POR OTRO TRANSPORTE (SENDBOX, BUSPACk)", "S/ ETIQUETA - POR DEPOSITO", "RETIRA EN NERVO", "PAQUETE ENVIADO"];
   var TIPOSENV = ["Domicilio", "Sucursal"];
   function sel(val, ops, ph, on){
     var e = h("select", "nvmov-in cat"); var o0 = h("option", null, ph || "—"); o0.value = ""; e.append(o0);
@@ -592,7 +593,8 @@
     var dp = caja(v.datos, "DNI, mail, celular, dirección", function(x){ guardarVenta(it, { datos: x }); });
     var ob = caja(v.obs, "Observaciones de envío", function(x){ guardarVenta(it, { obs: x }); });
     var su = caja(v.suc, "Sucursal", function(x){ guardarVenta(it, { suc: x }); });
-    var et = inp(arr(v.etq).join(", "), "Etiqueta", "", function(x){ guardarVenta(it, { etq: JSON.stringify(x.split(/\s*,\s*/).filter(Boolean)) }); });
+    var et0 = String(arr(v.etq)[0] || "").trim(), et1 = ETQS.filter(function(o){ return o.toLowerCase() === et0.toLowerCase(); })[0] || et0;
+    var et = sel(et1, ETQS, "Etiqueta", function(x){ guardarVenta(it, { etq: JSON.stringify(x ? [x] : []) }); refrescar(); });
     var co = inp(plataN(v.cobrado), "$ cobrado", "tot in", function(x){ guardarVenta(it, { cobrado: String(numAR(x) || "") }); refrescar(); });
     var to = inp(plataN(v.facturar), "$ a facturar", "tot", function(x){ guardarVenta(it, { facturar: String(numAR(x) || "") }); refrescar(); });
     var ce = inp(plataN(v.costoEnv), "$ envío", "tot", function(x){ guardarVenta(it, { costoEnv: String(numAR(x) || "0") }); });
@@ -1609,6 +1611,7 @@
     "#nvmc .m:has(.chip.c-ok):not(.nvfin)::after{content:\"✓\";position:absolute;right:-8px;top:-8px;width:24px;height:24px;border-radius:50%;background:#4E8A45;color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.15)}" +
     ".chmsg:has(.nvmovchip.ok):not(.nvfin){position:relative}" +
     ".chmsg:has(.nvmovchip.ok):not(.nvfin) .chx::before{content:\"✓ \";color:#4E8A45;font-weight:800}" +
-    ".nvmovchip.ok{background:#E3EEDF!important;color:#3E6B3A!important;font-weight:600}";
+    ".nvmovchip.ok{background:#E3EEDF!important;color:#3E6B3A!important;font-weight:600}" +
+    "html:not(#nv):not(#a) .chw .chlist .chmsg:has(.nvmovchip.ok):not(.nvfin)::after,html:not(#nv):not(#a) .chmsg:has(.nvmovchip.ok):not(.nvfin)::after{content:\"\u2713\"!important;display:flex!important;left:auto!important;right:-8px!important;top:-8px!important;bottom:auto!important;width:24px!important;height:24px!important}";
   document.head.appendChild(st);
 })();
