@@ -1350,3 +1350,19 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
   document.head.appendChild(st);
   document.addEventListener("click", function(e){ var i = e.target; if (i && i.matches && i.matches("section.nvmovp input[type=date].nvmov-in") && i.showPicker){ try { i.showPicker(); } catch(er){} } }, true);
 })();
+
+/* ---------- __nvChatFijo2: ninguna caja que contiene al chat puede quedar corrida (el chat no se va para arriba) ---------- */
+(function(){
+  if (window.__nvChatFijo2) return; window.__nvChatFijo2 = 1;
+  function chw(){ var L = document.querySelector(".chw .chlist"); return L && L.offsetParent && L.clientHeight > 0 ? L.closest(".chw") : null; }
+  function escribiendoCelu(){ var a = document.activeElement; return a && /TEXTAREA|INPUT/.test(a.tagName) && window.innerWidth < 800; }
+  function fijar(){
+    var w = chw(); if (!w || escribiendoCelu()) return;
+    for (var a = w.parentElement; a; a = a.parentElement){ if (a.scrollTop) a.scrollTop = 0; if (a.scrollLeft) a.scrollLeft = 0; }
+    var se = document.scrollingElement || document.documentElement; if (se.scrollTop) se.scrollTop = 0;
+    if (w.scrollTop) w.scrollTop = 0;
+  }
+  document.addEventListener("scroll", function(e){ var w = chw(); if (!w) return; var t = e.target; if (t === document || (t && t.contains && t !== w.querySelector(".chlist") && (t.contains(w) || t === w))) requestAnimationFrame(fijar); }, true);
+  document.addEventListener("focusin", function(){ setTimeout(fijar, 30); setTimeout(fijar, 300); }, true);
+  setInterval(fijar, 400);
+})();
