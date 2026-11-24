@@ -84,7 +84,9 @@
     }
     return f;
   }
-  function totalDe(f){ var d = f.datos || {}; var t = (d.items || []).reduce(function(a, i){ return a + (Number(i.c) || 0) * (Number(i.p) || 0); }, 0); if (d.conEnvio) t += Number(d.envio) || 0; return Math.round(t * 100) / 100; }
+  function brutoDe(f){ var d = f.datos || {}; var t = (d.items || []).reduce(function(a, i){ return a + (Number(i.c) || 0) * (Number(i.p) || 0); }, 0); if (d.conEnvio) t += Number(d.envio) || 0; return Math.round(t * 100) / 100; }
+  function descDe(f){ var d = f.datos || {}, b = brutoDe(f); var x = Number(d.descPct) ? b * Number(d.descPct) / 100 : (Number(d.desc) || 0); return Math.round(Math.max(0, Math.min(b, x)) * 100) / 100; }
+  function totalDe(f){ return Math.round((brutoDe(f) - descDe(f)) * 100) / 100; }
   function emitidasAnio(cu){ var y = new Date().getFullYear() + "-"; var t = 0; Object.keys(F).forEach(function(k){ var f = F[k]; if (f.cuenta === cu && f.estado === "emitida" && !f.nc && String(f.emitida_at || "").slice(0, 5) === y) t += Number(f.total) || 0; }); return t; }
   function emitidasMes(cu){ var t = 0; Object.keys(F).forEach(function(k){ var f = F[k]; if (f.cuenta === cu && f.estado === "emitida" && !f.nc && f.mes === MES) t += Number(f.total) || 0; }); return t; }
 
@@ -112,6 +114,7 @@
     var celda = "padding:9px 4px;border-bottom:1px solid " + LIN + ";"; var nw = "white-space:nowrap;";
     var filas = (d.items || []).map(function(i){ return '<tr><td style="' + celda + '">' + esc(i.d) + '</td><td style="' + celda + 'text-align:center;color:' + MUT + '">' + esc(i.c) + '</td><td style="' + celda + nw + 'text-align:right;color:' + MUT + '">' + plata(i.p) + '</td><td style="' + celda + nw + 'text-align:right">' + plata((Number(i.c) || 0) * (Number(i.p) || 0)) + '</td></tr>'; }).join("");
     if (d.conEnvio && Number(d.envio)) filas += '<tr><td style="' + celda + '">Envío</td><td style="' + celda + 'text-align:center;color:' + MUT + '">1</td><td style="' + celda + nw + 'text-align:right;color:' + MUT + '">' + plata(d.envio) + '</td><td style="' + celda + nw + 'text-align:right">' + plata(d.envio) + '</td></tr>';
+    var dsc = descDe(f); if (dsc) filas += '<tr><td style="' + celda + '">Descuento' + (Number(d.descPct) ? ' ' + esc(d.descPct) + '%' : '') + '</td><td style="' + celda + 'text-align:center;color:' + MUT + '"></td><td style="' + celda + nw + 'text-align:right;color:' + MUT + '"></td><td style="' + celda + nw + 'text-align:right">− ' + plata(dsc) + '</td></tr>';
     var total = esNC ? (Number(cb.total) || totalDe(f)) : totalDe(f);
     var emisor = esFac
       ? '<b style="font-weight:500">' + esc(cfg.razon || "—") + '</b><br>CUIT ' + esc(cfg.cuit || "—") + '<br>Responsable Monotributo<br>' + esc(cfg.dom || NERVO.dir) + (cfg.iibb ? '<br>IIBB ' + esc(cfg.iibb) : '') + (cfg.inicio ? '<br>Inicio de actividades ' + esc(fechaTx(cfg.inicio)) : '')
@@ -247,7 +250,7 @@
     var prev = h("div", "nvf-prev"), tg = h("div", "nvf-seg");
     var vista = "factura";
     [["factura", "Factura"], ["remito", "Remito"]].concat(f.nc ? [["nc", "Nota de crédito"]] : []).forEach(function(o){ var b = h("button", o[0] === vista ? "on" : "", o[1]); b.type = "button"; b.onclick = function(){ vista = o[0]; tg.querySelectorAll("button").forEach(function(z){ z.classList.toggle("on", z === b); }); pintarPrev(); }; tg.append(b); });
-    function pintarPrev(){ prev.innerHTML = docHTML(f, vista, false); tot.textContent = plata(totalDe(f)); }
+    function pintarPrev(){ prev.innerHTML = docHTML(f, vista, false); tot.textContent = plata(totalDe(f)); if (tfi && document.activeElement !== tfi) tfi.value = plata(totalDe(f)); }
     var cab = h("div", "nvf-edh"); cab.append(h("h2", null, (x.num || "Venta") + " · " + (x.cliente || "")), h("button", "nvf-x", "✕")); cab.lastChild.onclick = cerrar;
     var izq = h("div", "nvf-edl"), der = h("div", "nvf-edr");
     /* cuenta */
@@ -280,6 +283,14 @@
     ck.onchange = function(){ d.conEnvio = ck.checked; var n = d.conEnvio ? (Number(d.envio) || 0) : 0; ajEnv(envAct, n); envAct = n; pintarPrev(); };
     ei.onchange = function(){ d.envio = num(ei.value); if (d.envio) { d.conEnvio = true; ck.checked = true; } var n = d.conEnvio ? (Number(d.envio) || 0) : 0; ajEnv(envAct, n); envAct = n; pintarPrev(); };
     env.append(ck, h("span", null, "Pagó envío"), ei); izq.append(env);
+    /* descuento: en $ o en %, o escribiendo directo el total final */
+    var dw = h("label", "nvf-env"); var di = h("input", "nvf-in p"); di.inputMode = "decimal"; di.placeholder = "$ o %"; di.disabled = emitida;
+    di.value = Number(d.descPct) ? d.descPct + "%" : (Number(d.desc) ? plata(d.desc) : "");
+    di.onchange = function(){ var v = String(di.value || "").trim(); if (/%/.test(v)){ d.descPct = num(v); d.desc = 0; } else { d.desc = num(v); d.descPct = 0; } pintarPrev(); tfi.value = plata(totalDe(f)); };
+    dw.append(h("span", null, "Descuento"), di); izq.append(dw);
+    var tw = h("label", "nvf-env"); var tfi = h("input", "nvf-in p"); tfi.inputMode = "decimal"; tfi.placeholder = "Total final"; tfi.disabled = emitida; tfi.value = plata(totalDe(f));
+    tfi.onchange = function(){ var v = num(tfi.value), b0 = brutoDe(f); if (!v) { tfi.value = plata(totalDe(f)); return; } d.descPct = 0; d.desc = Math.max(0, Math.round((b0 - v) * 100) / 100); di.value = d.desc ? plata(d.desc) : ""; pintarPrev(); tfi.value = plata(totalDe(f)); };
+    tw.append(h("span", null, "O poné el total final"), tfi); izq.append(tw);
     var tt = h("div", "nvf-tot"); tt.append(h("span", null, "Total a facturar")); var tot = h("b"); tt.append(tot); izq.append(tt);
     if (x.monto && Math.abs(x.monto - totalDe(f)) > 1 && !emitida) izq.append(h("p", "nvf-nota", "En la venta figura " + plata(x.monto) + " como monto a facturar."));
     /* acciones */
