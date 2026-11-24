@@ -6652,7 +6652,7 @@ function chk(k,r,f,max,solo){ const box=el("div","ck"); const txt=String(r[f]||"
   }
   
   
-  const CH_CANALES=[["min","Minoristas","#E2BE55","🛍️"],["may","Mayoristas","#93AFC0","🏬"],["recl","Reclamos / devoluciones","#E39C98","⚠️"],["prov","Proveedores / pagos","#AF98C6","💳"],["env","Envíos","#9DB38F","🚚"]];
+  const CH_CANALES=[["min","Minoristas","#E2BE55","🛍️"],["may","Mayoristas","#93AFC0","🏬"],["recl","Reclamos / devoluciones","#E39C98","⚠️"],["prov","Proveedores / pagos","#AF98C6","💳"],["env","Envíos","#9DB38F","🚚"],["mej","Mejoras software","#B9A49A","🛠️"]];
   const CH_P={euge:"#B07A55",pau:"#5E8C6A"};
   S.chat=S.chat||{m:[],last:0,busy:false,ok:false,err:"",draft:{},canal:(()=>{ try{ return localStorage.getItem("ch_canal")||"min"; }catch(e){ return "min"; } })()};
   function chVisto(){ try{ return JSON.parse(localStorage.getItem("ch_visto")||"{}"); }catch(e){ return {}; } }
@@ -6743,7 +6743,8 @@ function chk(k,r,f,max,solo){ const box=el("div","ck"); const txt=String(r[f]||"
     ui.chl.replaceChildren(); if(!L.length) ui.chl.append(el("p","chz",S.chat.ok?"Todavía no hay mensajes en este canal. Escribí el primero.":"Cargando mensajes…"));
     let dia=""; L.forEach(x=>{ const d=chDia(x.creado); if(d!==dia){ dia=d; ui.chl.append(el("div","chd",d)); }
       const mio=x.por===S.soy; const w=el("div","chmsg"+(mio?" mio":"")+(x.reac&&x.reac.__pin?" pinned":"")); w.dataset.id=x.id; if(x.reac&&x.reac.__pin) w.append(el("div","chpinl","📌 Fijado"+(NAMES[x.reac.__pin[0]]?" por "+NAMES[x.reac.__pin[0]]:""))); const hd=el("div","chh"); const av=el("span","chav",String(NAMES[x.por]||x.por||"?").slice(0,1).toUpperCase()); av.style.background=CH_P[x.por]||"#9A7B62"; const nb=el("b",null,NAMES[x.por]||x.por||"—"); nb.style.color=CH_P[x.por]||"#5A4030"; hd.append(av, nb, el("span",null,chHora(x.creado)));
-      if(mio){ const del=el("button","chdel","🗑"); del.type="button"; del.title="Borrar mensaje"; let arm=false; del.onclick=()=>{ if(!arm){ arm=true; del.textContent="¿Seguro? tocá de nuevo"; del.classList.add("arm"); setTimeout(()=>{ arm=false; del.textContent="🗑"; del.classList.remove("arm"); },4000); return; } x.borrado=true; chDraw(); call("chatBorrar",x.id).catch(()=>toast("No se pudo borrar.")); }; hd.append(del); }
+      if(mio){ const del=el("button","chdel","🗑"); del.type="button"; del.title="Borrar mensaje"; let arm=false; del.onclick=()=>{ if(!arm){ arm=true; del.textContent="¿Seguro? tocá de nuevo"; del.classList.add("arm"); setTimeout(()=>{ arm=false; del.textContent="🗑"; del.classList.remove("arm"); },4000); return; } x.borrado=true; chDraw(); call("chatBorrar",x.id).catch(()=>toast("No se pudo borrar.")); }; hd.append(del);  const ed=el("button","chdel chedit","✏️"); ed.type="button"; ed.title="Editar mensaje"; ed.onclick=e=>{ e.stopPropagation(); chEditar(x,w,hd); }; hd.append(ed); }
+      if(x.editado) hd.append(el("small","chedt","editado"));
       const pk=el("button","chpkb","☺＋"); pk.type="button"; pk.title="Reaccionar"; pk.onclick=e=>{ e.stopPropagation(); chPicker(x,w); }; hd.append(pk);
       w.append(hd); if(String(x.texto||"").trim()) w.append(chTexto(x.texto)); if((x.adj||[]).length) w.append(chAdj(x.adj)); const rs=Object.entries(x.reac||{}).filter(([k2,L])=>!/^__/.test(k2)&&L&&L.length);
       if(rs.length){ const rw=el("div","chrs"); rs.forEach(([e,L])=>{ const b=el("button","chr"+(L.includes(S.soy)?" mine":""),e+" "+L.length); b.type="button"; b.title=L.map(p=>NAMES[p]||p).join(", ")+(CH_EMO.find(z=>z[0]===e&&z[1])?" · "+CH_EMO.find(z=>z[0]===e)[1]:""); b.onclick=ev=>{ ev.stopPropagation(); chReac(x,e); }; rw.append(b); }); w.append(rw); }
@@ -6751,6 +6752,13 @@ function chk(k,r,f,max,solo){ const box=el("div","ck"); const txt=String(r[f]||"
     const misL=L.filter(x=>x.por===S.soy); const ult=misL[misL.length-1]; if(ult&&L[L.length-1]===ult){ const otra=S.soy==="euge"?"pau":"euge"; const vt=((S.chat.vistos||{})[otra]||{})[c]||0; ui.chl.append(el("div","chvt"+(vt>=ult.creado?" ok":""), vt>=ult.creado?"✓✓ Visto por "+(NAMES[otra]||otra):"✓ Enviado")); }
     if(near||ui.first){ ui.chl.scrollTop=ui.chl.scrollHeight; ui.first=false; }
     chSetVisto(c); chVistoServer(c); chBadge(); }
+  function chEditar(x,w,hd){ if(w.querySelector(".chedf")) return; const tx=hd.nextElementSibling; const tieneTx=String(x.texto||"").trim(); const f=el("div","chedf"); const ta=el("textarea","chedta"); ta.value=x.texto||""; ta.rows=Math.min(8,Math.max(2,String(x.texto||"").split("\n").length+1));
+    const bx=el("div","chedb"); const no=el("button","chedno","Cancelar"); no.type="button"; const ok=el("button","chedok","Guardar"); ok.type="button"; bx.append(no,ok); f.append(ta,bx);
+    if(tx&&tieneTx) tx.style.display="none"; hd.after(f); ta.focus();
+    const fin=()=>{ f.remove(); if(tx) tx.style.display=""; };
+    no.onclick=e=>{ e.stopPropagation(); fin(); };
+    ok.onclick=e=>{ e.stopPropagation(); const v=ta.value.trim(); if(!v){ toast("Escribí algo o borrá el mensaje con 🗑"); return; } if(v===String(x.texto||"").trim()){ fin(); return; } x.texto=v; x.editado=Date.now(); chDraw(); call("chatEditar",x.id,v).catch(()=>toast("No se pudo editar.")); };
+    ta.onkeydown=e=>{ if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){ e.preventDefault(); ok.click(); } else if(e.key==="Escape"){ fin(); } }; }
   function renderChat(list){ const c=S.chat.canal; const w=el("div","chw "+(S.chat.mv==="canal"?"vc":"vl")); const side=el("div","chc"); const chans=[];
     side.append(el("div","cht","Canales"));
     const ico=(col,em)=>{ const i=el("span","chi"); i.style.background=col; return i; };

@@ -532,6 +532,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
     });
   }
   L.chatBorrar = function(a){ return cambiar(a[0], function(d){ d.borrado = true; }, "chatBorrar", a).then(function(r){ return !!r; }); };
+  L.chatEditar = function(a){ return cambiar(a[0], function(d){ d.texto = String(a[1] || "").slice(0, 4000); d.editado = Date.now(); }, "chatEditar", a); };
   L.chatReaccionar = function(a){
     var emo = a[1], por = a[2];
     return cambiar(a[0], function(d){ var re = d.reac || {}; var X = re[emo] || []; re[emo] = X.indexOf(por) >= 0 ? X.filter(function(p){ return p !== por; }) : X.concat([por]); if (!re[emo].length) delete re[emo]; d.reac = re; }, "chatReaccionar", a);
@@ -1184,4 +1185,24 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
   }, true);
   new MutationObserver(function(){ revisar(); }).observe(document.documentElement, { childList: true, subtree: true });
   revisar();
+})();
+
+/* ---------- __nvChatFijo: la pantalla del chat no se corre para arriba + editar mensajes + notas de movimientos visibles ---------- */
+(function(){
+  if (window.__nvChatFijo) return; window.__nvChatFijo = 1;
+  var st = document.createElement("style"); st.id = "nvtema-keep";
+  st.textContent = ".chedf{margin:6px 0 4px}.chedf .chedta{width:100%;box-sizing:border-box;border:1px solid #E3DAD4;border-radius:6px;padding:8px 10px;font:inherit;font-size:14px;resize:vertical;background:#fff;color:#2B201C;outline:none}.chedf .chedb{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}.chedf button{border:0;border-radius:6px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}.chedf .chedno{background:#F1ECE8;color:#5A3F35}.chedf .chedok{background:#4A3630;color:#fff}.chmsg .chedt{font-size:11px;color:#A39890;margin-left:6px;font-style:italic}" +
+    "html:not(#a):not(#b):not(#c):not(#d) body section.nvmovp .nvmov-sub{position:sticky !important;left:0 !important;background:transparent !important}html:not(#a):not(#b):not(#c):not(#d) body section.nvmovp .nvmov-sub .nvmov-tx{display:-webkit-box !important;-webkit-line-clamp:2 !important;-webkit-box-orient:vertical !important;overflow:hidden !important;white-space:normal !important}";
+  document.head.appendChild(st);
+  function chatAbierto(){ var L = document.querySelector(".chw .chlist"); return !!(L && L.offsetParent && L.clientHeight > 0); }
+  function escribiendo(){ var a = document.activeElement; return a && /TEXTAREA|INPUT/.test(a.tagName) && window.innerWidth < 800; }
+  function fijar(){
+    if (!chatAbierto() || escribiendo()) return;
+    var se = document.scrollingElement || document.documentElement;
+    if (se.scrollTop !== 0) se.scrollTop = 0;
+    var m = document.querySelector("main#list"); if (m && m.scrollTop !== 0 && m.scrollHeight > m.clientHeight && getComputedStyle(m).overflowY !== "visible") m.scrollTop = 0;
+  }
+  window.addEventListener("scroll", function(){ requestAnimationFrame(fijar); }, { passive: true });
+  document.addEventListener("scroll", function(e){ if (e.target && e.target.id === "list") requestAnimationFrame(fijar); }, true);
+  setInterval(fijar, 700);
 })();
