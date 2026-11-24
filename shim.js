@@ -1206,3 +1206,5 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
   document.addEventListener("scroll", function(e){ if (e.target && e.target.id === "list") requestAnimationFrame(fijar); }, true);
   setInterval(fijar, 700);
 })();
+
+;(function(){if(window.__nvChipFila)return;window.__nvChipFila=1;var st=document.createElement("style");st.id="nvtema-keep";st.textContent="html:not(#a):not(#b):not(#c):not(#d) body .chmsg .nvmovchip{position:static !important;float:none !important;display:table !important;margin:6px 0 0 !important;transform:none !important}";document.head.appendChild(st);})();
