@@ -432,7 +432,9 @@
       c.append(hd, ks, bar);
       if (!tope){ var bt = h("button", "nvf-link", "Poner tope"); bt.type = "button"; bt.onclick = config; c.append(bt); }
       else if (pct >= 90) c.append(h("p", "nvf-aviso", "Atención: estás cerca del tope de facturación."));
-      var nm = manuales(cu).length, bm = h("button", "nvf-link", "+ Facturado a mano" + (nm ? " (" + nm + ")" : "")); bm.type = "button"; bm.onclick = function(){ cargaManual(cu, o[1]); }; c.append(bm);
+      var nm = manuales(cu).length, ma = manualesAnio(cu), fm = h("div"); fm.style.cssText = "display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px";
+      if (ma){ var tm = h("span", null, "Facturado a mano en el año: "); tm.style.cssText = "font-size:13px;color:#6B5047"; var bb = h("b", null, plata(ma)); bb.style.fontWeight = "600"; tm.append(bb); fm.append(tm); }
+      var bm = h("button", "nvf-link", nm ? "Ver / cargar (" + nm + ")" : "+ Facturado a mano"); bm.type = "button"; bm.style.marginTop = "0"; bm.onclick = function(){ cargaManual(cu, o[1]); }; fm.append(bm); c.append(fm);
       tps.append(c);
     });
     p.append(tps);
