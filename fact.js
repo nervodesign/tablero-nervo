@@ -35,7 +35,9 @@
     s.split(/\n/).forEach(function(l){ var m = l.match(/^\s*([A-Za-zÁÉÍÓÚáéíóúñ ]+)\s*:\s*(.+)$/); if (m) o[m[1].trim().toLowerCase()] = m[2].trim(); });
     var mail = o.mail || o.email || (s.match(/[\w.+-]+@[\w-]+\.[\w.]+/) || [""])[0];
     var dni = o.dni || o.cuit || o.cuil || (s.match(/\b\d{2}-?\d{8}-?\d\b/) || s.match(/\b\d{2}\.?\d{3}\.?\d{3}\b|\b\d{7}\b/) || [""])[0];
-    return { nombre: o.nombre || "", doc: String(dni || "").replace(/\D/g, ""), email: String(mail || "").toLowerCase(), dir: o["dirección"] || o.direccion || o.domicilio || "", tel: o.celular || o.tel || o["teléfono"] || "" };
+    var dir = o["dirección"] || o.direccion || o.domicilio || "";
+    if (!dir && !Object.keys(o).length){ dir = s.split(/\n/).map(function(l){ return l.trim(); }).filter(function(l){ return l && /[a-záéíóúñ]/i.test(l) && !/@/.test(l) && !/^[\d\s+().-]+$/.test(l); }).join(", "); }
+    return { nombre: o.nombre || "", doc: String(dni || "").replace(/\D/g, ""), email: String(mail || "").toLowerCase(), dir: dir, tel: o.celular || o.tel || o["teléfono"] || "" };
   }
   function itemsMin(v){
     var ps = (Array.isArray(v.prods) ? v.prods : String(v.prods || "").split(/\n/)).map(function(x){ return String(x).replace(/\s*·\s*/, " · "); }).map(function(x){ return x.trim(); }).filter(Boolean);
