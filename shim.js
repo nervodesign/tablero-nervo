@@ -1319,3 +1319,5 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
     if (PEND){ var s = S(); if (s && s.loaded && s.soy && (s.stock || []).length){ var id = PEND; PEND = null; try { history.replaceState(null, "", location.pathname); } catch(er){} escaneo(id); } }
   }, 600);
 })();
+
+;(function(){if(window.__nvFechaCelda)return;window.__nvFechaCelda=1;var st=document.createElement("style");st.id="nvtema-keep";var P="html:not(#a):not(#b):not(#c):not(#d):not(#e):not(#f) body section.nvmovp .nvmov-it ";st.textContent=P+"input[type=date].nvmov-in{width:calc(100% - 12px) !important;min-width:0 !important;max-width:calc(100% - 12px) !important;margin-right:12px !important;padding-right:0 !important;box-sizing:border-box !important}"+P+".nvmov-tr > *{min-width:0 !important;overflow:hidden !important}"+P+".nvmov-tr > *:has(select),"+P+".nvmov-tr > *:has(.nvmov-ok){overflow:visible !important}";document.head.appendChild(st);})();
