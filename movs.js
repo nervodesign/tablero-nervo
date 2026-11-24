@@ -980,7 +980,7 @@
     var pend = rows.filter(function(r){ return r.estado === "pendiente"; }).length;
     var apr = rows.filter(function(r){ return r.estado === "aprobado"; }).length;
     var ids = {}; DATA.forEach(function(r){ ids[r.msg_id] = 1; });
-    var msgs = Array.prototype.map.call(w.querySelectorAll(".chmsg[data-id]"), function(m){ return m.getAttribute("data-id"); });
+    var msgs = Array.prototype.filter.call(w.querySelectorAll(".chmsg[data-id]"), function(m){ return !/TODO ACTUALIZADO/i.test(m.textContent || ""); }).map(function(m){ return m.getAttribute("data-id"); });
     var falt = msgs.filter(function(id){ return !ids[id]; }).length;
     var d = new Date(ULT);
     box.innerHTML = "";
