@@ -1428,3 +1428,23 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
 ;(function(){if(window.__nvPlataLibre)return;window.__nvPlataLibre=1;var st=document.createElement("style");st.id="nvtema-keep";st.textContent="html:not(#a):not(#b):not(#c):not(#d) body section.nvmovp .nvmov-blq:not(:first-of-type) .nvmov-blqb{max-height:none !important;overflow-y:visible !important}";document.head.appendChild(st);})();
 
 ;(function(){if(window.__nvKpFila)return;window.__nvKpFila=1;var st=document.createElement("style");st.id="nvtema-keep";var P="html:not(#a):not(#b):not(#c):not(#d):not(#e) body section.nvmovp ";st.textContent=P+".nvmov-st{display:inline-flex !important;gap:8px !important;width:auto !important;margin:0 12px 10px 0 !important;vertical-align:middle !important;grid-template-columns:none !important}"+P+".nvmov-st .nvmov-k{display:flex !important;align-items:baseline !important;gap:6px !important;width:auto !important;min-width:0 !important;min-height:0 !important;padding:8px 12px !important;border-radius:6px !important;flex:0 0 auto !important}"+P+".nvmov-st .nvmov-k b{font-size:16px !important;line-height:1 !important;margin:0 !important}"+P+".nvmov-st .nvmov-k small{font-size:12px !important;margin:0 !important;white-space:nowrap !important}"+P+".nvmov-seg{display:inline-flex !important;width:auto !important;vertical-align:middle !important;margin:0 0 10px !important}";document.head.appendChild(st);})();
+
+/* ---------- Comprobantes por mail (nervodesigncordoba+mov@gmail.com) → chat #movimientos ---------- */
+;(function(){
+  if (window.__nvMailMov) return; window.__nvMailMov = 1;
+  var corriendo = false;
+  function soy(){ try { return (window.__nv && window.__nv.S && window.__nv.S.soy) || ""; } catch(e){ return ""; } }
+  function revisar(){
+    if (corriendo || document.hidden || !window.__nvGRun || !window.__nvLocal || !window.__nvLocal.chatEnviar || !soy()) return;
+    corriendo = true;
+    window.__nvGRun("mailMovs", []).then(function(L){
+      (L || []).forEach(function(x){
+        if (!x || !x.id) return;
+        window.__nvLocal.chatEnviar([{ id: x.id, canal: "mov", texto: x.texto || "Comprobante por mail", por: x.por || soy(), adj: x.adj || [] }]).catch(function(){});
+      });
+    }).catch(function(){}).then(function(){ corriendo = false; });
+  }
+  setTimeout(revisar, 20000);
+  setInterval(revisar, 180000);
+  document.addEventListener("visibilitychange", function(){ if (!document.hidden) setTimeout(revisar, 3000); });
+})();
