@@ -1366,3 +1366,27 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
   document.addEventListener("focusin", function(){ setTimeout(fijar, 30); setTimeout(fijar, 300); }, true);
   setInterval(fijar, 400);
 })();
+
+/* ---------- __nvBarraGrid: barra para correr a los costados arriba de las tablas (Nervo 2026 y demás) ---------- */
+(function(){
+  if (window.__nvBarraGrid) return; window.__nvBarraGrid = 1;
+  var st = document.createElement("style"); st.id = "nvtema-keep";
+  st.textContent = ".nvtopsb2{overflow-x:auto;overflow-y:hidden;height:14px;margin:0 0 4px;position:sticky;top:0;z-index:6;background:inherit}.nvtopsb2>div{height:1px}";
+  document.head.appendChild(st);
+  function armar(){
+    document.querySelectorAll("#list .gridw").forEach(function(t){
+      var b = t.previousElementSibling;
+      if (!b || !b.classList.contains("nvtopsb2")){
+        b = document.createElement("div"); b.className = "nvtopsb2"; b.title = "Deslizá para ver más columnas"; b.appendChild(document.createElement("div"));
+        t.parentNode.insertBefore(b, t); var lock = 0;
+        b.addEventListener("scroll", function(){ if (lock) return; lock = 1; t.scrollLeft = b.scrollLeft; requestAnimationFrame(function(){ lock = 0; }); }, { passive: true });
+        t.addEventListener("scroll", function(){ if (lock) return; lock = 1; b.scrollLeft = t.scrollLeft; requestAnimationFrame(function(){ lock = 0; }); }, { passive: true });
+      }
+      var w = t.scrollWidth; if (b.firstChild.style.width !== w + "px") b.firstChild.style.width = w + "px";
+      b.style.width = t.clientWidth + "px";
+      b.style.display = w > t.clientWidth + 4 ? "" : "none";
+      if (Math.abs(b.scrollLeft - t.scrollLeft) > 1) b.scrollLeft = t.scrollLeft;
+    });
+  }
+  setInterval(armar, 800); armar();
+})();
