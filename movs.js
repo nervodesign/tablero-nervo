@@ -755,7 +755,7 @@
     }
     var bv = h("button", "nvmov-ok", "✓ Aprobar"); bv.type = "button"; bv.onclick = function(){ ck.checked = true; ck.dispatchEvent(new Event("change")); };
     sub.append(fa, fw, lf);
-    if (it.src === "chat") sub.append(h("span", "nvmov-tx", "“" + (it.mov.texto || "") + "”"));
+    /* el mensaje original ya se ve en el chat de al lado: no se repite acá */
     if (v.cobrado && v.facturar && Number(v.cobrado) && Math.abs(Number(v.cobrado) - Number(v.facturar)) > 1) sub.append(h("span", "nvmov-al", "Cobrado distinto de lo a facturar"));
     var de = h("select", "nvmov-dest"); de.title = "A qué estado pasa en Ventas minoristas al aprobar";
     ["PARA HACER", "EN PROCESO", "PARA EMBALAR", "LISTO PARA ENVIAR"].forEach(function(e){ var o = h("option", null, e.charAt(0) + e.slice(1).toLowerCase()); o.value = e; de.append(o); });
