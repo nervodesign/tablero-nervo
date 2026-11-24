@@ -380,13 +380,56 @@
   }
   function baseMin(){ var S = window.__nv && window.__nv.S; return (S && S.bzData && S.bzData.min) || []; }
   function ventasWeb(){ return baseMin().filter(function(r){ if (!/REVISAR/i.test(r.env || "")) return false; return true; }); }
+  /* venta de WhatsApp con la plantilla: /nueva venta Pau · Productos: · total: · datos de la persona */
+  function leerVentaWA(tx){
+    var s = String(tx || ""); if (!/productos?\s*:/i.test(s) && !/total\s*:/i.test(s)) return null;
+    var L = s.split(/\n/).map(function(x){ return x.replace(/^\s*[•·\-*–]+\s*/, "").trim(); });
+    var o = { prods: [], cant: [], total: 0, datos: [], nombre: "", envio: 0, menv: "", tipo: "" };
+    function num(x){ var t = String(x || "").replace(/[^\d.,]/g, ""); if (!t) return 0; if (/,\d{1,2}$/.test(t)) t = t.replace(/\./g, "").replace(",", "."); else t = t.replace(/[.,]/g, ""); return Number(t) || 0; }
+    var stock = ((window.__nv && window.__nv.S && window.__nv.S.stock) || []).map(function(x){ return String(x.producto || ""); });
+    function catalogo(n){ var k = n.toLowerCase(); var best = ""; stock.forEach(function(p){ var b = p.split(" — ")[0].toLowerCase(); if (b.length > 4 && k.indexOf(b) >= 0 && b.length > best.length) best = p.split(" — ")[0]; }); return best ? (n.toLowerCase() === best.toLowerCase() ? best : n) : n; }
+    var modo = "";
+    L.forEach(function(l){
+      if (!l) return;
+      var lw = l.toLowerCase();
+      if (/^\/\S+/.test(l)) return;
+      if (/^necesitar|^muchas gracias|^gracias/i.test(l)) return;
+      var m;
+      if ((m = l.match(/^productos?\s*:\s*(.*)$/i))){ modo = "p"; if (m[1]) l = m[1]; else return; }
+      else if ((m = l.match(/^total\s*:?\s*(.*)$/i))){ o.total = num(m[1]); modo = "d"; return; }
+      else if ((m = l.match(/^env[ií]o\s*:?\s*(.*)$/i))){ var e = m[1]; o.envio = num(e.replace(/\b\d{4}\b(?=.*\d{4,})/, "")); if (/v[ií]a\s*cargo/i.test(e)) o.menv = "Vía Cargo"; else if (/andreani/i.test(e)) o.menv = "Andreani"; else if (/retir/i.test(e)) o.menv = "Retira en Nervo"; else if (/buspack/i.test(e)) o.menv = "BUSPACK"; if (/sucursal/i.test(e)) o.tipo = "Sucursal"; else if (/domicilio/i.test(e)) o.tipo = "Domicilio"; return; }
+      if (modo === "p"){
+        var q = 1, n = l, a = l.match(/^(\d{1,3})\s*(?:x|×|u\.?|unid\w*)?\s+(.+)$/i), b = l.match(/^(.+?)\s*(?:x|×)\s*(\d{1,3})$/i);
+        if (a){ q = Number(a[1]); n = a[2]; } else if (b){ n = b[1]; q = Number(b[2]); }
+        o.prods.push(catalogo(n.trim())); o.cant.push("[ ] " + q); return;
+      }
+      var lb = l.match(/^(nombre\s*y\s*apellido|nombre|cliente|dni|cuit|cuil|domicilio|direcci[oó]n|provincia\s*y\s*ciudad|ciudad|provincia|localidad|cp|c[oó]digo\s*postal|cel(?:ular)?|tel(?:[eé]fono)?|mail|e-?mail|correo)\b\s*[:\-]?\s*(.*)$/i);
+      if (lb){ var val = lb[2].trim(); if (!val) return; var k = lb[1].toLowerCase();
+        if (/^(nombre|cliente)/.test(k)){ if (!o.nombre) o.nombre = val; o.datos.unshift(val); return; }
+        var et = /dni|cuit|cuil/.test(k) ? "DNI" : /domic|direc/.test(k) ? "Dirección" : /prov|ciudad|local/.test(k) ? "Localidad" : /cp|postal/.test(k) ? "CP" : /cel|tel/.test(k) ? "Celular" : "Mail";
+        o.datos.push(et + ": " + val); return; }
+      o.datos.push(l);
+    });
+    if (!o.nombre){ var f = o.datos.filter(function(d){ return !/:/.test(d) && !/\d/.test(d) && !/@/.test(d) && d.split(" ").length >= 2; })[0]; if (f) o.nombre = f; }
+    return o;
+  }
   function ventasTodas(){
     var w = ventasWeb().map(function(r){ return { src: "web", id: "w" + r.id, row: r }; });
     var ch = ROWS.filter(function(r){ return esBorradorVenta(r) && (r.estado === "pendiente" || r.estado === "procesando"); }).map(function(m){
       var v = (m.cliente && m.cliente.venta) || null;
       if (!v){ v = { num: "", fecha: m.fecha || diaDe(m.msg_at || m.creado), cliente: m.contraparte || "", datos: (m.cliente && m.cliente.datos) || "", prods: "[]", cant: "", obs: "",
         facturar: m.monto || "", cobrado: m.monto || "", metodo: JSON.stringify(m.medio ? [/transf/i.test(m.medio) ? "Transferencia / Depósito" : /efect/i.test(m.medio) ? "Efectivo" : /mercado/i.test(m.medio) ? "MERCADO PAGO" : m.medio] : []),
-        cobro: JSON.stringify(cobroDeQuien(m.por)), menv: "", tipo: "", suc: "", fact: "" }; }
+        cobro: JSON.stringify(cobroDeQuien(m.por)), menv: "", tipo: "", suc: "", fact: "" };
+        var wa = leerVentaWA(m.texto);
+        if (wa){
+          if (wa.prods.length){ v.prods = JSON.stringify(wa.prods); v.cant = wa.cant.join("\n"); }
+          if (wa.total){ v.facturar = String(wa.total); v.cobrado = String(wa.total); }
+          if (wa.datos.length) v.datos = wa.datos.join("\n");
+          if (wa.nombre) v.cliente = wa.nombre;
+          if (wa.envio) v.costoEnv = String(wa.envio);
+          if (wa.menv) v.menv = wa.menv; if (wa.tipo) v.tipo = wa.tipo;
+          if (!m.medio) v.metodo = JSON.stringify(["Transferencia / Depósito"]);
+        } }
       return { src: "chat", id: "c" + m.id, row: v, mov: m };
     });
     return w.concat(ch).sort(function(a, b){ return String(a.row.fecha || "").localeCompare(String(b.row.fecha || "")) || String(a.row.num || "").localeCompare(String(b.row.num || ""), "es", { numeric: true }); });
