@@ -100,17 +100,17 @@
     cap.onclick = function(e){ if (e.target === cap) cerrar(); };
     var cab = h("div", "nvf-edh"); cab.append(h("h2", null, "Facturado a mano · " + nom), h("button", "nvf-x", "✕")); cab.lastChild.onclick = cerrar; p.append(cab);
     var bd = h("div"); bd.style.cssText = "padding:6px 32px 30px;display:grid;gap:16px"; p.append(bd);
-    var nt = h("p", "nvf-nota", "Cargá acá las facturas que hiciste directo en ARCA. Suman a lo facturado del mes y se restan del tope."); nt.style.cssText = "margin:0;line-height:1.45"; bd.append(nt);
+    var nt = h("p", "nvf-nota", "Cargá acá lo que facturaste directo en ARCA en el mes. Se suma a lo facturado del mes y se resta del tope."); nt.style.cssText = "margin:0;line-height:1.45"; bd.append(nt);
     if (0) p.append(h("p", "nvf-nota", "Cargá acá las facturas que hiciste directo en ARCA. Suman a lo facturado del mes y se restan del tope."));
     function fl(lab, inp){ var w = h("label", "nvf-fl"); w.append(h("span", null, lab), inp); w.style.cssText = "display:grid;gap:6px;margin:0"; inp.style.width = "100%"; inp.style.boxSizing = "border-box"; bd.append(w); return inp; }
     var im = h("input", "nvf-in"); im.inputMode = "decimal"; im.placeholder = "$ 0"; fl("Monto", im);
-    var fe = h("input", "nvf-in"); fe.type = "date"; fe.value = new Date().toISOString().slice(0, 10); fl("Fecha de la factura", fe);
+    var fe = h("input", "nvf-in"); fe.type = "date"; var hoyD = new Date().toISOString().slice(0, 10); fe.value = hoyD.slice(0, 7) === MES ? hoyD : MES + "-01"; fl("Fecha de la factura", fe);
     var de = h("input", "nvf-in"); de.placeholder = "Ej: Factura C 0004-00000123 · Cliente"; fl("Detalle (opcional)", de);
     var lis = h("div"); lis.style.cssText = "margin-top:14px;font-size:13px";
     function pintarLis(){
-      lis.innerHTML = ""; var ms = manuales(cu).slice().sort(function(a, b){ return String(b.fecha).localeCompare(String(a.fecha)); });
+      lis.innerHTML = ""; var ms = manuales(cu).filter(function(m){ return String(m.fecha || "").slice(0, 7) === MES; }).sort(function(a, b){ return String(b.fecha).localeCompare(String(a.fecha)); });
       if (!ms.length) return;
-      lis.append(h("h3", null, "Cargadas"));
+      lis.append(h("h3", null, "Cargadas en " + MESES[Number(MES.split("-")[1]) - 1].toLowerCase()));
       ms.forEach(function(m){ var r = h("div"); r.style.cssText = "display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #EFE7E1";
         var tx = h("span", null, fechaTx(m.fecha) + " · " + plata(m.monto) + (m.det ? " · " + m.det : "")); tx.style.flex = "1";
         var x = h("button", "nvf-del", "✕"); x.type = "button"; x.title = "Borrar"; x.onclick = function(){ if (!confirm("¿Borrar esta carga de " + plata(m.monto) + "?")) return; var d = Object.assign({}, CFG[cu] || {}); d.manuales = (d.manuales || []).filter(function(z){ return z.id !== m.id; }); guardarCfg(cu, d).then(function(){ toast("Borrada"); pintarLis(); }); };
@@ -432,8 +432,8 @@
       c.append(hd, ks, bar);
       if (!tope){ var bt = h("button", "nvf-link", "Poner tope"); bt.type = "button"; bt.onclick = config; c.append(bt); }
       else if (pct >= 90) c.append(h("p", "nvf-aviso", "Atención: estás cerca del tope de facturación."));
-      var nm = manuales(cu).length, ma = manualesAnio(cu), fm = h("div"); fm.style.cssText = "display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px";
-      if (ma){ var tm = h("span", null, "Facturado a mano en el año: "); tm.style.cssText = "font-size:13px;color:#6B5047"; var bb = h("b", null, plata(ma)); bb.style.fontWeight = "600"; tm.append(bb); fm.append(tm); }
+      var nm = manuales(cu).filter(function(m){ return String(m.fecha || "").slice(0, 7) === MES; }).length, ma = manualesMes(cu), fm = h("div"); fm.style.cssText = "display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px";
+      if (ma){ var tm = h("span", null, "Facturado a mano en " + MESES[Number(mm[1]) - 1].toLowerCase() + ": "); tm.style.cssText = "font-size:13px;color:#6B5047"; var bb = h("b", null, plata(ma)); bb.style.fontWeight = "600"; tm.append(bb); fm.append(tm); }
       var bm = h("button", "nvf-link", nm ? "Ver / cargar (" + nm + ")" : "+ Facturado a mano"); bm.type = "button"; bm.style.marginTop = "0"; bm.onclick = function(){ cargaManual(cu, o[1]); }; fm.append(bm); c.append(fm);
       tps.append(c);
     });
