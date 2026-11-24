@@ -1218,3 +1218,104 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
 ;(function(){if(window.__nvFilasColor2)return;window.__nvFilasColor2=1;var st=document.createElement("style");st.id="nvtema-keep";var P="html:not(#a):not(#b):not(#c):not(#d):not(#e):not(#f) body section.nvmovp ";st.textContent=P+".nvmov-it{border-left:0 !important;position:relative !important}"+P+".nvmov-it::before{content:\"\";position:absolute;left:0;top:0;bottom:0;width:4px;background:#9B785F;z-index:3;pointer-events:none}"+P+".nvmov-it:nth-of-type(even)::before{background:#C9A994}";document.head.appendChild(st);})();
 
 ;(function(){if(window.__nvFilaAncho)return;window.__nvFilaAncho=1;var st=document.createElement("style");st.id="nvtema-keep";var P="html:not(#a):not(#b):not(#c):not(#d):not(#e):not(#f) body section.nvmovp .nvmov-tb ";st.textContent=P+".nvmov-it,"+P+".nvmov-tr{width:max-content !important;min-width:100% !important;box-sizing:border-box !important}";document.head.appendChild(st);})();
+
+/* ---------- __nvStockQR: etiquetas QR 5x4 cm por producto + escanear para sumar o restar stock ---------- */
+(function(){
+  if (window.__nvStockQR) return; window.__nvStockQR = 1;
+  var BASE = "https://nervodesign.github.io/tablero-nervo/?stk=";
+  function S(){ return window.__nv && window.__nv.S; }
+  function e(t, c, x){ var n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; }
+  function partes(p){ var s = String(p || ""); var i = s.indexOf(" — "); if (i < 0) i = s.indexOf(" - "); return i < 0 ? [s, ""] : [s.slice(0, i).trim(), s.slice(i + 3).trim()]; }
+  function qrLib(){ return new Promise(function(ok){ if (window.qrcode) return ok(); var s = document.getElementById("nvqrlib"); if (!s){ s = document.createElement("script"); s.id = "nvqrlib"; s.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"; document.head.append(s); } var n = 0; (function esp(){ if (window.qrcode || n++ > 60) ok(); else setTimeout(esp, 100); })(); }); }
+  function qrSvg(txt){ var q = window.qrcode(0, "M"); q.addData(txt); q.make(); return q.createSvgTag({ cellSize: 2, margin: 0, scalable: true }); }
+  var st = e("style"); st.id = "nvtema-keep";
+  st.textContent = ".nvqr-cap{position:fixed;inset:0;background:rgba(43,32,28,.35);z-index:9999;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 12px}" +
+    ".nvqr{background:#fff;border-radius:8px;max-width:620px;width:100%;padding:20px 20px 16px;box-shadow:0 10px 40px rgba(0,0,0,.18);color:#2B201C;font-size:14px;position:relative}" +
+    ".nvqr h3{margin:0 0 4px;font-size:18px;font-weight:600}.nvqr p.s{margin:0 0 12px;color:#8D827C;font-size:13px}.nvqr .x{position:absolute;right:12px;top:10px;border:0;background:none;font-size:18px;cursor:pointer;color:#8D827C}" +
+    ".nvqr input[type=search]{width:100%;box-sizing:border-box;border:1px solid #E3DAD4;border-radius:6px;padding:8px 10px;font:inherit;margin-bottom:8px}" +
+    ".nvqr .lst{max-height:52vh;overflow:auto;border:1px solid #F0EAE6;border-radius:6px}.nvqr .cat{background:#F7F2EE;padding:6px 10px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#6B5047;display:flex;justify-content:space-between;position:sticky;top:0}" +
+    ".nvqr .it{display:flex;align-items:center;gap:8px;padding:6px 10px;border-top:1px solid #F4EFEC}.nvqr .it span{flex:1;min-width:0}.nvqr .it small{color:#8D827C}.nvqr .it input[type=number]{width:52px;border:1px solid #E3DAD4;border-radius:6px;padding:4px;text-align:center;font:inherit}" +
+    ".nvqr .acc{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;align-items:center}.nvqr .acc .tot{margin-right:auto;color:#8D827C;font-size:13px}.nvqr button.b{border:0;border-radius:6px;padding:9px 14px;font:inherit;cursor:pointer;background:#F1ECE8;color:#5A3F35}.nvqr button.p{background:#4A3630;color:#fff}" +
+    ".nvqr .big{font-size:40px;font-weight:600;margin:6px 0 2px}.nvqr .cant{display:flex;align-items:center;gap:10px;justify-content:center;margin:14px 0}.nvqr .cant button{width:44px;height:44px;border-radius:8px;border:1px solid #E3DAD4;background:#fff;font-size:22px;cursor:pointer}.nvqr .cant input{width:70px;text-align:center;font-size:22px;border:1px solid #E3DAD4;border-radius:8px;padding:6px}" +
+    ".nvqr .dos{display:grid;grid-template-columns:1fr 1fr;gap:10px}.nvqr .dos button{border:0;border-radius:8px;padding:16px;font:inherit;font-size:17px;font-weight:600;cursor:pointer}.nvqr .sale{background:#F3E2DC;color:#9A4B36}.nvqr .entra{background:#E3EEDF;color:#3E6B3A}.nvqr .ok{text-align:center;padding:10px;border-radius:8px;background:#F2F8EF;color:#3E6B3A;margin-top:10px}" +
+    "#stockTools .nvqr-btn{white-space:nowrap}";
+  document.head.append(st);
+  function modal(){ var cap = e("div", "nvqr-cap"), p = e("div", "nvqr"); cap.append(p); var x = e("button", "x", "✕"); x.type = "button"; p.append(x);
+    function cerrar(){ cap.remove(); } x.onclick = cerrar; cap.onclick = function(ev){ if (ev.target === cap) cerrar(); }; document.body.append(cap); return { p: p, cerrar: cerrar }; }
+
+  /* ---- 1. elegir productos e imprimir ---- */
+  function elegir(){
+    var s = S(); if (!s || !s.stock) return;
+    var m = modal(), p = m.p, cant = {};
+    p.append(e("h3", null, "Imprimir etiquetas QR"), e("p", "s", "Etiquetas de 5 × 4 cm con QR, nombre y medida. Poné cuántas copias querés de cada producto (por ejemplo 1 para la pizarra, o una por unidad)."));
+    var q = e("input"); q.type = "search"; q.placeholder = "Buscar producto…"; p.append(q);
+    var lst = e("div", "lst"); p.append(lst);
+    var acc = e("div", "acc"), tot = e("span", "tot"), todos = e("button", "b", "1 de cada uno"), imp = e("button", "b p", "Imprimir"); todos.type = imp.type = "button"; acc.append(tot, todos, imp); p.append(acc);
+    function total(){ var n = 0; Object.keys(cant).forEach(function(k){ n += cant[k]; }); tot.textContent = n ? n + (n === 1 ? " etiqueta" : " etiquetas") + " · " + Math.ceil(n / 28) + (Math.ceil(n / 28) === 1 ? " hoja" : " hojas") : "Elegí productos"; imp.disabled = !n; }
+    function pintar(){
+      lst.replaceChildren(); var f = q.value.trim().toLowerCase(), by = {};
+      s.stock.filter(function(x){ return !f || (x.producto + " " + (x.categoria || "")).toLowerCase().indexOf(f) >= 0; }).forEach(function(x){ (by[x.categoria || "Otros"] = by[x.categoria || "Otros"] || []).push(x); });
+      Object.keys(by).sort().forEach(function(c){
+        var h = e("div", "cat"); var tc = e("button", null, "todos +1"); tc.type = "button"; tc.style.cssText = "border:0;background:none;color:#6B5047;cursor:pointer;font-size:11px"; h.append(e("span", null, c), tc); lst.append(h);
+        var ins = [];
+        by[c].sort(function(a, b){ return String(a.producto).localeCompare(String(b.producto)); }).forEach(function(x){
+          var r = e("div", "it"), pr = partes(x.producto), t = e("span"); t.append(document.createTextNode(pr[0]), pr[1] ? e("small", null, " · " + pr[1]) : "");
+          var n = e("input"); n.type = "number"; n.min = 0; n.value = cant[x.id] || 0; n.oninput = function(){ var v = Math.max(0, Math.min(200, parseInt(n.value, 10) || 0)); if (v) cant[x.id] = v; else delete cant[x.id]; total(); };
+          ins.push([x, n]); r.append(t, n); lst.append(r);
+        });
+        tc.onclick = function(){ ins.forEach(function(z){ var v = (cant[z[0].id] || 0) + 1; cant[z[0].id] = v; z[1].value = v; }); total(); };
+      });
+    }
+    q.oninput = pintar; todos.onclick = function(){ s.stock.forEach(function(x){ cant[x.id] = 1; }); pintar(); total(); };
+    imp.onclick = function(){ imprimir(s.stock.filter(function(x){ return cant[x.id]; }).map(function(x){ return [x, cant[x.id]]; })); };
+    pintar(); total();
+  }
+  function imprimir(lista){
+    var w = window.open("", "_blank"); if (!w){ alert("Permití ventanas emergentes para imprimir las etiquetas."); return; }
+    w.document.write("<p style='font-family:sans-serif'>Armando etiquetas…</p>");
+    qrLib().then(function(){
+      var html = "";
+      lista.forEach(function(z){ var x = z[0], pr = partes(x.producto), svg = qrSvg(BASE + encodeURIComponent(x.id));
+        for (var i = 0; i < z[1]; i++) html += "<div class='et'><div class='q'>" + svg + "</div><b>" + esc(pr[0]) + "</b>" + (pr[1] ? "<span>" + esc(pr[1]) + "</span>" : "") + "</div>"; });
+      w.document.open();
+      w.document.write("<!doctype html><html><head><meta charset='utf-8'><title>Etiquetas QR · Nervo</title><style>@page{size:A4;margin:5mm}*{box-sizing:border-box}body{margin:0;font-family:Helvetica,Arial,sans-serif;color:#2B201C}.g{display:grid;grid-template-columns:repeat(4,50mm);grid-auto-rows:40mm;justify-content:center}.et{width:50mm;height:40mm;border:.2mm dashed #CFC4BD;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2mm;text-align:center;overflow:hidden;break-inside:avoid}.q{width:24mm;height:24mm}.q svg{width:100%;height:100%;display:block}b{font-size:8.5pt;font-weight:600;margin-top:1.5mm;line-height:1.15;max-height:2.3em;overflow:hidden}span{font-size:7.5pt;color:#6B5047;line-height:1.15;max-height:2.3em;overflow:hidden}@media screen{body{padding:10mm;background:#F4EFEC}.g{background:#fff;padding:5mm 0}}</style></head><body><div class='g'>" + html + "</div><script>setTimeout(function(){print()},500)<\/script></body></html>");
+      w.document.close();
+    });
+  }
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function boton(){ var t = document.getElementById("stockTools"); if (!t || t.querySelector(".nvqr-btn")) return; var b = e("button", "chipbtn nvqr-btn", "🏷 Imprimir QR"); b.type = "button"; b.onclick = elegir; t.append(b); }
+
+  /* ---- 2. al escanear: sumar o restar ---- */
+  var PEND = (new URLSearchParams(location.search)).get("stk");
+  function escaneo(id){
+    var s = S(); var it = (s.stock || []).filter(function(x){ return String(x.id) === String(id); })[0];
+    var m = modal(), p = m.p;
+    if (!it){ p.append(e("h3", null, "No encontré ese producto"), e("p", "s", "Puede que lo hayan borrado del stock. Revisalo en la solapa Stock.")); return; }
+    var pr = partes(it.producto);
+    p.append(e("h3", null, pr[0]), e("p", "s", (pr[1] ? pr[1] + " · " : "") + (it.categoria || "")));
+    var hoy = e("div", "big", String(Number(it.cantidad) || 0)); p.append(e("small", null, "Hay ahora"), hoy);
+    var cw = e("div", "cant"), menos = e("button", null, "−"), mas = e("button", null, "+"), n = e("input"); menos.type = mas.type = "button"; n.type = "number"; n.min = 1; n.value = 1; n.inputMode = "numeric";
+    menos.onclick = function(){ n.value = Math.max(1, (parseInt(n.value, 10) || 1) - 1); }; mas.onclick = function(){ n.value = (parseInt(n.value, 10) || 0) + 1; };
+    cw.append(menos, n, mas); p.append(cw);
+    var dos = e("div", "dos"), sale = e("button", "sale", "Sale"), entra = e("button", "entra", "Entra"); sale.type = entra.type = "button"; dos.append(sale, entra); p.append(dos);
+    var msg = e("div"); p.append(msg);
+    function mover(signo){
+      var c = Math.max(1, parseInt(n.value, 10) || 1), actual = Number(it.cantidad) || 0;
+      if (signo < 0 && c > actual){ msg.className = "ok"; msg.style.background = "#F3E2DC"; msg.style.color = "#9A4B36"; msg.textContent = "Hay " + actual + ": no pueden salir " + c + "."; return; }
+      var d = signo * c; sale.disabled = entra.disabled = true;
+      it.cantidad = Math.max(0, actual + d); it.cambiado = Date.now(); it.por = s.soy; hoy.textContent = it.cantidad; try { window.__nv.render(); } catch(er){}
+      google.script.run.withSuccessHandler(function(){
+        msg.className = "ok"; msg.style.background = ""; msg.style.color = ""; msg.textContent = (d < 0 ? "Salieron " + c : "Entraron " + c) + " ✓ · Quedan " + it.cantidad + ".";
+        sale.disabled = entra.disabled = false; n.value = 1;
+      }).withFailureHandler(function(){
+        it.cantidad = actual; hoy.textContent = actual; try { window.__nv.render(); } catch(er){}
+        msg.className = "ok"; msg.style.background = "#F3E2DC"; msg.style.color = "#9A4B36"; msg.textContent = "No se pudo guardar. Revisá la conexión y probá de nuevo."; sale.disabled = entra.disabled = false;
+      }).ajustarStock(it.id, d, s.soy, it.cambiado);
+    }
+    sale.onclick = function(){ mover(-1); }; entra.onclick = function(){ mover(1); };
+  }
+  setInterval(function(){
+    boton();
+    if (PEND){ var s = S(); if (s && s.loaded && s.soy && (s.stock || []).length){ var id = PEND; PEND = null; try { history.replaceState(null, "", location.pathname); } catch(er){} escaneo(id); } }
+  }, 600);
+})();
