@@ -85,7 +85,7 @@
     return f;
   }
   function brutoDe(f){ var d = f.datos || {}; var t = (d.items || []).reduce(function(a, i){ return a + (Number(i.c) || 0) * (Number(i.p) || 0); }, 0); if (d.conEnvio) t += Number(d.envio) || 0; return Math.round(t * 100) / 100; }
-  function descDe(f){ var d = f.datos || {}, b = brutoDe(f); var x = Number(d.descPct) ? b * Number(d.descPct) / 100 : (Number(d.desc) || 0); return Math.round(Math.max(0, Math.min(b, x)) * 100) / 100; }
+  function descDe(f){ var d = f.datos || {}, b = (d.items || []).reduce(function(a, i){ return a + (Number(i.c) || 0) * (Number(i.p) || 0); }, 0); /* solo productos, nunca el envío */ var x = Number(d.descPct) ? b * Number(d.descPct) / 100 : (Number(d.desc) || 0); return Math.round(Math.max(0, Math.min(b, x)) * 100) / 100; }
   function totalDe(f){ return Math.round((brutoDe(f) - descDe(f)) * 100) / 100; }
   function emitidasAnio(cu){ var y = new Date().getFullYear() + "-"; var t = 0; Object.keys(F).forEach(function(k){ var f = F[k]; if (f.cuenta === cu && f.estado === "emitida" && !f.nc && String(f.emitida_at || "").slice(0, 5) === y) t += Number(f.total) || 0; }); return t; }
   function emitidasMes(cu){ var t = 0; Object.keys(F).forEach(function(k){ var f = F[k]; if (f.cuenta === cu && f.estado === "emitida" && !f.nc && f.mes === MES) t += Number(f.total) || 0; }); return t; }
