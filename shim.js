@@ -1321,3 +1321,32 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
 })();
 
 ;(function(){if(window.__nvFechaCelda)return;window.__nvFechaCelda=1;var st=document.createElement("style");st.id="nvtema-keep";var P="html:not(#a):not(#b):not(#c):not(#d):not(#e):not(#f) body section.nvmovp .nvmov-it ";st.textContent=P+"input[type=date].nvmov-in{width:calc(100% - 12px) !important;min-width:0 !important;max-width:calc(100% - 12px) !important;margin-right:12px !important;padding-right:0 !important;box-sizing:border-box !important}";document.head.appendChild(st);})();
+
+/* ---------- __nvEnvioNube: "Créditos Envío Nube" = ENVÍO NUBE, logística · y la fecha sin el ícono encima de la columna ---------- */
+(function(){
+  if (window.__nvEnvioNube) return; window.__nvEnvioNube = 1;
+  var CAT = "4.1 LOGISTICA - ET. DE TRANSP. PAG. X NERVO";
+  function envolver(){
+    var L = window.__nvLector; if (!L || !L.leer || !L.leer.__cmd || L.leer.__envN) return;
+    var orig = L.leer;
+    var nuevo = function(m){
+      return Promise.resolve(orig.apply(this, arguments)).then(function(res){
+        res = res || {}; var tx = String((m && m.texto) || "");
+        if (/env[ií]o\s*nube/i.test(tx)){
+          res.contraparte = "ENVÍO NUBE"; res.tipo = "envio"; res.signo = "egreso"; res.cat = CAT;
+          var w = tx.match(/web\s*#?\s*(\d{3,})/i); res.concepto = w ? "Web " + w[1] : (res.concepto || null);
+          if (!Number(res.monto)){ var mm = tx.match(/\$\s*([\d.]+(?:,\d{1,2})?)/); if (mm) res.monto = Number(mm[1].replace(/\./g, "").replace(",", ".")); }
+          if (res.falta) res.falta = res.falta.filter(function(f){ return !/categor|concepto|monto/i.test(f); });
+        }
+        return res;
+      });
+    };
+    nuevo.__cmd = 1; nuevo.__envN = 1; L.leer = nuevo;
+  }
+  setInterval(envolver, 700);
+  var st = document.createElement("style"); st.id = "nvtema-keep";
+  var P = "html:not(#a):not(#b):not(#c):not(#d):not(#e):not(#f):not(#g) body section.nvmovp ";
+  st.textContent = P + "input[type=date].nvmov-in::-webkit-calendar-picker-indicator{display:none !important}" + P + "input[type=date].nvmov-in{cursor:pointer}";
+  document.head.appendChild(st);
+  document.addEventListener("click", function(e){ var i = e.target; if (i && i.matches && i.matches("section.nvmovp input[type=date].nvmov-in") && i.showPicker){ try { i.showPicker(); } catch(er){} } }, true);
+})();
