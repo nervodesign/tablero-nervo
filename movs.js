@@ -285,7 +285,7 @@
     var monto = Math.abs(Number(r.monto) || 0), total = signoDe(r) === "-" ? -monto : monto;
     var esV = /^venta:/.test(r.msg_id || "");
     var fila = { id: id, concepto: esV ? String(r.contraparte || "") : String(r.contraparte || r.concepto || tipoDe(r.tipo)[1]).toUpperCase(), fecha: fecha, cat: r.cat,
-      total: total, cuenta: GRUPOS_FIN[String(r.cat).split(".")[0]] || "", notas: (r.concepto ? r.concepto + " · " : "") + (esV ? "Creado desde Movimientos (venta aprobada)" : "desde #movimientos") };
+      total: total, cuenta: (r.cliente && r.cliente.finCuenta) || GRUPOS_FIN[String(r.cat).split(".")[0]] || "", notas: (r.concepto ? r.concepto + " · " : "") + (esV ? "Creado desde Movimientos (venta aprobada)" : "desde #movimientos") };
     return new Promise(function(ok, mal){
       google.script.run.withSuccessHandler(function(){ ok(id); }).withFailureHandler(mal).baseGuardarVarios(hoja, [fila]);
     });
@@ -330,7 +330,10 @@
     to.value = mon ? "$ " + (s === "-" ? "-" : "") + Math.round(mon).toLocaleString("es-AR") : ""; to.placeholder = "$ -0";
     to.title = "Negativo si sale plata, positivo si entra";
     to.onchange = function(){ var n = numAR(to.value); if (n == null){ guardar(r, { monto: null }); return; } guardar(r, { monto: Math.abs(n), signo: n < 0 ? "egreso" : "ingreso" }); };
-    var cu = h("span", "nvmov-cuenta", r.cat ? (GRUPOS_FIN[String(r.cat).split(".")[0]] || "") : "—");
+    var cuSel = (r.cliente && r.cliente.finCuenta) || (r.cat ? (GRUPOS_FIN[String(r.cat).split(".")[0]] || "") : "");
+    var cu = h("select", "nvmov-in nvmov-cuenta" + (cuSel ? "" : " falta")); var cu0 = h("option", null, "Cuenta"); cu0.value = ""; cu.append(cu0);
+    Object.keys(GRUPOS_FIN).forEach(function(k){ var o = h("option", null, GRUPOS_FIN[k]); o.value = GRUPOS_FIN[k]; cu.append(o); }); cu.value = cuSel; cu.title = "Cuenta de Finanzas";
+    cu.onchange = function(){ guardar(r, { cliente: Object.assign({}, r.cliente || {}, { finCuenta: cu.value || null }) }); };
     var no = h("input", "nvmov-in"); no.value = r.concepto || ""; no.placeholder = "Notas"; no.onchange = function(){ guardar(r, { concepto: no.value.trim() || null }); };
     var qu = h("select", "nvmov-in quien" + (r.por ? "" : " falta")); [["","❓"],["euge","Euge"],["pau","Pau"]].forEach(function(o){ var e = h("option", null, o[1]); e.value = o[0]; qu.append(e); }); qu.value = r.por || "";
     qu.onchange = function(){ guardar(r, { por: qu.value || null }); };
@@ -341,7 +344,7 @@
     });
     var x = h("button", "nvmov-x", r.estado === "descartado" ? "↺" : "✕"); x.type = "button"; x.title = r.estado === "descartado" ? "Recuperar" : "Descartar";
     x.onclick = function(){ guardar(r, { estado: r.estado === "descartado" ? "pendiente" : "descartado" }); };
-    if (r.cargado) [co, fe, ca, to, no, qu].forEach(function(e){ e.disabled = true; });
+    if (r.cargado) [co, fe, ca, cu, to, no, qu].forEach(function(e){ e.disabled = true; });
     [ckw, co, fe, ca, to, cu, no, qu, ad, x].forEach(function(e){ var cc = h("div", "nvmov-c"); cc.append(e); f.append(cc); });
     w.append(f);
     /* debajo, chiquito: el mensaje original y avisos */
