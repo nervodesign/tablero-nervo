@@ -1424,3 +1424,5 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
     });
   }, 500);
 })();
+
+;(function(){if(window.__nvPlataLibre)return;window.__nvPlataLibre=1;var st=document.createElement("style");st.id="nvtema-keep";st.textContent="html:not(#a):not(#b):not(#c):not(#d) body section.nvmovp .nvmov-blq:not(:first-of-type) .nvmov-blqb{max-height:none !important;overflow-y:visible !important}";document.head.appendChild(st);})();
