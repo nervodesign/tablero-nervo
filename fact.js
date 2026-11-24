@@ -179,6 +179,15 @@
         .mandarMails(JSON.stringify({ asunto: asunto, fotos: [], para: [{ id: f.id, email: c.email, html: mailHTML(f, tipo), texto: texto }] }));
     });
   }
+  /* al emitir: avisa en el chat "Facturas", manda copia a Nervo y marca la venta como facturada */
+  var MAIL_COPIA = "nervodesigncordoba@gmail.com";
+  function avisarFactura(f){
+    var d = f.datos || {}, c = d.cliente || {}, n = String(f.pv || 5).padStart(5, "0") + "-" + String(f.nro).padStart(8, "0"), quien = f.cuenta === "pau" ? "Pau" : "Euge";
+    var tx = "🧾 Factura C " + n + " · " + (c.nombre || "") + " · " + plata(f.total) + (d.num ? " · " + d.num : "") + " · emitida por " + quien;
+    try { window.__nvLocal.chatEnviar([{ canal: "fac", texto: tx, por: soy() || f.cuenta }]); } catch(e){}
+    try { google.script.run.withFailureHandler(function(){ toast("No se pudo mandar la copia a " + MAIL_COPIA); }).mandarMails(JSON.stringify({ asunto: "Factura emitida " + n + " · " + (c.nombre || ""), fotos: [], para: [{ id: f.id, email: MAIL_COPIA, html: mailHTML(f, "factura"), texto: tx }] })); } catch(e){}
+    try { var tb = f.origen === "may" ? "base_may" : "base_min", campo = f.origen === "may" ? "facturas" : "factN"; if (f.venta_id){ var x = { id: f.venta_id, cambiado: Date.now(), por: soy() }; x[campo] = "C " + n; google.script.run.baseGuardarVarios(tb, [x]); } } catch(e){}
+  }
   function imprimir(f, tipo){
     var w = window.open("", "_blank"); if (!w) { toast("Permití ventanas emergentes para descargar el PDF"); return; }
     w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + (tipo === "factura" ? "Factura" : tipo === "nc" ? "Nota de credito" : "Remito") + ' Nervo Design</title><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&display=swap" rel="stylesheet"><style>body{margin:0;padding:24px;background:#fff}@media print{body{padding:0}}</style></head><body>' + docHTML(f, tipo, false) + '<script>setTimeout(function(){print()},600)<\/script></body></html>');
@@ -227,7 +236,9 @@
         if (!res.ok){ throw new Error(res.error || "No se pudo emitir"); }
         if (esNC){ f.nc = { pv: res.pv, nro: res.nro, cae: res.cae, cae_vto: res.cae_vto, fecha: res.fecha, total: res.total, at: new Date().toISOString(), por: soy() || "" }; }
         else { f.estado = "emitida"; f.pv = res.pv; f.nro = res.nro; f.cae = res.cae; f.cae_vto = res.cae_vto; f.fecha = res.fecha; f.doc_tipo = res.doc_tipo; f.doc_nro = res.doc_nro; f.emitida_at = f.emitida_at || new Date().toISOString(); }
-        return guardarF(f).then(function(){
+        return guardarF(f).then(function(rg){
+          if (rg && rg.error){ alert("OJO: la factura SE EMITIÓ en ARCA (N° " + res.pv + "-" + res.nro + ") pero el tablero no la pudo guardar. NO la vuelvas a facturar y avisá para revisarla."); }
+          if (!esNC) avisarFactura(f);
           cerrar(); if (cerrarEditor) cerrarEditor();
           toast((esNC ? "Nota de crédito emitida ✓ N° " : "Factura emitida ✓ N° ") + String(res.pv).padStart(5, "0") + "-" + String(res.nro).padStart(8, "0"));
           pintar();
