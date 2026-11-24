@@ -1147,3 +1147,41 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
 
 /* Movimientos: productos marron, cuadraditos chicos, fecha sin pisarse */
 ;(function(){if(window.__nvMovFx)return;window.__nvMovFx=1;var st=document.createElement('style');st.id='nvtema-keep';st.textContent="html:not(#a):not(#b):not(#c):not(#d) body section.nvmovp .nvmov-chip{background:#F4EEEA !important;color:#5A3F35 !important;font-weight:500 !important;border:1px solid #E9DFD8 !important}html:not(#a):not(#b):not(#c):not(#d) body section.nvmovp .nvmov-plc::before{width:11px !important;height:11px !important;border-width:1px !important;border-radius:3px !important;flex:0 0 11px !important;border-color:#CFC4BD !important}html:not(#a):not(#b):not(#c):not(#d) body section.nvmovp .nvmov-it input[type=date].nvmov-in{width:100% !important;min-width:112px !important;font-size:12.5px !important;padding-right:2px !important;box-sizing:border-box !important}";document.head.appendChild(st);})();
+
+/* ---------- __nvChatAbajo: el chat siempre abre en lo último y no salta (solo se mueve si vos subís) ---------- */
+(function(){
+  if (window.__nvChatAbajo) return; window.__nvChatAbajo = 1;
+  var EST = new WeakMap();
+  function cerca(L){ return L.scrollHeight - L.scrollTop - L.clientHeight < 90; }
+  function preparar(L){
+    if (EST.has(L)) return EST.get(L);
+    var s = { pin: true, user: 0, h: L.clientHeight };
+    EST.set(L, s);
+    function abajo(){ if (L.querySelector(".flash")){ s.pin = false; return; } if (s.pin && L.clientHeight > 0) L.scrollTop = L.scrollHeight; }
+    s.abajo = abajo;
+    ["wheel", "touchstart", "touchmove", "keydown", "mousedown"].forEach(function(ev){ L.addEventListener(ev, function(){ s.user = Date.now(); }, { passive: true }); });
+    L.addEventListener("scroll", function(){
+      if (L.querySelector(".flash")){ s.pin = false; return; }
+      if (Date.now() - s.user < 1200) s.pin = cerca(L);
+      else if (s.pin && !cerca(L)) requestAnimationFrame(abajo);
+    }, { passive: true });
+    new MutationObserver(function(){ if (s.pin) requestAnimationFrame(abajo); }).observe(L, { childList: true, subtree: true, characterData: true });
+    L.addEventListener("load", function(){ if (s.pin) abajo(); }, true);
+    if (window.ResizeObserver){
+      new ResizeObserver(function(){
+        if (s.h === 0 && L.clientHeight > 0) s.pin = true; /* al volver a entrar al chat */
+        s.h = L.clientHeight; if (s.pin) abajo();
+      }).observe(L);
+    }
+    abajo(); setTimeout(abajo, 300); setTimeout(abajo, 1200);
+    return s;
+  }
+  function revisar(){ [].forEach.call(document.querySelectorAll(".chw .chlist"), preparar); }
+  /* al cambiar de canal o tocar el chat desde afuera de la lista: vuelve a lo último */
+  document.addEventListener("click", function(e){
+    var chw = e.target.closest && e.target.closest(".chw"); if (!chw || e.target.closest(".chlist")) return;
+    setTimeout(function(){ [].forEach.call(document.querySelectorAll(".chw .chlist"), function(L){ var s = preparar(L); s.pin = true; s.abajo(); setTimeout(s.abajo, 250); }); }, 60);
+  }, true);
+  new MutationObserver(function(){ revisar(); }).observe(document.documentElement, { childList: true, subtree: true });
+  revisar();
+})();
