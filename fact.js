@@ -90,8 +90,40 @@
   function brutoDe(f){ var d = f.datos || {}; var t = (d.items || []).reduce(function(a, i){ return a + netoLinea(i); }, 0); if (d.conEnvio) t += Number(d.envio) || 0; return Math.round(t * 100) / 100; }
   function descDe(f){ return 0; } /* el descuento va por producto */
   function totalDe(f){ return Math.round((brutoDe(f) - descDe(f)) * 100) / 100; }
-  function emitidasAnio(cu){ var y = new Date().getFullYear() + "-"; var t = 0; Object.keys(F).forEach(function(k){ var f = F[k]; if (f.cuenta === cu && f.estado === "emitida" && !f.nc && String(f.emitida_at || "").slice(0, 5) === y) t += Number(f.total) || 0; }); return t; }
-  function emitidasMes(cu){ var t = 0; Object.keys(F).forEach(function(k){ var f = F[k]; if (f.cuenta === cu && f.estado === "emitida" && !f.nc && f.mes === MES) t += Number(f.total) || 0; }); return t; }
+  /* facturas hechas a mano por ARCA (fuera del tablero): suman al mes y al tope */
+  function manuales(cu){ return ((CFG[cu] || {}).manuales || []).filter(function(m){ return m && Number(m.monto); }); }
+  function manualesAnio(cu){ var y = String(new Date().getFullYear()); return manuales(cu).filter(function(m){ return String(m.fecha || "").slice(0, 4) === y; }).reduce(function(s, m){ return s + Number(m.monto); }, 0); }
+  function manualesMes(cu){ return manuales(cu).filter(function(m){ return String(m.fecha || "").slice(0, 7) === MES; }).reduce(function(s, m){ return s + Number(m.monto); }, 0); }
+  function cargaManual(cu, nom){
+    var cap = h("div", "nvf-cap"), p = h("div", "nvf-ed nvf-cfg"); cap.append(p); p.style.maxWidth = "460px";
+    function cerrar(){ cap.classList.remove("on"); setTimeout(function(){ cap.remove(); }, 220); pintar(); }
+    cap.onclick = function(e){ if (e.target === cap) cerrar(); };
+    var cab = h("div", "nvf-edh"); cab.append(h("h2", null, "Facturado a mano · " + nom), h("button", "nvf-x", "✕")); cab.lastChild.onclick = cerrar; p.append(cab);
+    p.append(h("p", "nvf-nota", "Cargá acá las facturas que hiciste directo en ARCA. Suman a lo facturado del mes y se restan del tope."));
+    function fl(lab, inp){ var w = h("label", "nvf-fl"); w.append(h("span", null, lab), inp); p.append(w); return inp; }
+    var im = h("input", "nvf-in"); im.inputMode = "decimal"; im.placeholder = "$ 0"; fl("Monto", im);
+    var fe = h("input", "nvf-in"); fe.type = "date"; fe.value = new Date().toISOString().slice(0, 10); fl("Fecha de la factura", fe);
+    var de = h("input", "nvf-in"); de.placeholder = "Ej: Factura C 0004-00000123 · Cliente"; fl("Detalle (opcional)", de);
+    var lis = h("div"); lis.style.cssText = "margin-top:14px;font-size:13px";
+    function pintarLis(){
+      lis.innerHTML = ""; var ms = manuales(cu).slice().sort(function(a, b){ return String(b.fecha).localeCompare(String(a.fecha)); });
+      if (!ms.length) return;
+      lis.append(h("h3", null, "Cargadas"));
+      ms.forEach(function(m){ var r = h("div"); r.style.cssText = "display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #EFE7E1";
+        var tx = h("span", null, fechaTx(m.fecha) + " · " + plata(m.monto) + (m.det ? " · " + m.det : "")); tx.style.flex = "1";
+        var x = h("button", "nvf-del", "✕"); x.type = "button"; x.title = "Borrar"; x.onclick = function(){ if (!confirm("¿Borrar esta carga de " + plata(m.monto) + "?")) return; var d = Object.assign({}, CFG[cu] || {}); d.manuales = (d.manuales || []).filter(function(z){ return z.id !== m.id; }); guardarCfg(cu, d).then(function(){ toast("Borrada"); pintarLis(); }); };
+        r.append(tx, x); lis.append(r); });
+    }
+    var acc = h("div", "nvf-acc"); acc.style.marginTop = "12px";
+    var bg = h("button", "nvf-bt pri", "Guardar"); bg.type = "button";
+    bg.onclick = function(){ var mo = num(im.value); if (!mo){ toast("Poné el monto"); im.focus(); return; } if (!fe.value){ toast("Poné la fecha"); return; }
+      var d = Object.assign({}, CFG[cu] || {}); d.manuales = (d.manuales || []).concat([{ id: "m" + Date.now(), monto: mo, fecha: fe.value, det: de.value.trim(), por: soy() || "", at: new Date().toISOString() }]);
+      bg.disabled = true; guardarCfg(cu, d).then(function(r){ bg.disabled = false; if (r && r.error){ toast("No se pudo guardar: " + r.error.message); return; } toast("Cargado ✓ " + plata(mo)); im.value = ""; de.value = ""; pintarLis(); }); };
+    acc.append(bg); p.append(acc, lis); pintarLis();
+    document.body.append(cap); requestAnimationFrame(function(){ cap.classList.add("on"); });
+  }
+  function emitidasAnio(cu){ var y = new Date().getFullYear() + "-"; var t = manualesAnio(cu); Object.keys(F).forEach(function(k){ var f = F[k]; if (f.cuenta === cu && f.estado === "emitida" && !f.nc && String(f.emitida_at || "").slice(0, 5) === y) t += Number(f.total) || 0; }); return t; }
+  function emitidasMes(cu){ var t = manualesMes(cu); Object.keys(F).forEach(function(k){ var f = F[k]; if (f.cuenta === cu && f.estado === "emitida" && !f.nc && f.mes === MES) t += Number(f.total) || 0; }); return t; }
 
   /* ---------- documento (factura / remito) ---------- */
   /* QR oficial de ARCA (se arma en la compu, no se manda a terceros) */
@@ -398,6 +430,7 @@
       c.append(hd, ks, bar);
       if (!tope){ var bt = h("button", "nvf-link", "Poner tope"); bt.type = "button"; bt.onclick = config; c.append(bt); }
       else if (pct >= 90) c.append(h("p", "nvf-aviso", "Atención: estás cerca del tope de facturación."));
+      var nm = manuales(cu).length, bm = h("button", "nvf-link", "+ Facturado a mano" + (nm ? " (" + nm + ")" : "")); bm.type = "button"; bm.onclick = function(){ cargaManual(cu, o[1]); }; c.append(bm);
       tps.append(c);
     });
     p.append(tps);
