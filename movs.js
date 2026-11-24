@@ -572,27 +572,40 @@
   }
   /* ver la venta completa en un recuadro, todo entero y fácil de leer */
   function verCompleta(it){
-    var v = it.row, d = datosFin(it);
-    var cap = h("div", "nvvc-cap"), p = h("div", "nvvc"); cap.append(p);
+    /* la venta completa en un recuadro, editable como en Ventas minoristas */
+    var v = it.row, pend = {};
+    var cap = h("div", "nvvc-cap"), p = h("div", "nvvc nvvc-ed"); cap.append(p);
     var x = h("button", "nvvc-x", "✕"); x.type = "button";
-    function cerrar(){ cap.remove(); document.removeEventListener("keydown", esc); }
-    function esc(e){ if (e.key === "Escape") cerrar(); }
+    function cerrar(){ cap.remove(); document.removeEventListener("keydown", esc); try { pintar(); } catch(e){} }
+    function esc(e){ if (e.key === "Escape" && !/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || "")) cerrar(); }
     x.onclick = cerrar; cap.onclick = function(e){ if (e.target === cap) cerrar(); }; document.addEventListener("keydown", esc);
-    var tit = h("div", "nvvc-t"); tit.append(h("b", null, (v.num || "Venta") + " · " + (v.cliente || "—")), h("small", null, (it.src === "web" ? "Tienda Nube" : "WhatsApp / IG") + (v.fecha ? " · " + v.fecha.split("-").reverse().join("/") : "")));
+    var titB = h("b", null, (v.num || "Venta") + " · " + (v.cliente || "—"));
+    var tit = h("div", "nvvc-t"); tit.append(titB, h("small", null, (it.src === "web" ? "Tienda Nube" : "WhatsApp / IG") + " · los cambios se guardan solos"));
     p.append(x, tit);
-    function sec(nom, filas){ var s = h("div", "nvvc-s"); s.append(h("h4", null, nom)); var g = h("div", "nvvc-g"); filas.forEach(function(f){ if (!f) return; var e = h("div", f[2] ? "full" : ""); e.append(h("small", null, f[0])); var sp = h("span", null, f[1] == null || f[1] === "" ? "—" : String(f[1])); if (!f[1]) sp.className = "vac"; e.append(sp); g.append(e); }); s.append(g); p.append(s); }
-    var ps = arr(v.prods), cs = String(v.cant || "").replace(/\[.?\]\s*/g, "").split(/\n/);
-    var lp = h("div", "nvvc-s"); lp.append(h("h4", null, "Productos"));
-    if (!ps.length) lp.append(h("p", "vac", "Sin productos cargados"));
-    ps.forEach(function(pr, i){ var r = h("div", "nvvc-p"); r.append(h("span", "q", (String(cs[i] || "1").trim() || "1") + " ×"), h("span", null, pr)); lp.append(r); });
-    p.append(lp);
-    var pesos = function(n){ return Number(n) ? "$ " + plataN(n) : ""; };
-    sec("Cliente", [["Nombre", v.cliente], ["Datos personales", v.datos, 1]]);
-    sec("Plata", [["Total cobrado", pesos(v.cobrado)], ["Total a facturar", pesos(v.facturar)], ["Costo de envío", pesos(v.costoEnv)], ["Pago", v.pago], ["Método de pago", arr(v.metodo).join(", ")], ["Cobró", d.quien]]);
-    sec("Envío", [["Método de envío", v.menv], ["Tipo de envío", v.tipo], ["Etiqueta", arr(v.etq).join(", ")], ["Estado", v.env], ["Sucursal / retiro", v.suc, 1], ["Observaciones", v.obs, 1]]);
-    if (v.fact) sec("Factura", [["Datos de factura", v.fact, 1]]);
-    sec("Así entra en Finanzas " + (d.quien || ""), d.cols.map(function(c){ return [c[0], c[1]]; }));
+    function ed(campos){ Object.assign(pend, campos); guardarVenta(it, Object.assign({}, pend)); titB.textContent = (v.num || "Venta") + " · " + (v.cliente || "—"); pintarFin(); }
+    function sec(nom, filas){ var s = h("div", "nvvc-s"); s.append(h("h4", null, nom)); var g = h("div", "nvvc-g"); filas.forEach(function(f){ if (!f) return; var e = h("label", f[2] ? "full" : ""); e.append(h("small", null, f[0]), f[1]); g.append(e); }); s.append(g); p.append(s); return s; }
+    function tx(val, on, ph){ var e = h("input", "nvmov-in"); e.value = val == null ? "" : val; e.placeholder = ph || ""; e.onchange = function(){ on(e.value.trim()); }; return e; }
+    function ar(val, on, ph){ var e = h("textarea", "nvmov-in"); e.value = val || ""; e.rows = 3; e.placeholder = ph || ""; e.onchange = function(){ on(e.value); }; return e; }
+    function pl(val, on){ var e = h("input", "nvmov-in"); e.inputMode = "decimal"; e.value = plataN(val); e.placeholder = "$"; e.onchange = function(){ var n = numAR(e.value); e.value = plataN(n); on(String(n || "")); }; return e; }
+    var fe = h("input", "nvmov-in"); fe.type = "date"; fe.value = v.fecha || ""; fe.onchange = function(){ ed({ fecha: fe.value }); };
+    sec("Venta", [["#", tx(v.num, function(z){ ed({ num: z, venta: z }); })], ["Fecha de compra", fe]]);
+    var pc = prodsYCants(it, function(){ pintarFin(); });
+    var sp = h("div", "nvvc-s"); sp.append(h("h4", null, "Productos y cantidades")); var gp = h("div", "nvvc-pc"); gp.append(pc[0], pc[1]); sp.append(gp); p.append(sp);
+    sec("Cliente", [["Nombre", tx(v.cliente, function(z){ ed({ cliente: z }); })], ["Datos personales", ar(v.datos, function(z){ ed({ datos: z }); }, "DNI, mail, celular, dirección"), 1]]);
+    var qu = h("select", "nvmov-in"); [["","❓"],["euge","Euge"],["pau","Pau"]].forEach(function(o){ var e = h("option", null, o[1]); e.value = o[0]; qu.append(e); }); qu.value = quienDeCobro(v.cobro) || ""; qu.onchange = function(){ ed({ cobro: JSON.stringify(cobroDeQuien(qu.value)) }); };
+    sec("Plata", [["Total cobrado", pl(v.cobrado, function(z){ ed({ cobrado: z }); })], ["Total a facturar", pl(v.facturar, function(z){ ed({ facturar: z }); })], ["Costo de envío", pl(v.costoEnv, function(z){ ed({ costoEnv: z || "0" }); })],
+      ["Pago", sel(v.pago, PAGOS, "Pago", function(z){ ed({ pago: z }); })], ["Método de pago", sel(arr(v.metodo)[0] || "", METODOS, "❓ Medio", function(z){ ed({ metodo: JSON.stringify(z ? [z] : []) }); })], ["Cobró", qu]]);
+    var et0 = String(arr(v.etq)[0] || "").trim(), et1 = ETQS.filter(function(o){ return o.toLowerCase() === et0.toLowerCase(); })[0] || et0;
+    sec("Envío", [["Método de envío", sel(v.menv, MENVS, "Método de envío", function(z){ ed({ menv: z }); })], ["Tipo de envío", sel(v.tipo, TIPOSENV, "Domicilio / Sucursal", function(z){ ed({ tipo: z }); })],
+      ["Etiqueta", sel(et1, ETQS, "Etiqueta", function(z){ ed({ etq: JSON.stringify(z ? [z] : []) }); }), 1],
+      ["Sucursal / retiro", ar(v.suc, function(z){ ed({ suc: z }); }), 1], ["Observaciones de envío", ar(v.obs, function(z){ ed({ obs: z }); }), 1]]);
+    sec("Factura", [["Datos de factura", ar(v.fact, function(z){ ed({ fact: z }); }), 1]]);
+    var sf = h("div", "nvvc-s"); p.append(sf);
+    function pintarFin(){ var d = datosFin(it); sf.innerHTML = ""; sf.append(h("h4", null, "Así entra en Finanzas " + (d.quien || ""))); var g = h("div", "nvvc-g nvvc-ro"); d.cols.forEach(function(c){ var e = h("div"); e.append(h("small", null, c[0]), h("span", null, c[1] == null || c[1] === "" ? "—" : String(c[1]))); g.append(e); }); sf.append(g); }
+    pintarFin();
+    var pie = h("div", "nvvc-pie"); var lis = h("button", "nvmov-ok", "Listo"); lis.type = "button"; lis.onclick = cerrar; pie.append(lis); p.append(pie);
     if (!document.getElementById("nvvc-css")){ var st = h("style"); st.id = "nvvc-css"; st.textContent = ".nvvc-cap{position:fixed;inset:0;background:rgba(43,32,28,.35);z-index:9999;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:40px 16px}.nvvc{position:relative;background:#fff;border-radius:8px;max-width:640px;width:100%;padding:22px 24px 18px;box-shadow:0 10px 40px rgba(0,0,0,.18);font-size:14px;color:#2B201C}.nvvc-x{position:absolute;right:12px;top:10px;border:0;background:none;font-size:18px;cursor:pointer;color:#8D827C}.nvvc-t b{display:block;font-size:18px;font-weight:600}.nvvc-t small{color:#8D827C}.nvvc-s{border-top:1px solid #ECE5E0;margin-top:14px;padding-top:12px}.nvvc-s h4{margin:0 0 8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6B5047;font-weight:600}.nvvc-g{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}.nvvc-g>div.full{grid-column:1/-1}.nvvc-g small{display:block;font-size:11px;color:#8D827C;margin-bottom:2px}.nvvc-g span{white-space:pre-wrap;word-break:break-word}.nvvc .vac{color:#B9AFA9}.nvvc-p{display:flex;gap:8px;padding:5px 0;border-bottom:1px dashed #F0EAE6}.nvvc-p .q{min-width:34px;color:#6B5047;font-weight:600}@media(max-width:560px){.nvvc-g{grid-template-columns:1fr}}"; document.head.append(st); }
+    if (!document.getElementById("nvvc-css2")){ var s2 = h("style"); s2.id = "nvvc-css2"; s2.textContent = ".nvvc-ed{max-width:760px}.nvvc-ed .nvvc-g label{display:block;margin:0}.nvvc-ed .nvvc-g label.full{grid-column:1/-1}.nvvc-ed .nvmov-in{width:100%;box-sizing:border-box;min-height:34px;font:inherit;font-size:13.5px}.nvvc-ed textarea.nvmov-in{resize:vertical;min-height:64px}.nvvc-pc{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:10px}.nvvc-pie{display:flex;justify-content:flex-end;margin-top:16px}.nvvc-ro span{white-space:pre-wrap}@media(max-width:560px){.nvvc-pc{grid-template-columns:1fr}}"; document.head.append(s2); }
     document.body.append(cap);
   }
   function filaVenta(it){
@@ -693,7 +706,7 @@
     var ti = sel(v.tipo, TIPOSENV, "Domicilio / Sucursal", function(x){ guardarVenta(it, { tipo: x }); refrescar(); });
     var qu = h("select", "nvmov-in quien" + (quienDeCobro(v.cobro) ? "" : " falta")); [["","❓"],["euge","Euge"],["pau","Pau"]].forEach(function(o){ var e = h("option", null, o[1]); e.value = o[0]; qu.append(e); });
     qu.value = quienDeCobro(v.cobro) || ""; qu.onchange = function(){ guardarVenta(it, { cobro: JSON.stringify(cobroDeQuien(qu.value)) }); qu.classList.toggle("falta", !qu.value); refrescar(); };
-    var ab = h("button", "nvmov-mas", "Abrir"); ab.type = "button";
+    var ab = h("span", "nvmov-vacio");
     var x = h("button", "nvmov-x", "✕"); x.type = "button"; x.title = it.src === "web" ? "No se puede descartar una venta de la tienda (se revisa y aprueba)" : "Descartar";
     if (it.src === "web") x.disabled = true; else x.onclick = function(){ guardar(it.mov, { estado: "descartado" }); };
     [ckw, nu, pc[0], pc[1], fe, cl, dp, ob, su, et, co, to, ce, pa, me, mn, ti, qu, ab, x].forEach(function(e){ var cc = h("div", "nvmov-c"); cc.append(e); f.append(cc); }); w.append(f);
@@ -759,9 +772,8 @@
     };
     fc.onchange = function(){ FIN[it.id] = fc.checked; refrescar(); };
     refrescar();
-    ab.onclick = function(){ det.hidden = !det.hidden; ab.classList.toggle("on", !det.hidden); ab.textContent = det.hidden ? "Abrir" : "Cerrar"; };
-    var vc = h("button", "nvmov-mas nvmov-vc", "Ver venta"); vc.type = "button"; vc.title = "Ver la venta completa en un recuadro"; vc.onclick = function(){ verCompleta(it); };
-    if (ab.parentNode){ ab.parentNode.append(vc); vc.style.marginTop = "6px"; vc.style.display = "block"; }
+    var vc = h("button", "nvmov-mas nvmov-vc", "Ver venta"); vc.type = "button"; vc.title = "Ver y editar la venta completa"; vc.onclick = function(){ verCompleta(it); };
+    vc.style.cssText = "display:block;margin:0 0 6px;width:100%"; c1.prepend(vc);
     return w;
   }
 
