@@ -101,14 +101,26 @@
             cliente: res.datos ? { datos: res.datos } : null, falta: res.falta || [], ia: { lector: res.leido, errores: res.errores || null }, estado: "pendiente" }).then(function(){
             /* solo si quedó sin monto o sin dueño y hay un archivo, pedimos ayuda a la IA (si está saturada, no pasa nada) */
             if ((!x.monto || !x.por) && (m.adj || []).length) ayudaIA(x, m);
+            if (res.nota) aplicarNota(x, res.nota);
           });
         });
       }).catch(function(e){ if (!/duplicate|23505/i.test(String(e && (e.code || e.message)))) console.warn(e); }).then(function(){ delete ENCURSO[m.id]; });
     });
   }
 
+  /* /nota WEB 1583 … → se suma a las observaciones de esa venta (no es un movimiento de plata) */
+  function aplicarNota(x, nt){
+    var nn = function(s){ return String(s || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); };
+    var v = baseMin().find(function(z){ return nn(z.num) === nn(nt.num) || nn(z.venta) === nn(nt.num); });
+    if (!v){ guardar(x, { falta: ["No encontré la venta " + nt.num + ": revisá el número"] }); return; }
+    var obs = (v.obs ? String(v.obs).trim() + "\n\n" : "") + "📝 " + nt.texto;
+    v.obs = obs;
+    try { google.script.run.withFailureHandler(function(e){ guardar(x, { falta: ["No se pudo guardar la nota en " + nt.num] }); }).baseGuardarVarios("base_min", [{ id: v.id, obs: obs, cambiado: Date.now(), por: SOY }]); } catch(e){}
+    guardar(x, { estado: "descartado", concepto: "📝 Nota agregada a " + nt.num, falta: [] });
+  }
   /* ---------- en el chat: etiqueta debajo de cada mensaje ---------- */
   function etiqueta(r){
+    if (/^\s*\/nota/i.test(r.texto || "")) return /^📝 Nota agregada/.test(r.concepto || "") ? ["📝 " + String(r.concepto).replace(/^📝\s*/, ""), "ok"] : ["📝 Nota · no encontré la venta", "pen"];
     if (/^\s*\/ojo/i.test(r.texto || "")) return (r.estado === "aprobado" || r.estado === "descartado") ? ["✓ Ojo resuelto", "ok"] : ["⚠ Ojo · para corregir", "pen"];
     if (/^web-/.test(r.msg_id || "")){ var wr = baseMin().find(function(x){ return "web-" + x.id === r.msg_id; }); return wr && !/REVISAR/i.test(wr.env || "") ? ["✓ Venta web revisada", "ok"] : ["● Venta web · para revisar en Movimientos", "pen"]; }
     if (r.estado === "procesando") return ["⏳ Leyendo…", "lee"];
@@ -1275,6 +1287,7 @@
     { c: "/pago Euge", d: "Euge pagó algo (transferencia o efectivo)", top: 1 },
     { c: "/pago Pau", d: "Pau pagó algo (transferencia o efectivo)", top: 1 },
     { c: "/nueva venta", d: "Pasar una venta minorista", top: 1 },
+    { c: "/nota", d: "Agregar un dato a una venta (ej: /nota WEB 1583 …) · no va a Movimientos", top: 1 },
     { c: "/ojo", d: "Hay que corregir un dato de una venta o compra" },
     { c: "/cobro Euge", d: "Entró plata a la cuenta de Euge" },
     { c: "/cobro Pau", d: "Entró plata a la cuenta de Pau" },
@@ -1289,7 +1302,7 @@
     if (!m) return null;
     var k = N(m[1]), quien = m[3] ? m[3].toLowerCase() : "", resto = t.slice(m[0].length);
     if (k === "nueva" && m[2]) k = "venta";
-    var ok = { pago: 1, venta: 1, ojo: 1, cobro: 1, sena: 1, mayorista: 1, sueldo: 1, envio: 1 };
+    var ok = { pago: 1, venta: 1, ojo: 1, nota: 1, cobro: 1, sena: 1, mayorista: 1, sueldo: 1, envio: 1 };
     if (!ok[k]) return null;
     return { k: k, quien: quien, resto: resto };
   }
@@ -1301,6 +1314,13 @@
     L.leer = function(m, pres){
       var c = leerCmd(m && m.texto);
       if (!c) return orig.apply(this, arguments);
+      if (c.k === "nota"){
+        var rr = c.resto, mm = /\b(web|whats(?:app)?|wa|insta(?:gram)?|ig)\s*[#n°º.:]*\s*(\d{2,6})\b/i.exec(rr);
+        if (!mm) return Promise.resolve({ tipo: "otro", concepto: "📝 Nota sin número de venta", falta: ["Poné el número de venta, ej: /nota WEB 1583 …"], leido: "comando /nota" });
+        var pre = /^web/i.test(mm[1]) ? "WEB" : /^(insta|ig)/i.test(mm[1]) ? "INSTA" : "WHATS";
+        var txt = (rr.slice(0, mm.index) + rr.slice(mm.index + mm[0].length)).replace(/^[\s:·\-–]+/, "").trim();
+        return Promise.resolve({ tipo: "otro", concepto: "📝 Nota para " + pre + " " + mm[2], falta: [], leido: "comando /nota", nota: { num: pre + " " + mm[2], texto: txt } });
+      }
       if (c.k === "ojo") return Promise.resolve({ tipo: "otro", signo: null, monto: null, por: null, cuenta: null, concepto: "⚠ OJO: " + c.resto.trim(), falta: ["corregir lo que dice el mensaje"], leido: "comando /ojo" });
       var m2 = Object.assign({}, m, { texto: c.resto });
       return Promise.resolve(orig.call(this, m2, pres)).then(function(res){
@@ -1461,6 +1481,7 @@
   function estado(m){ if (/^\s*✅\s*TODO ACTUALIZADO/i.test(m.texto || "")) return ["✅ Revisión cerrada hasta acá", "c-ok", "ok"];
     var r = ROWS[m.id];
     if (/^web-/.test(m.id)){ var w = ((window.__nv && window.__nv.S && window.__nv.S.bzData && window.__nv.S.bzData.min) || []).find(function(x){ return "web-" + x.id === m.id; }); return w && !/REVISAR/i.test(w.env || "") ? ["✓ Venta web revisada", "c-ok", "ok"] : ["● Venta web · para revisar", "c-pen", "rev"]; }
+    if (/^\s*\/nota/i.test(m.texto || "")) return r && /^📝 Nota agregada/.test(r.concepto || "") ? ["📝 " + String(r.concepto).replace(/^📝\s*/, ""), "c-ok", "ok"] : (r ? ["📝 Nota · no encontré la venta", "c-no", "rev"] : ["⏳ Leyendo…", "c-gr", "rev"]);
     if (/^\s*\/ojo/i.test(m.texto || "")) return r && (r.estado === "aprobado" || r.estado === "descartado") ? ["✓ Ojo resuelto", "c-ok", "ok"] : ["⚠ Ojo · para corregir", "c-no", "rev"];
     if (!r) return Date.now() - m.creado < 60000 ? ["⏳ Leyendo…", "c-gr", "rev"] : ["⚠ Falta cargar", "c-no", "falta"];
     if (r.estado === "procesando") return ["⏳ Leyendo…", "c-gr", "rev"];
