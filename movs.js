@@ -1382,6 +1382,34 @@
     var t = (r.monto ? " · " + plata(r.monto) : "") + (r.por ? " · " + (NOM[r.por] || r.por) : "");
     return r.estado === "aprobado" ? ["✓ Aprobado" + t, "c-ok", "ok"] : ["● Pendiente" + t, "c-pen", "rev"];
   }
+  /* si se edita un mensaje del canal, el movimiento pendiente se vuelve a leer con el texto nuevo */
+  window.__nvMovReleer = function(id, texto){
+    function aviso(t){ var d = document.createElement("div"); d.className = "nvtoast"; d.textContent = t; d.style.cssText = "position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#4A3630;color:#fff;padding:10px 16px;border-radius:8px;z-index:10000;font-size:14px;max-width:90vw"; document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 5000); }
+    return SB().from("movimientos").select("*").eq("msg_id", id).then(function(r){
+      var row = r && r.data && r.data[0]; if (!row) return;
+      if (row.estado === "descartado") return;
+      if (row.estado === "aprobado" || row.cargado){ aviso("Ese movimiento ya estaba aprobado y está en Finanzas: el cambio hay que hacerlo en Finanzas."); return; }
+      var L = window.__nvLector, S = window.__nv && window.__nv.S;
+      var m = { id: id, texto: texto, por: row.autor, creado: Date.parse(row.msg_at) || Date.now(), adj: row.adj || [] };
+      var lee = L && L.leer ? Promise.resolve(L.leer(m, (S && S.presupuestos) || [])) : Promise.resolve({});
+      return lee.catch(function(){ return {}; }).then(function(res){
+        res = res || {}; var T = ["venta","mayorista","sena","pago","sueldo","envio","otro"], cm = row.cliente || {};
+        var up = { texto: texto, falta: res.falta || [], cambiado: new Date().toISOString() };
+        if (T.indexOf(res.tipo) >= 0) up.tipo = res.tipo;
+        if (/^(ingreso|egreso)$/.test(res.signo)) up.signo = res.signo;
+        if (Number(res.monto)) up.monto = Number(res.monto);
+        if (res.cat && !cm.catManual) up.cat = res.cat;
+        if (/^(euge|pau)$/.test(res.por)) up.por = res.por;
+        if (/^(euge|pau)$/.test(res.cuenta)) up.cuenta = res.cuenta;
+        if (res.contraparte) up.contraparte = res.contraparte;
+        if (res.concepto) up.concepto = res.concepto;
+        if (res.medio) up.medio = res.medio;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(res.fecha || "")) up.fecha = res.fecha;
+        if (res.datos) up.cliente = Object.assign({}, cm, { datos: res.datos });
+        return SB().from("movimientos").update(up).eq("id", row.id).then(function(x){ if (x && x.error) aviso("No se pudo actualizar el movimiento: " + x.error.message); else aviso("Movimiento actualizado con el mensaje editado ✓"); });
+      });
+    });
+  };
   function cargarAhora(m, btn){
     btn.disabled = true; btn.textContent = "Leyendo…";
     var L = window.__nvLector, S = window.__nv && window.__nv.S;

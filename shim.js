@@ -532,7 +532,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
     });
   }
   L.chatBorrar = function(a){ return cambiar(a[0], function(d){ d.borrado = true; }, "chatBorrar", a).then(function(r){ return !!r; }); };
-  L.chatEditar = function(a){ return cambiar(a[0], function(d){ d.texto = String(a[1] || "").slice(0, 4000); d.editado = Date.now(); }, "chatEditar", a); };
+  L.chatEditar = function(a){ return cambiar(a[0], function(d){ d.texto = String(a[1] || "").slice(0, 4000); d.editado = Date.now(); }, "chatEditar", a).then(function(r){ try { if (window.__nvMovReleer) window.__nvMovReleer(String(a[0]), String(a[1] || "")); } catch(e){} return r; }); };
   L.chatReaccionar = function(a){
     var emo = a[1], por = a[2];
     return cambiar(a[0], function(d){ var re = d.reac || {}; var X = re[emo] || []; re[emo] = X.indexOf(por) >= 0 ? X.filter(function(p){ return p !== por; }) : X.concat([por]); if (!re[emo].length) delete re[emo]; d.reac = re; }, "chatReaccionar", a);
@@ -1183,7 +1183,7 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
     var chw = e.target.closest && e.target.closest(".chw"); if (!chw || e.target.closest(".chlist")) return;
     setTimeout(function(){ [].forEach.call(document.querySelectorAll(".chw .chlist"), function(L){ var s = preparar(L); s.pin = true; s.abajo(); setTimeout(s.abajo, 250); }); }, 60);
   }, true);
-  new MutationObserver(function(){ revisar(); }).observe(document.documentElement, { childList: true, subtree: true });
+  var pendRev = 0; new MutationObserver(function(){ if (pendRev) return; pendRev = 1; setTimeout(function(){ pendRev = 0; revisar(); }, 250); }).observe(document.documentElement, { childList: true, subtree: true });
   revisar();
 })();
 
@@ -1194,7 +1194,7 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
   st.textContent = ".chedf{margin:6px 0 4px}.chedf .chedta{width:100%;box-sizing:border-box;border:1px solid #E3DAD4;border-radius:6px;padding:8px 10px;font:inherit;font-size:14px;resize:vertical;background:#fff;color:#2B201C;outline:none}.chedf .chedb{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}.chedf button{border:0;border-radius:6px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}.chedf .chedno{background:#F1ECE8;color:#5A3F35}.chedf .chedok{background:#4A3630;color:#fff}.chmsg .chedt{font-size:11px;color:#A39890;margin-left:6px;font-style:italic}" +
     "html:not(#a):not(#b):not(#c):not(#d) body section.nvmovp .nvmov-sub{position:sticky !important;left:0 !important;background:transparent !important}html:not(#a):not(#b):not(#c):not(#d) body section.nvmovp .nvmov-sub .nvmov-tx{display:-webkit-box !important;-webkit-line-clamp:2 !important;-webkit-box-orient:vertical !important;overflow:hidden !important;white-space:normal !important}";
   document.head.appendChild(st);
-  function chatAbierto(){ var L = document.querySelector(".chw .chlist"); return !!(L && L.offsetParent && L.clientHeight > 0); }
+  function chatAbierto(){ var L = document.querySelector(".chw .chlist"); if (!(L && L.offsetParent && L.clientHeight > 0)) return false; var w = L.closest(".chw") || L; return w.getBoundingClientRect().height <= window.innerHeight + 4; }
   function escribiendo(){ var a = document.activeElement; return a && /TEXTAREA|INPUT/.test(a.tagName) && window.innerWidth < 800; }
   function fijar(){
     if (!chatAbierto() || escribiendo()) return;
@@ -1354,7 +1354,7 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
 /* ---------- __nvChatFijo2: ninguna caja que contiene al chat puede quedar corrida (el chat no se va para arriba) ---------- */
 (function(){
   if (window.__nvChatFijo2) return; window.__nvChatFijo2 = 1;
-  function chw(){ var L = document.querySelector(".chw .chlist"); return L && L.offsetParent && L.clientHeight > 0 ? L.closest(".chw") : null; }
+  function chw(){ var L = document.querySelector(".chw .chlist"); var w = L && L.offsetParent && L.clientHeight > 0 ? L.closest(".chw") : null; return w && w.getBoundingClientRect().height <= window.innerHeight + 4 ? w : null; }
   function escribiendoCelu(){ var a = document.activeElement; return a && /TEXTAREA|INPUT/.test(a.tagName) && window.innerWidth < 800; }
   function fijar(){
     var w = chw(); if (!w || escribiendoCelu()) return;
