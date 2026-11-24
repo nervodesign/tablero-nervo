@@ -354,11 +354,25 @@
     if (r.por && r.cuenta && r.por !== r.cuenta) sub.append(h("span", "nvmov-al", "⚠️ El comprobante es de la cuenta de " + NOM[r.cuenta]));
     (r.falta || []).forEach(function(t){ sub.append(h("span", "nvmov-al", "Falta: " + t)); });
     if (r.estado === "procesando") sub.append(h("span", "nvmov-al", "⏳ Leyendo…"));
+    /* etiquetas de envío: preguntar quién pagó el envío (cliente → 4.2 · Nervo → 4.1) */
+    var esEtq = /^4\.[12]\b/.test(String(r.cat || "")) || (/^4\./.test(String(r.cat || "")) && /etiqueta|env[ií]o\s*nube|andreani|v[ií]a\s*cargo/i.test((r.texto || "") + " " + (r.contraparte || "")));
+    var envP = (r.cliente && r.cliente.envPago) || "";
+    if (esEtq && r.estado === "pendiente"){
+      var qe = h("span", "nvmov-envq"); qe.style.cssText = "display:inline-flex;align-items:center;gap:6px;padding:3px 6px 3px 10px;border-radius:999px;font-size:12px;background:" + (envP ? "#EEF3EA" : "#FBEFE6") + ";border:1px " + (envP ? "solid #CFE0C8" : "dashed #E0A994");
+      qe.append(h("span", null, "¿Quién pagó el envío?"));
+      [["cliente", "Cliente", "4.2 LOGISTICA - ET. DE TRANSP. PAG. X CLIENTE"], ["nervo", "Nervo", "4.1 LOGISTICA - ET. DE TRANSP. PAG. X NERVO"]].forEach(function(o){
+        var b = h("button", null, o[1]); b.type = "button"; var on = envP === o[0];
+        b.style.cssText = "border:0;border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer;" + (on ? "background:#5B3A2E;color:#fff" : "background:#fff;color:#3B2418");
+        b.onclick = function(){ guardar(r, { cat: o[2], cliente: Object.assign({}, r.cliente || {}, { envPago: o[0], catManual: true, finCuenta: "4.0 LOGÍSTICA Y ENVÍOS" }) }); };
+        qe.append(b);
+      });
+      sub.append(qe);
+    }
     if (r.estado === "aprobado") sub.append(h("span", "nvmov-apro", "✓ En Finanzas " + (NOM[r.por] || "") + (r.aprobado_por ? " · aprobó " + (NOM[r.aprobado_por] || r.aprobado_por) : "")));
     if (r.estado === "pendiente"){
       var bo = h("button", "nvmov-ok", "✓ Aprobar"); bo.type = "button";
       bo.title = r.por ? "Lo carga en Finanzas " + NOM[r.por] : "Primero elegí a quién se carga";
-      bo.onclick = function(){ ck.checked = true; ck.dispatchEvent(new Event("change")); };
+      bo.onclick = function(){ if (esEtq && !envP){ toast("Antes de aprobar, elegí quién pagó el envío: Cliente o Nervo"); return; } ck.checked = true; ck.dispatchEvent(new Event("change")); };
       qu.addEventListener("change", function(){ bo.title = qu.value ? "Lo carga en Finanzas " + NOM[qu.value] : "Primero elegí a quién se carga"; });
       f.firstChild.append(bo);
     }
