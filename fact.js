@@ -99,8 +99,10 @@
     function cerrar(){ cap.classList.remove("on"); setTimeout(function(){ cap.remove(); }, 220); pintar(); }
     cap.onclick = function(e){ if (e.target === cap) cerrar(); };
     var cab = h("div", "nvf-edh"); cab.append(h("h2", null, "Facturado a mano · " + nom), h("button", "nvf-x", "✕")); cab.lastChild.onclick = cerrar; p.append(cab);
-    p.append(h("p", "nvf-nota", "Cargá acá las facturas que hiciste directo en ARCA. Suman a lo facturado del mes y se restan del tope."));
-    function fl(lab, inp){ var w = h("label", "nvf-fl"); w.append(h("span", null, lab), inp); p.append(w); return inp; }
+    var bd = h("div"); bd.style.cssText = "padding:6px 32px 30px;display:grid;gap:16px"; p.append(bd);
+    var nt = h("p", "nvf-nota", "Cargá acá las facturas que hiciste directo en ARCA. Suman a lo facturado del mes y se restan del tope."); nt.style.cssText = "margin:0;line-height:1.45"; bd.append(nt);
+    if (0) p.append(h("p", "nvf-nota", "Cargá acá las facturas que hiciste directo en ARCA. Suman a lo facturado del mes y se restan del tope."));
+    function fl(lab, inp){ var w = h("label", "nvf-fl"); w.append(h("span", null, lab), inp); w.style.cssText = "display:grid;gap:6px;margin:0"; inp.style.width = "100%"; inp.style.boxSizing = "border-box"; bd.append(w); return inp; }
     var im = h("input", "nvf-in"); im.inputMode = "decimal"; im.placeholder = "$ 0"; fl("Monto", im);
     var fe = h("input", "nvf-in"); fe.type = "date"; fe.value = new Date().toISOString().slice(0, 10); fl("Fecha de la factura", fe);
     var de = h("input", "nvf-in"); de.placeholder = "Ej: Factura C 0004-00000123 · Cliente"; fl("Detalle (opcional)", de);
@@ -114,12 +116,12 @@
         var x = h("button", "nvf-del", "✕"); x.type = "button"; x.title = "Borrar"; x.onclick = function(){ if (!confirm("¿Borrar esta carga de " + plata(m.monto) + "?")) return; var d = Object.assign({}, CFG[cu] || {}); d.manuales = (d.manuales || []).filter(function(z){ return z.id !== m.id; }); guardarCfg(cu, d).then(function(){ toast("Borrada"); pintarLis(); }); };
         r.append(tx, x); lis.append(r); });
     }
-    var acc = h("div", "nvf-acc"); acc.style.marginTop = "12px";
+    var acc = h("div", "nvf-acc"); acc.style.cssText = "margin:4px 0 0;padding:0;border:0;display:flex;justify-content:flex-end";
     var bg = h("button", "nvf-bt pri", "Guardar"); bg.type = "button";
     bg.onclick = function(){ var mo = num(im.value); if (!mo){ toast("Poné el monto"); im.focus(); return; } if (!fe.value){ toast("Poné la fecha"); return; }
       var d = Object.assign({}, CFG[cu] || {}); d.manuales = (d.manuales || []).concat([{ id: "m" + Date.now(), monto: mo, fecha: fe.value, det: de.value.trim(), por: soy() || "", at: new Date().toISOString() }]);
       bg.disabled = true; guardarCfg(cu, d).then(function(r){ bg.disabled = false; if (r && r.error){ toast("No se pudo guardar: " + r.error.message); return; } toast("Cargado ✓ " + plata(mo)); im.value = ""; de.value = ""; pintarLis(); }); };
-    acc.append(bg); p.append(acc, lis); pintarLis();
+    acc.append(bg); lis.style.marginTop = "4px"; bd.append(acc, lis); pintarLis();
     document.body.append(cap); requestAnimationFrame(function(){ cap.classList.add("on"); });
   }
   function emitidasAnio(cu){ var y = new Date().getFullYear() + "-"; var t = manualesAnio(cu); Object.keys(F).forEach(function(k){ var f = F[k]; if (f.cuenta === cu && f.estado === "emitida" && !f.nc && String(f.emitida_at || "").slice(0, 5) === y) t += Number(f.total) || 0; }); return t; }
