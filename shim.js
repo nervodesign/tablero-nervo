@@ -1448,3 +1448,29 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
   setInterval(revisar, 180000);
   document.addEventListener("visibilitychange", function(){ if (!document.hidden) setTimeout(revisar, 3000); });
 })();
+
+/* ---------- Movimientos en el celu: cada venta como tarjeta (todo lo demás se edita en "Ver venta") ---------- */
+;(function(){
+  if (document.getElementById("nv-movil-ventas")) return;
+  var R = "html:not(#a):not(#b):not(#c) body section.nvmovp .nvmov-vt";
+  var F = R + " .nvmov-tr.nvmov-vr:not(.nvmov-th)";
+  var s = document.createElement("style"); s.id = "nv-movil-ventas";
+  s.textContent = "@media (max-width:700px){" +
+    R + " .nvmov-th{display:none!important}" +
+    R + " .nvmov-tb," + R + " .nvmov-it{width:100%!important;min-width:0!important;max-width:100%!important;overflow:visible!important}" +
+    F + "{display:flex!important;flex-wrap:wrap!important;align-items:center!important;width:100%!important;min-width:0!important;gap:8px 12px!important;padding:12px!important;box-sizing:border-box!important}" +
+    F + " > .nvmov-c{display:none!important;border:0!important;padding:0!important;min-width:0!important;width:auto!important}" +
+    F + " > .nvmov-c:nth-child(2){display:block!important;order:1;flex:0 0 auto}" +
+    F + " > .nvmov-c:nth-child(6){display:block!important;order:2;flex:1 1 120px}" +
+    F + " > .nvmov-c:nth-child(11){display:block!important;order:3;flex:0 0 110px}" +
+    F + " > .nvmov-c:nth-child(1){display:flex!important;order:4;flex:1 1 100%;flex-wrap:wrap;gap:8px;align-items:center}" +
+    F + " > .nvmov-c:nth-child(1) > *{margin:0!important;width:auto!important}" +
+    F + " > .nvmov-c:nth-child(1) .nvmov-vc{flex:1 1 40%;display:block!important}" +
+    F + " > .nvmov-c:nth-child(11)::before{content:'Cobrado';display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#A48C7E;margin-bottom:2px}" +
+    F + " .nvmov-in{font-size:15px!important;max-width:100%!important}" +
+    R + " .nvmov-lfin{display:none!important}" +
+    R + " .nvmov-sub{padding:0 12px 12px!important;display:flex!important;flex-wrap:wrap!important;gap:6px!important}" +
+    R + " .nvmov-sub .nvmov-falt{white-space:normal!important}" +
+  "}";
+  document.head.appendChild(s);
+})();
