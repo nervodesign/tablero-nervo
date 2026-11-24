@@ -262,6 +262,7 @@
     if (!LISTO){ p.append(h("div", "nvmov-vacio", "Cargando…")); return; }
     var lista = ROWS.filter(function(r){
       if (esBorradorVenta(r)) return false;
+      if (/^\s*\/nota/i.test(r.texto || "")) return false; /* las notas van a la venta, no son movimientos */
       if (FILTRO === "pend") return r.estado === "pendiente" || r.estado === "procesando" || RECIEN[r.id];
       if (FILTRO === "apro") return r.estado === "aprobado";
       if (FILTRO === "desc") return r.estado === "descartado";
