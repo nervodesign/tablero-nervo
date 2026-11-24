@@ -1390,3 +1390,37 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
   }
   setInterval(armar, 800); armar();
 })();
+
+/* ---------- __nvRepDias: en la tarea, "Se repite" permite elegir días (Lun, Mié...) ---------- */
+(function(){
+  if (window.__nvRepDias) return; window.__nvRepDias = 1;
+  var D = [[1,"Lun"],[2,"Mar"],[3,"Mié"],[4,"Jue"],[5,"Vie"],[6,"Sáb"],[0,"Dom"]];
+  var st = document.createElement("style"); st.id = "nvtema-keep";
+  st.textContent = ".nvrd{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 2px;justify-content:flex-end}.nvrd button{border:1px solid #E3DAD4;background:#fff;color:#5A3F35;border-radius:6px;padding:6px 9px;font:inherit;font-size:13px;cursor:pointer;min-width:42px}.nvrd button.on{background:#4A3630;border-color:#4A3630;color:#fff}";
+  document.head.appendChild(st);
+  function txt(v){ try { return "Días: " + window.__nvRTxt({ rep: v }); } catch(e){ return "Días específicos"; } }
+  function mejorar(s){
+    if (s.dataset.nvrd) return; s.dataset.nvrd = "1";
+    var pn = s.closest(".ob2-pn"), ti = pn && pn.querySelector(".ob2-ti"), S = window.__nv && window.__nv.S;
+    var t = ti && S && (S.tareas || []).filter(function(x){ return x.titulo === ti.value; })[0];
+    var actual = t && /^dias:/.test(t.rep || "") ? t.rep : "";
+    var fila = document.createElement("div"); fila.className = "nvrd";
+    var lab = s.closest("label"); (lab || s).insertAdjacentElement("afterend", fila);
+    var sel = actual ? actual.slice(5).split(",").filter(Boolean).map(Number) : [];
+    function opt(v){ var o = [].slice.call(s.options).filter(function(x){ return x.value === v; })[0]; if (!o){ o = document.createElement("option"); o.value = v; s.append(o); } o.textContent = txt(v); return o; }
+    function pintar(){ fila.replaceChildren(ayuda); D.forEach(function(d){ var b = document.createElement("button"); b.type = "button"; b.textContent = d[1]; if (sel.indexOf(d[0]) >= 0) b.className = "on";
+      b.onclick = function(e){ e.preventDefault(); e.stopPropagation(); var i = sel.indexOf(d[0]); if (i >= 0) sel.splice(i, 1); else sel.push(d[0]); pintar(); if (!sel.length){ s.value = ""; s.dispatchEvent(new Event("change", { bubbles: true })); return; }
+        var v = "dias:" + sel.slice().sort().join(","); opt(v); s.value = v; s.dispatchEvent(new Event("change", { bubbles: true })); };
+      fila.append(b); }); }
+    if (actual){ opt(actual); s.value = actual; }
+    var ayuda = document.createElement("small"); ayuda.textContent = "o elegí días:"; ayuda.style.cssText = "color:#8D827C;align-self:center;margin-right:auto;font-size:12px";
+    pintar();
+    s.addEventListener("change", function(){ if (!/^dias:/.test(s.value)){ sel = []; pintar(); } });
+  }
+  setInterval(function(){
+    document.querySelectorAll(".ob2-pn select").forEach(function(s){
+      var vs = [].slice.call(s.options).map(function(o){ return o.value; });
+      if (vs.indexOf("diaria") >= 0 && vs.indexOf("") >= 0 && vs.length <= 4) mejorar(s);
+    });
+  }, 500);
+})();
