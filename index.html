@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795603617452"></script>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795603770162"></script>
 <base target="_top">
 <meta charset="utf-8">
 <title>Nervo Design</title>
@@ -6731,7 +6731,7 @@ function chk(k,r,f,max,solo){ const box=el("div","ck"); const txt=String(r[f]||"
       if(/^image\/(jpeg|png|webp|heic|heif)/i.test(file.type)&&!/gif/i.test(file.type)){ const img=new Image(); const u=URL.createObjectURL(file); img.onload=()=>{ const M=1600; let w=img.naturalWidth,h=img.naturalHeight; const k=Math.min(1,M/Math.max(w,h)); w=Math.round(w*k); h=Math.round(h*k); const c=document.createElement("canvas"); c.width=w; c.height=h; c.getContext("2d").drawImage(img,0,0,w,h); URL.revokeObjectURL(u); const d=c.toDataURL("image/jpeg",0.85); res({n:(file.name||"foto").replace(/\.\w+$/,"")+".jpg", t:"image/jpeg", b:d.split(",")[1]}); }; img.onerror=()=>{ URL.revokeObjectURL(u); rd.onload=()=>res({n:file.name, t:file.type, b:String(rd.result).split(",")[1]}); rd.onerror=rej; rd.readAsDataURL(file); }; img.src=u; return; }
       if(file.size>15*1048576){ rej(new Error("grande")); return; }
       rd.onload=()=>res({n:file.name||"archivo", t:file.type||"application/octet-stream", b:String(rd.result).split(",")[1]}); rd.onerror=rej; rd.readAsDataURL(file); }); }
-  function chDraw(force){ const ui=S.chat.ui; if(!ui||!ui.chl.isConnected) return; if(!force&&ui.chl.querySelector(".chpk")) return; const c=S.chat.canal;
+  function chDraw(force){ const ui=S.chat.ui; if(!ui||!ui.chl.isConnected) return; if(!force&&ui.chl.querySelector(".chpk,.chedf")) return; const c=S.chat.canal;
     const vc=ui.w.classList.contains("vc")||window.innerWidth>800;
     ui.chans.forEach(([b,k])=>{ b.classList.toggle("on",k===c&&window.innerWidth>800); const n=(k===c&&vc)?0:chNoLeidos(k); const sp=b.querySelector(".chn"); sp.textContent=n||""; sp.hidden=!n;
       const ul=S.chat.m.filter(x=>x.canal===k&&!x.borrado).slice(-1)[0]; b.querySelector(".chp").textContent=ul?((NAMES[ul.por]||ul.por)+": "+String(ul.texto).replace(/\s+/g," ")):"Sin mensajes todavía"; b.querySelector(".chtm").textContent=ul?(chDia(ul.creado)==="Hoy"?chHora(ul.creado):chDia(ul.creado)):""; });
@@ -6757,7 +6757,7 @@ function chk(k,r,f,max,solo){ const box=el("div","ck"); const txt=String(r[f]||"
     if(tx&&tieneTx) tx.style.display="none"; hd.after(f); ta.focus();
     const fin=()=>{ f.remove(); if(tx) tx.style.display=""; };
     no.onclick=e=>{ e.stopPropagation(); fin(); };
-    ok.onclick=e=>{ e.stopPropagation(); const v=ta.value.trim(); if(!v){ toast("Escribí algo o borrá el mensaje con 🗑"); return; } if(v===String(x.texto||"").trim()){ fin(); return; } x.texto=v; x.editado=Date.now(); chDraw(); call("chatEditar",x.id,v).catch(()=>toast("No se pudo editar.")); };
+    ok.onclick=e=>{ e.stopPropagation(); const v=ta.value.trim(); if(!v){ toast("Escribí algo o borrá el mensaje con 🗑"); return; } if(v===String(x.texto||"").trim()){ fin(); return; } x.texto=v; x.editado=Date.now(); fin(); chDraw(true); call("chatEditar",x.id,v).catch(()=>toast("No se pudo editar.")); };
     ta.onkeydown=e=>{ if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){ e.preventDefault(); ok.click(); } else if(e.key==="Escape"){ fin(); } }; }
   function renderChat(list){ const c=S.chat.canal; const w=el("div","chw "+(S.chat.mv==="canal"?"vc":"vl")); const side=el("div","chc"); const chans=[];
     side.append(el("div","cht","Canales"));
