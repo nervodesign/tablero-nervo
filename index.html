@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795606427602"></script>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795607008217"></script>
 <base target="_top">
 <meta charset="utf-8">
 <title>Nervo Design</title>
@@ -4905,6 +4905,21 @@ function renderPres(list){
     const box=el("div","vc-box"); box.append(el("b",null,"🚚 Vía Cargo (para embalar + listo para enviar)"));
     const r=el("div","vc-sum"); r.append(el("span","vc-c","Pagado por cliente: "+money(cli)+" · "+cliN+(cliN===1?" envío":" envíos")), el("span","vc-n","Pagado por nosotras: "+nos+(nos===1?" envío":" envíos"))); box.append(r);
     list.append(box); }
+  function evAutoGuias(){
+    if(!S.envios||!Array.isArray(S.seguimiento)) return; if(S.agRun&&Date.now()-S.agRun<180000) return; S.agRun=Date.now();
+    call("mailEnvios").then(L=>{ if(!Array.isArray(L)||!L.length) return;
+      const all=evAll(); evAutoGuias(); const tiene=g=>(S.seguimiento||[]).some(x=>x&&x.guia===g);
+      const nn=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z ]/g," ").split(" ").filter(w=>w.length>2);
+      let n=0;
+      L.forEach(m=>{ if(!m||!m.guia||tiene(m.guia)) return;
+        const o=all.find(o=>{ const d=String(o.p.dni||"").replace(/[^0-9]/g,""); if(m.dni&&d&&d===m.dni) return true; const a=nn(m.nombre), b=nn(o.p.nombre); return a.length>=2&&a.filter(w=>b.indexOf(w)>=0).length>=2; });
+        if(o){ const sg=segDe(o); if(sg&&sg.guia) return;
+          write("seguimiento",{id:o.id, venta:o.venta||"", guia:m.guia, empresa:"Vía Cargo", enviado:"", nombre:o.p.nombre||m.nombre||"", tel:myWaNum(o.p.tel||""), cambiado:Date.now(), por:S.soy}); }
+        else write("seguimiento",{id:"vc"+m.guia, venta:"", guia:m.guia, empresa:"Vía Cargo", enviado:"", nombre:m.nombre||"", tel:"", cambiado:m.fecha||Date.now(), por:S.soy});
+        n++; });
+      if(n) toast(n===1?"Se cargó 1 guía de Vía Cargo desde el mail.":"Se cargaron "+n+" guías de Vía Cargo desde el mail.");
+    }).catch(()=>{});
+  }
   function renderEnvios(list){
     if(!S.envios && !S.envErr){ evLoad(); const k=el("div","skel"); list.append(k,el("div","skel")); return; }
     const top=el("div","ev-top");
@@ -6131,6 +6146,7 @@ function renderPres(list){
         call("baseGuardarVarios","base_min",[Object.assign({},r,{web:r.web?"1":""})]).catch(()=>toast("No se pudo guardar. Probá de nuevo.")); toast("#"+r.num+": "+l.toLowerCase()+"."); render(); }); sg.append(b); });
       row.append(i,sg); card.append(row); }); box.append(card); }
   function etqSegLista(box){
+    if(!S.envios&&!S.envErr) evLoad(); else evAutoGuias();
     const c=el("div","etq-card"); c.append(el("h3",null,"Seguimientos"), el("p",null,"Todas las guías cargadas. Tocá un botón para copiar la guía o el celular del cliente."));
     const tel=t=>{ let d=String(t||"").replace(/\D/g,""); if(!d) return ""; if(d.indexOf("549")===0) return "+"+d; if(d.indexOf("54")===0) return "+549"+d.slice(2); return "+549"+d.replace(/^0/,""); };
     const arr=(S.seguimiento||[]).filter(x=>x&&x.guia).slice().sort((a,b)=>(+b.cambiado||0)-(+a.cambiado||0));
