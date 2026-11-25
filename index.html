@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795609922577"></script>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795612535337"></script>
 <base target="_top">
 <meta charset="utf-8">
 <title>Nervo Design</title>
@@ -6172,7 +6172,9 @@ function renderPres(list){
     arr.forEach(x=>{ const r=el("div","sgl-r"); r.dataset.k=[x.nombre,x.guia,x.venta,x.empresa,x.tel].join(" ").toLowerCase();
       const n=el("div","sgl-n"); n.append(el("b",null,x.nombre||"Cliente"), el("span","sgl-s",[x.venta,x.empresa,x.enviado?("avisado "+fmtDate(x.enviado)):"sin avisar"].filter(Boolean).join(" · ")));
       const cp=(val,vacio)=>{ const b=el("button","btn ghost sgl-b",val?(val+" 📋"):vacio); b.type="button"; if(!val) b.disabled=true; else { b.title="Copiar"; b.onclick=()=>evCopy(val); } return b; };
-      r.append(n, cp(x.guia,"Sin guía"), cp(tel(x.tel),"Sin celular")); t.append(r); });
+      const msj=g=>{ const emp=x.empresa||"Vía Cargo"; const se=(typeof SEG_EMP!=="undefined"&&SEG_EMP.find(e=>e[0]===emp))||[]; const url=/v[ií]a\s*cargo/i.test(emp)?"https://viacargo.com.ar/seguimiento-de-envio/":String(se[1]||"").replace("{g}",g); return "Hola, queremos avisarte que tu pedido fue despachado! ✨\n\n📦 Transporte: "+emp+"\n🔢 Código de seguimiento: "+g+(url?"\n\nPodés verificar su estado desde acá 👉 "+url:"")+"\n\nMuchas gracias por elegirnos ! Cualquier cosa, estamos a tu disposición !"; };
+      const gb=el("button","btn ghost sgl-b",x.guia+" 📋"); gb.type="button"; gb.title="Copiar mensaje con la guía"; gb.onclick=()=>evCopy(msj(x.guia));
+      r.append(n, gb, cp(tel(x.tel),"Sin celular")); t.append(r); });
     si.oninput=()=>{ const q=si.value.trim().toLowerCase(); t.querySelectorAll(".sgl-r").forEach(r=>{ r.style.display=!q||r.dataset.k.indexOf(q)>=0?"":"none"; }); };
     c.append(t); box.append(c);
     if(!document.getElementById("sgl-css")){ const st=document.createElement("style"); st.id="sgl-css"; st.textContent=".sgl{display:flex;flex-direction:column;gap:6px;margin-top:12px}.sgl-r{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid rgba(0,0,0,.07)}.sgl-n{display:flex;flex-direction:column;min-width:0}.sgl-n b{font-weight:600}.sgl-s{font-size:12px;opacity:.65}.sgl-b{white-space:nowrap;font-variant-numeric:tabular-nums}@media(max-width:700px){.sgl-r{grid-template-columns:1fr 1fr}.sgl-n{grid-column:1/-1}.sgl-b{font-size:13px;padding:6px 8px}}"; document.head.append(st); }
