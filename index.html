@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795607225426"></script>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795609922577"></script>
 <base target="_top">
 <meta charset="utf-8">
 <title>Nervo Design</title>
@@ -4905,13 +4905,14 @@ function renderPres(list){
     const box=el("div","vc-box"); box.append(el("b",null,"🚚 Vía Cargo (para embalar + listo para enviar)"));
     const r=el("div","vc-sum"); r.append(el("span","vc-c","Pagado por cliente: "+money(cli)+" · "+cliN+(cliN===1?" envío":" envíos")), el("span","vc-n","Pagado por nosotras: "+nos+(nos===1?" envío":" envíos"))); box.append(r);
     list.append(box); }
+  function segVentaDe(num){ const d=S.bzData; if(!d||!Array.isArray(d.min)) return null; const n=String(num||"").replace(/[^0-9]/g,""); if(!n) return null; const L=d.min.filter(r=>String(r.num||"").replace(/[^0-9]/g,"")===n); const r=L.find(r=>/WEB/i.test(r.num||""))||L[0]; if(!r) return null; try{ return evParse(Object.assign({tipoC:"min"},r)); }catch(e){ return null; } }
   function evPdfJs(){ if(window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
     return new Promise((ok,ko)=>{ const s=document.createElement("script"); s.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"; s.onload=()=>{ try{ window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; }catch(e){} ok(window.pdfjsLib); }; s.onerror=ko; document.head.append(s); }); }
   async function evPdfGuias(it){ const lib=await evPdfJs(); const bin=atob(it.b64); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
     const doc=await lib.getDocument({data:u}).promise; let t="";
     for(let p=1;p<=doc.numPages;p++){ const pg=await doc.getPage(p); const tc=await pg.getTextContent(); t+=" "+tc.items.map(x=>x.str).join(" "); }
     t=t.replace(/\s+/g," ");
-    return t.split(/GU[IÍ]A\s*:/i).slice(1).map(c=>({ guia:(c.match(/^\s*(\d{9,14})/)||[])[1]||"", web:(c.match(/TIENDA\s*NUBE\s*:?\s*#?\s*(\d{3,6})/i)||[])[1]||it.web||"", tel:(c.match(/TELEF\w*\s*:?\s*(\d{8,13})/i)||[])[1]||"", nombre:"", dni:"", fecha:it.fecha })).filter(x=>x.guia); }
+    return t.split(/GU[IÍ]A\s*:/i).slice(1).map(c=>({ guia:(c.match(/^\s*(\d{9,14})/)||[])[1]||"", web:(c.match(/TIENDA\s*NUBE\s*:?\s*#?\s*(\d{3,6})/i)||[])[1]||it.web||"", tel:(c.match(/TELEF\w*\s*:?\s*(\d{8,13})/i)||[])[1]||"", nombre:((c.match(/CD\s+DESTINO\s+(?:CD\s+)?([A-ZÁÉÍÓÚÑ]{2,}(?:\s+[A-ZÁÉÍÓÚÑ]{2,}){1,3})/)||[])[1]||"").trim(), dni:"", fecha:it.fecha })).filter(x=>x.guia); }
   function evAutoGuias(){
     if(!S.envios||!Array.isArray(S.seguimiento)) return; if(S.agRun&&Date.now()-S.agRun<180000) return; S.agRun=Date.now();
     call("mailEnvios").then(async L=>{ if(!Array.isArray(L)||!L.length) return;
@@ -4923,7 +4924,7 @@ function renderPres(list){
         const o=all.find(o=>{ if(m.web&&num(o.venta)===m.web) return true; const d=num(o.p.dni); if(m.dni&&d&&d===m.dni) return true; const a=nn(m.nombre), b=nn(o.p.nombre); return a.length>=2&&a.filter(w=>b.indexOf(w)>=0).length>=2; });
         if(o){ const sg=segDe(o); if(sg&&sg.guia) return;
           write("seguimiento",{id:o.id, venta:o.venta||"", guia:m.guia, empresa:"Vía Cargo", enviado:"", nombre:o.p.nombre||m.nombre||"", tel:myWaNum(o.p.tel||m.tel||""), cambiado:Date.now(), por:S.soy}); }
-        else write("seguimiento",{id:"vc"+m.guia, venta:m.web?("WEB "+m.web):"", guia:m.guia, empresa:"Vía Cargo", enviado:"", nombre:m.nombre||"", tel:m.tel?myWaNum(m.tel):"", cambiado:m.fecha||Date.now(), por:S.soy});
+        else { const pv=segVentaDe(m.web); write("seguimiento",{id:"vc"+m.guia, venta:m.web?("WEB "+m.web):"", guia:m.guia, empresa:"Vía Cargo", enviado:"", nombre:(pv&&pv.nombre)||m.nombre||"", tel:myWaNum((pv&&pv.tel)||m.tel||""), cambiado:m.fecha||Date.now(), por:S.soy}); }
         n++; };
       L.filter(x=>x&&!x.pdf).forEach(cargar);
       let hechos={}; try{ hechos=JSON.parse(localStorage.getItem("nvPdfHechos")||"{}"); }catch(e){}
@@ -6160,6 +6161,8 @@ function renderPres(list){
       row.append(i,sg); card.append(row); }); box.append(card); }
   function etqSegLista(box){
     if(!S.envios&&!S.envErr) evLoad(); else evAutoGuias();
+    if(!S.bzData) bzLoad();
+    (S.seguimiento||[]).forEach(x=>{ if(!x||!x.guia||(x.nombre&&x.tel)) return; let p=segVentaDe(x.venta); const nu={}; if(!p&&!x.venta&&x.nombre&&S.bzData&&Array.isArray(S.bzData.min)){ const nn=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z ]/g," ").split(" ").filter(w=>w.length>2); const a=nn(x.nombre); if(a.length>=2){ const L=S.bzData.min.slice(-400).reverse(); for(const rr of L){ let q; try{ q=evParse(Object.assign({tipoC:"min"},rr)); }catch(e){ continue; } const b=nn(q.nombre); if(a.filter(w=>b.indexOf(w)>=0).length>=2){ p=q; nu.venta=rr.num||""; break; } } } } if(!p) return; if(!x.nombre&&p.nombre) nu.nombre=p.nombre; if(!x.tel&&p.tel) nu.tel=myWaNum(p.tel); if(Object.keys(nu).length) setTimeout(()=>write("seguimiento",Object.assign({},x,nu,{cambiado:x.cambiado||Date.now()})),0); });
     const c=el("div","etq-card"); c.append(el("h3",null,"Seguimientos"), el("p",null,"Todas las guías cargadas. Tocá un botón para copiar la guía o el celular del cliente."));
     const tel=t=>{ let d=String(t||"").replace(/\D/g,""); if(!d) return ""; if(d.indexOf("549")===0) return "+"+d; if(d.indexOf("54")===0) return "+549"+d.slice(2); return "+549"+d.replace(/^0/,""); };
     const arr=(S.seguimiento||[]).filter(x=>x&&x.guia).slice().sort((a,b)=>(+b.cambiado||0)-(+a.cambiado||0));
