@@ -1524,3 +1524,58 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
   "}";
   document.head.appendChild(s);
 })();
+
+/* ---------- Comprobantes: se ven en el mismo tablero (vista previa), sin irse a otra página ---------- */
+;(function(){
+  if (window.__nvPrev) return; window.__nvPrev = 1;
+  var RX = /drive\.google\.com\/file\/d\/([\w-]{10,})\//;
+  var st = document.createElement("style"); st.id = "nv-prev-css";
+  st.textContent = ".nvpv-cap{position:fixed;inset:0;z-index:100000;background:rgba(30,22,19,.72);display:flex;flex-direction:column;padding:max(10px,env(safe-area-inset-top)) 10px max(10px,env(safe-area-inset-bottom))}" +
+    ".nvpv-bar{display:flex;align-items:center;gap:8px;color:#fff;padding:4px 2px 10px;font:500 14px/1.2 Outfit,system-ui,sans-serif}" +
+    ".nvpv-bar b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}" +
+    ".nvpv-bar a,.nvpv-bar button{flex:none;border:0;border-radius:999px;background:rgba(255,255,255,.16);color:#fff;font:inherit;font-size:13px;padding:7px 12px;text-decoration:none;cursor:pointer}" +
+    ".nvpv-bar button.x{background:#fff;color:#3B2418;width:34px;height:34px;padding:0;font-size:16px}" +
+    ".nvpv-fr{flex:1;width:100%;border:0;border-radius:12px;background:#fff}" +
+    ".nvpv-th{display:block;margin-top:6px;max-width:220px;width:100%;border-radius:8px;border:1px solid #EADFD6;background:#fff;cursor:zoom-in}";
+  document.head.appendChild(st);
+  function abrir(id, nom){
+    var cap = document.createElement("div"); cap.className = "nvpv-cap";
+    var bar = document.createElement("div"); bar.className = "nvpv-bar";
+    var t = document.createElement("b"); t.textContent = nom || "Comprobante";
+    var dl = document.createElement("a"); dl.textContent = "Descargar"; dl.href = "https://drive.google.com/uc?export=download&id=" + id; dl.target = "_blank"; dl.rel = "noopener";
+    var ab = document.createElement("a"); ab.textContent = "Abrir en Drive"; ab.href = "https://drive.google.com/file/d/" + id + "/view"; ab.target = "_blank"; ab.rel = "noopener";
+    var x = document.createElement("button"); x.type = "button"; x.className = "x"; x.textContent = "✕"; x.setAttribute("aria-label", "Cerrar");
+    bar.append(t, dl, ab, x);
+    var fr = document.createElement("iframe"); fr.className = "nvpv-fr"; fr.src = "https://drive.google.com/file/d/" + id + "/preview"; fr.allow = "autoplay";
+    cap.append(bar, fr); document.body.appendChild(cap);
+    function cerrar(){ cap.remove(); document.removeEventListener("keydown", esc, true); }
+    function esc(e){ if (e.key === "Escape"){ e.stopPropagation(); cerrar(); } }
+    x.onclick = cerrar; cap.addEventListener("click", function(e){ if (e.target === cap) cerrar(); });
+    document.addEventListener("keydown", esc, true);
+  }
+  window.__nvVerArchivo = abrir;
+  document.addEventListener("click", function(e){
+    if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+    var a = e.target && e.target.closest && e.target.closest("a[href]"); if (!a) return;
+    if (a.closest(".nvpv-cap")) return;
+    var m = RX.exec(a.href || ""); if (!m) return;
+    e.preventDefault(); e.stopPropagation();
+    var nom = (a.querySelector("b") && a.querySelector("b").textContent) || a.title || (a.textContent || "").replace(/^[^\w¿¡]+/, "").trim();
+    abrir(m[1], nom);
+  }, true);
+  /* los PDF muestran la primera página en el chat */
+  function miniaturas(){
+    [].forEach.call(document.querySelectorAll('a[href*="drive.google.com/file/d/"]:not([data-nvpv])'), function(a){
+      a.setAttribute("data-nvpv", "1");
+      var m = RX.exec(a.href || ""); if (!m) return;
+      var esPdf = /📄|\.pdf\b/i.test(a.textContent || "") || /pdf/i.test(a.title || "");
+      if (!esPdf || a.querySelector("img")) return;
+      var im = document.createElement("img"); im.className = "nvpv-th"; im.loading = "lazy"; im.alt = "Vista previa";
+      im.src = "https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w600";
+      im.onerror = function(){ im.remove(); };
+      if (a.classList.contains("chfile")) a.after(im); else a.appendChild(im);
+      im.addEventListener("click", function(e){ e.preventDefault(); e.stopPropagation(); abrir(m[1], (a.textContent || "").replace(/^[^\w¿¡]+/, "").trim()); });
+    });
+  }
+  setInterval(miniaturas, 1500); setTimeout(miniaturas, 500);
+})();
