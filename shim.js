@@ -1619,3 +1619,9 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
   }
   setInterval(procesar, 1200); setTimeout(procesar, 300);
 })();
+
+/* nv-chw-fit: el chat entra siempre en la pantalla (Windows/Mac/celu) */
+(function(){ if(window.__nvChwFit) return; window.__nvChwFit=1;
+  function fit(){ document.querySelectorAll('.chw').forEach(function(w){ if(!w.offsetParent) return; var top=w.getBoundingClientRect().top+(window.scrollY||0); var h=Math.max(320, Math.floor(window.innerHeight-top-12)); if(w.style.getPropertyValue('height')!==h+'px'){ w.style.setProperty('height',h+'px','important'); w.style.setProperty('min-height','0','important'); } }); }
+  window.addEventListener('resize',fit); setInterval(fit,700); fit();
+})();
