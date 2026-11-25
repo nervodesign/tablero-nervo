@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795626102662"></script>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795644916390"></script>
 <base target="_top">
 <meta charset="utf-8">
 <title>Nervo Design</title>
@@ -6130,8 +6130,13 @@ function renderPres(list){
     return { min:(d.base_min||[]).map(r=>Object.assign({},r,{prods:A(r.prods),etq:A(r.etq),metodo:A(r.metodo),cobro:A(r.cobro),cobrado:N(r.cobrado),facturar:N(r.facturar),costoEnv:N(r.costoEnv),web:W(r.web)})),
       may:(d.base_may||[]).map(r=>Object.assign({},r,{estado:A(r.estado),pago:A(r.pago),cobrado:A(r.cobrado),sena:N(r.sena),saldo:N(r.saldo)})),
       euge:(d.fin_euge||[]).map(r=>Object.assign({},r,{total:N(r.total)})), pau:(d.fin_pau||[]).map(r=>Object.assign({},r,{total:N(r.total)})), usd:(d.fin_usd||[]).map(r=>Object.assign({},r,{monto:N(r.monto)})), on:!!d.on }; }
+   
+  (function(){ if(window.__bzAR) return; window.__bzAR=1; const ok=()=>{ const a=document.activeElement; if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return false; if(a&&a.isContentEditable) return false; if(document.querySelector(".sheet,.modal,[role=dialog]")) return false; return document.visibilityState==="visible"; };
+    const go=()=>{ try{ if(S.bzData&&!S.bzBusy&&ok()) bzLoad(true); }catch(e){} };
+    setInterval(go,90000); window.addEventListener("focus",()=>{ if(Date.now()-(S.bzAt||0)>20000) go(); }); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&Date.now()-(S.bzAt||0)>20000) go(); });
+  })();
   function bzLoad(force){ if(S.bzBusy) return; if(S.bzData&&!force) return; S.bzBusy=true;
-    call("baseLeer").then(d=>{ S.bzData=bzParse(d); S.bzBusy=false; if(S.tab==="base"||S.tab==="mayoristas"||S.tab==="envios") render(); }).catch(e=>{ S.bzBusy=false; S.bzErr=String(e&&e.message||e); if(S.tab==="base") render(); }); }
+    call("baseLeer").then(d=>{ S.bzData=bzParse(d); S.bzAt=Date.now(); S.bzBusy=false; if(S.tab==="base"||S.tab==="mayoristas"||S.tab==="envios") render(); }).catch(e=>{ S.bzBusy=false; S.bzErr=String(e&&e.message||e); if(S.tab==="base") render(); }); }
   function renderBase(list){
     if(!S.loaded) return;
     if(!S.bzData){ bzLoad(); list.append(el("p","note",S.bzErr?"No pude abrir la Base: "+S.bzErr:"Abriendo la Base…")); return; }
