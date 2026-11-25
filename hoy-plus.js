@@ -98,6 +98,7 @@
     var S = window.__nv && window.__nv.S, B = S && S.bzData && S.bzData.min; if (!B) return;
     var mes = new Date().toISOString().slice(0, 7), R = B.filter(function(r){ return !/ARCHIVADO/i.test(r.env || ""); });
     var cols = KB.map(function(k){ return R.filter(function(r){ return k[1].test(r.env || ""); }); });
+    try { var CHV = (window.__nvVentasChat && window.__nvVentasChat()) || []; if (CHV.length) cols[0] = cols[0].concat(CHV); } catch(e){}
     var env = R.filter(function(r){ return /ENVIADO|RETIRADO/i.test(r.env || "") && String(r.fecha || "").slice(0, 7) === mes; }).length;
     var act = cols.reduce(function(a, c){ return a + c.length; }, 0);
     var sig = cols.map(function(c){ return c.map(function(r){ return r.id || r.num; }).join(","); }).join("|") + "|" + env;

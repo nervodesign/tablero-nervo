@@ -440,6 +440,8 @@
     if (!o.nombre){ var f = o.datos.filter(function(d){ return !/:/.test(d) && !/\d/.test(d) && !/@/.test(d) && d.split(" ").length >= 2; })[0]; if (f) o.nombre = f; }
     return o;
   }
+  /* para "Hoy": las ventas del chat que todavía están por revisar en Movimientos */
+  window.__nvVentasChat = function(){ try { return ventasTodas().filter(function(it){ return it.src !== "web"; }).map(function(it){ var v = it.row || {}; return { id: it.id, num: v.num || "WHATS APP", cliente: v.cliente || "", prods: arr(v.prods), fecha: v.fecha || "" }; }); } catch(e){ return []; } };
   function ventasTodas(){
     var w = ventasWeb().map(function(r){ return { src: "web", id: "w" + r.id, row: r }; });
     var ch = ROWS.filter(function(r){ return esBorradorVenta(r) && (r.estado === "pendiente" || r.estado === "procesando"); }).map(function(m){
