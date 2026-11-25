@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795607008217"></script>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795607225426"></script>
 <base target="_top">
 <meta charset="utf-8">
 <title>Nervo Design</title>
@@ -4905,18 +4905,31 @@ function renderPres(list){
     const box=el("div","vc-box"); box.append(el("b",null,"🚚 Vía Cargo (para embalar + listo para enviar)"));
     const r=el("div","vc-sum"); r.append(el("span","vc-c","Pagado por cliente: "+money(cli)+" · "+cliN+(cliN===1?" envío":" envíos")), el("span","vc-n","Pagado por nosotras: "+nos+(nos===1?" envío":" envíos"))); box.append(r);
     list.append(box); }
+  function evPdfJs(){ if(window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    return new Promise((ok,ko)=>{ const s=document.createElement("script"); s.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"; s.onload=()=>{ try{ window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; }catch(e){} ok(window.pdfjsLib); }; s.onerror=ko; document.head.append(s); }); }
+  async function evPdfGuias(it){ const lib=await evPdfJs(); const bin=atob(it.b64); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
+    const doc=await lib.getDocument({data:u}).promise; let t="";
+    for(let p=1;p<=doc.numPages;p++){ const pg=await doc.getPage(p); const tc=await pg.getTextContent(); t+=" "+tc.items.map(x=>x.str).join(" "); }
+    t=t.replace(/\s+/g," ");
+    return t.split(/GU[IÍ]A\s*:/i).slice(1).map(c=>({ guia:(c.match(/^\s*(\d{9,14})/)||[])[1]||"", web:(c.match(/TIENDA\s*NUBE\s*:?\s*#?\s*(\d{3,6})/i)||[])[1]||it.web||"", tel:(c.match(/TELEF\w*\s*:?\s*(\d{8,13})/i)||[])[1]||"", nombre:"", dni:"", fecha:it.fecha })).filter(x=>x.guia); }
   function evAutoGuias(){
     if(!S.envios||!Array.isArray(S.seguimiento)) return; if(S.agRun&&Date.now()-S.agRun<180000) return; S.agRun=Date.now();
-    call("mailEnvios").then(L=>{ if(!Array.isArray(L)||!L.length) return;
-      const all=evAll(); evAutoGuias(); const tiene=g=>(S.seguimiento||[]).some(x=>x&&x.guia===g);
+    call("mailEnvios").then(async L=>{ if(!Array.isArray(L)||!L.length) return;
+      const all=evAll(); const tiene=g=>(S.seguimiento||[]).some(x=>x&&x.guia===g);
       const nn=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z ]/g," ").split(" ").filter(w=>w.length>2);
+      const num=t=>String(t||"").replace(/[^0-9]/g,"");
       let n=0;
-      L.forEach(m=>{ if(!m||!m.guia||tiene(m.guia)) return;
-        const o=all.find(o=>{ const d=String(o.p.dni||"").replace(/[^0-9]/g,""); if(m.dni&&d&&d===m.dni) return true; const a=nn(m.nombre), b=nn(o.p.nombre); return a.length>=2&&a.filter(w=>b.indexOf(w)>=0).length>=2; });
+      const cargar=m=>{ if(!m||!m.guia||tiene(m.guia)) return;
+        const o=all.find(o=>{ if(m.web&&num(o.venta)===m.web) return true; const d=num(o.p.dni); if(m.dni&&d&&d===m.dni) return true; const a=nn(m.nombre), b=nn(o.p.nombre); return a.length>=2&&a.filter(w=>b.indexOf(w)>=0).length>=2; });
         if(o){ const sg=segDe(o); if(sg&&sg.guia) return;
-          write("seguimiento",{id:o.id, venta:o.venta||"", guia:m.guia, empresa:"Vía Cargo", enviado:"", nombre:o.p.nombre||m.nombre||"", tel:myWaNum(o.p.tel||""), cambiado:Date.now(), por:S.soy}); }
-        else write("seguimiento",{id:"vc"+m.guia, venta:"", guia:m.guia, empresa:"Vía Cargo", enviado:"", nombre:m.nombre||"", tel:"", cambiado:m.fecha||Date.now(), por:S.soy});
-        n++; });
+          write("seguimiento",{id:o.id, venta:o.venta||"", guia:m.guia, empresa:"Vía Cargo", enviado:"", nombre:o.p.nombre||m.nombre||"", tel:myWaNum(o.p.tel||m.tel||""), cambiado:Date.now(), por:S.soy}); }
+        else write("seguimiento",{id:"vc"+m.guia, venta:m.web?("WEB "+m.web):"", guia:m.guia, empresa:"Vía Cargo", enviado:"", nombre:m.nombre||"", tel:m.tel?myWaNum(m.tel):"", cambiado:m.fecha||Date.now(), por:S.soy});
+        n++; };
+      L.filter(x=>x&&!x.pdf).forEach(cargar);
+      let hechos={}; try{ hechos=JSON.parse(localStorage.getItem("nvPdfHechos")||"{}"); }catch(e){}
+      for(const it of L.filter(x=>x&&x.pdf&&x.b64)){ if(hechos[it.id]) continue;
+        try{ (await evPdfGuias(it)).forEach(cargar); hechos[it.id]=Date.now(); }catch(e){} }
+      try{ localStorage.setItem("nvPdfHechos",JSON.stringify(hechos)); }catch(e){}
       if(n) toast(n===1?"Se cargó 1 guía de Vía Cargo desde el mail.":"Se cargaron "+n+" guías de Vía Cargo desde el mail.");
     }).catch(()=>{});
   }
