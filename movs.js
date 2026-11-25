@@ -711,6 +711,27 @@
     };
     return w;
   }
+  function cartaCss(){
+    if (document.getElementById("nvcard-css")) return;
+    var s = document.createElement("style"); s.id = "nvcard-css";
+    var P = "html:not(#a):not(#b):not(#c):not(#d):not(#e) body ";
+    s.textContent = P + ".nvcard{display:flex!important;flex-direction:column!important;gap:8px!important;padding:12px!important;margin:0!important;font-size:14px!important;line-height:1.3!important;box-sizing:border-box!important;width:100%!important;max-width:100%!important}" +
+      P + ".nvcard-t{display:flex!important;justify-content:space-between!important;align-items:flex-start!important;gap:10px!important}" +
+      P + ".nvcard-t b{display:block!important;font-size:15px!important;font-weight:700!important;color:#2B201C!important}" +
+      P + ".nvcard-t small{display:block!important;font-size:11.5px!important;color:#A48C7E!important}" +
+      P + ".nvcard-cli{font-size:14.5px!important;font-weight:600!important;color:#2B201C!important;text-align:right!important;overflow:hidden!important;text-overflow:ellipsis!important}" +
+      P + ".nvcard-m{display:flex!important;justify-content:space-between!important;align-items:baseline!important}" +
+      P + ".nvcard-m small{font-size:11px!important;letter-spacing:.06em!important;text-transform:uppercase!important;color:#A48C7E!important}" +
+      P + ".nvcard-m b{font-size:14.5px!important;font-weight:600!important;color:#2B201C!important}" +
+      P + ".nvcard-falta{display:block!important;font-size:12px!important;line-height:1.35!important;white-space:normal!important;background:#FBE8EF!important;color:#8E3C5E!important;border-radius:8px!important;padding:6px 8px!important;margin:0!important}" +
+      P + ".nvcard-falta[hidden]{display:none!important}" +
+      P + ".nvcard-b{display:flex!important;flex-direction:row!important;gap:6px!important;align-items:stretch!important}" +
+      P + ".nvcard-b > *{flex:1 1 0!important;min-width:0!important;width:auto!important;height:36px!important;min-height:0!important;margin:0!important;padding:0 6px!important;font-size:13px!important;line-height:34px!important;border-radius:10px!important;box-sizing:border-box!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;text-align:center!important;display:block!important}" +
+      P + ".nvcard-ver{background:#EFEAE6!important;border:0!important;color:#3B2418!important}" +
+      P + ".nvcard-dest{-webkit-appearance:none!important;appearance:none!important;background:#FBE8EF!important;border:1px solid #F0C9D8!important;color:#8E3C5E!important;font-weight:600!important;text-align-last:center!important}" +
+      P + ".nvcard-fin{align-self:flex-start!important;font-size:12.5px!important;padding:4px 10px!important;margin:0!important}";
+    document.head.appendChild(s);
+  }
   function filaVenta0(it){
     var v = it.row, w = h("div", "nvmov-it"), f = h("div", "nvmov-tr nvmov-vr");
     var ck = h("input"); ck.type = "checkbox"; ck.className = "nvmov-ck"; ck.title = "Aprobar venta";
@@ -804,6 +825,19 @@
     refrescar();
     var vc = h("button", "nvmov-mas nvmov-vc", "Ver venta"); vc.type = "button"; vc.title = "Ver y editar la venta completa"; vc.onclick = function(){ verCompleta(it); };
     vc.style.cssText = "display:block;margin:0 0 6px;width:100%"; c1.prepend(vc);
+    /* en el celu: tarjeta simple (lo demás se edita en "Ver venta") */
+    if (window.matchMedia && matchMedia("(max-width:700px)").matches){
+      cartaCss();
+      var cd = h("div", "nvcard");
+      var t1 = h("div", "nvcard-t"); var tn = h("div"); tn.append(h("b", null, v.num || "Venta"), h("small", null, it.src === "web" ? "Tienda Nube" : "WhatsApp / IG"));
+      t1.append(tn, h("span", "nvcard-cli", v.cliente || "Sin cliente")); cd.append(t1);
+      var t2 = h("div", "nvcard-m"); t2.append(h("small", null, "Cobrado"), h("b", null, Number(v.cobrado) ? "$ " + plataN(v.cobrado) : "—")); cd.append(t2);
+      fa.className = "nvcard-falta"; cd.append(fa);
+      var bt = h("div", "nvcard-b"); vc.removeAttribute("style"); vc.className = "nvcard-ver"; bv.classList.add("nvcard-ok"); de.className = "nvcard-dest";
+      bt.append(vc, bv, de); cd.append(bt);
+      fw.classList.add("nvcard-fin"); cd.append(fw);
+      f.style.setProperty("display", "none", "important"); sub.style.setProperty("display", "none", "important"); w.append(cd);
+    }
     return w;
   }
 
