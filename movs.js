@@ -1431,7 +1431,7 @@
     if (a && !a.__cmd){
       a.__cmd = 1; a.innerHTML = "<b>Comandos</b>";
       var bar = document.createElement("div"); bar.className = "nvcmd-bar";
-      CMDS.slice(0, 6).forEach(function(x){ var b = document.createElement("button"); b.type = "button"; b.textContent = x.c; b.title = x.d; b.onclick = function(){ var ta = document.querySelector(".chw .chf textarea"); if (ta) poner(ta, x.c); }; bar.appendChild(b); });
+      CMDS.slice(0, 7).forEach(function(x){ var b = document.createElement("button"); b.type = "button"; b.textContent = x.c; b.title = x.d; b.onclick = function(){ var ta = document.querySelector(".chw .chf textarea"); if (ta) poner(ta, x.c); }; bar.appendChild(b); });
       a.appendChild(bar);
     }
     var ta = document.querySelector(".chw .chf textarea");
