@@ -1625,3 +1625,8 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
   function fit(){ document.querySelectorAll('.chw').forEach(function(w){ if(!w.offsetParent) return; var top=w.getBoundingClientRect().top+(window.scrollY||0); var h=Math.max(320, Math.floor(window.innerHeight-top-12)); if(w.style.getPropertyValue('height')!==h+'px'){ w.style.setProperty('height',h+'px','important'); w.style.setProperty('min-height','0','important'); } }); }
   window.addEventListener('resize',fit); setInterval(fit,700); fit();
 })();
+
+/* nv-chpend-fix: la foto adjunta antes de mandar se ve completa (celu) */
+(function(){ if(document.getElementById('nv-chpend-fix')) return; var st=document.createElement('style'); st.id='nv-chpend-fix';
+  st.textContent='.chmain>.chpend,.chmain>.chf{flex-shrink:0!important}.chmain>.chlist{min-height:0!important}.chpend{padding:8px 10px!important;gap:8px!important;max-height:none!important;overflow:visible!important}.chpend[hidden]{display:none!important}.chpc{position:relative;padding:4px 30px 4px 4px!important;min-height:52px}.chpc img{width:48px!important;height:48px!important;object-fit:cover;border-radius:8px;display:block}.chpc button{position:absolute;top:50%;right:4px;transform:translateY(-50%);width:24px;height:24px;line-height:24px;padding:0!important}';
+  document.head.appendChild(st); })();
