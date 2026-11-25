@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795646334034"></script>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795646625053"></script>
 <base target="_top">
 <meta charset="utf-8">
 <title>Nervo Design</title>
@@ -2819,6 +2819,7 @@ button.stk-sin{all:unset;display:block;cursor:pointer;font-size:11.5px;color:#8A
   <button class="tab desk" role="tab" id="tab-ven" aria-selected="false" type="button" hidden style="display:none"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><span class="lb">Ventas</span></button>
   <div class="navsec" aria-hidden="true">Gestión</div>
   <button class="tab" role="tab" id="tab-pagos" aria-selected="false" type="button"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M16 15h2"/></svg><span class="n" id="n-pagos">0</span></span><span class="lb">A pagar</span></button>
+      <button class="tab desk" role="tab" id="tab-provcat" aria-selected="false" type="button"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9M3 9h18M4 9v11h16V9M9 20v-6h6v6"/></svg></span><span class="lb">Proveedores</span></button>
   <button class="tab desk" role="tab" id="tab-stock" aria-selected="false" type="button"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg><span class="n" id="n-stock">0</span></span><span class="lb">Stock</span></button>
   <button class="tab desk" role="tab" id="tab-cost" aria-selected="false" type="button"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.3"/></svg></span><span class="lb">Costos</span></button>
   <button class="tab desk" role="tab" id="tab-tej" aria-selected="false" type="button" hidden style="display:none"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M6 8c4 1 8 5 9 11M9 4.6c2 3 6 6 10.6 6M4.3 14c3-.5 7 1 9 5.6"/></svg></span><span class="lb">Equipo</span></button>
@@ -2961,6 +2962,7 @@ button.stk-sin{all:unset;display:block;cursor:pointer;font-size:11.5px;color:#8A
   $("#tab-hoy").onclick=()=>setTab("hoy");
   $("#tab-tareas").onclick=()=>setTab("tareas");
   $("#tab-pagos").onclick=()=>setTab("proveedores");
+  $("#tab-provcat").onclick=()=>setTab("provcat");
   $("#tab-stock").onclick=()=>setTab("stock");
   $("#tab-mas").onclick=()=>masMenu();
   $("#tab-tej").onclick=()=>setTab("tejedoras");
@@ -2989,7 +2991,7 @@ button.stk-sin{all:unset;display:block;cursor:pointer;font-size:11.5px;color:#8A
     const isA = S.tab==="archivadas", isT = S.tab==="tareas" || isA;
     $("#tab-hoy").setAttribute("aria-selected", S.tab==="hoy");
     $("#tab-tareas").setAttribute("aria-selected", S.tab==="tareas");
-    $("#tab-pagos").setAttribute("aria-selected", S.tab==="proveedores");
+    $("#tab-pagos").setAttribute("aria-selected", S.tab==="proveedores");  $("#tab-provcat").setAttribute("aria-selected", S.tab==="provcat");
     $("#tab-stock").setAttribute("aria-selected", S.tab==="stock");
     $("#tab-mas").setAttribute("aria-selected", ["calendario","tejedoras","links","ventas","costos","presupuestos","envios","mayoristas","contenido","web","fotos","catalogos","promos","base","chat"].includes(S.tab));
     $("#tab-pres").setAttribute("aria-selected", S.tab==="presupuestos");
@@ -3001,7 +3003,7 @@ button.stk-sin{all:unset;display:block;cursor:pointer;font-size:11.5px;color:#8A
     $("#tab-tej").setAttribute("aria-selected", S.tab==="tejedoras");
     $("#tab-cal").setAttribute("aria-selected", S.tab==="calendario");
     $("#tab-links").setAttribute("aria-selected", S.tab==="links");
-    $("#fab").hidden = isA || (S.tab==="proveedores"&&S.provView==="eq") || S.tab==="ventas" || S.tab==="presupuestos" || S.tab==="envios" || S.tab==="mayoristas" || S.tab==="contenido" || S.tab==="web" || S.tab==="fotos" || S.tab==="catalogos" || S.tab==="promos" || S.tab==="base" || S.tab==="chat";
+    $("#fab").hidden = isA || S.tab==="provcat" || (S.tab==="proveedores"&&S.provView==="eq") || S.tab==="ventas" || S.tab==="presupuestos" || S.tab==="envios" || S.tab==="mayoristas" || S.tab==="contenido" || S.tab==="web" || S.tab==="fotos" || S.tab==="catalogos" || S.tab==="promos" || S.tab==="base" || S.tab==="chat";
     { const tki=$("#tkIA"); if(tki){ tki.hidden=S.tab!=="tareas"; tki.onclick=tkIAMain; } }
     $("#fabTxt").textContent = {links:"Nuevo link", hoy:"Crear", calendario:"Crear", stock:"Nuevo producto", costos:"Nuevo producto", proveedores:((S.provView||"ped")==="ped"?"Nuevo pedido":S.provView==="gr"?"Registrar pago":"Nuevo proveedor"), tejedoras:(S.tejView==="hrs"?"Nuevo empleado":"Nueva tejedora")}[S.tab] || "Nueva tarea";
     $("#stockTools").hidden = S.tab!=="stock";
@@ -3012,7 +3014,7 @@ button.stk-sin{all:unset;display:block;cursor:pointer;font-size:11.5px;color:#8A
     setN("#n-hoy", hoyData().urg);
     const hoyTxt = (()=>{ const d=new Date(); return ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"][d.getDay()]+" "+d.getDate()+" de "+["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"][d.getMonth()]; })();
     $("#secTitle").hidden = S.tab==="hoy";
-    $("#secTitle").textContent = {hoy:"Hoy · "+hoyTxt, tareas:"Tareas", proveedores:((S.provView||"ped")==="ped"?"Pedidos y pagos":S.provView==="gr"?"Grass · cuenta corriente":S.provView==="eq"?"Empleados":"A pagar · por proveedor"), archivadas:"Tareas archivadas", tejedoras:"Equipo · tejedoras y Damián", links:"Links importantes", stock:"Stock", ventas:"Ventas", costos:"Costos y márgenes", calendario:"Calendario", presupuestos:"Presupuestos", envios:"Envíos · para embalar y listos", mayoristas:"Mayoristas · novedades y seguimiento", contenido:"Contenido · Instagram y mails", web:"Tienda web · ventas y carritos", fotos:"Fotos para mandar", catalogos:"Catálogos", promos:"Promos", base:"Nervo Design 2026"}[S.tab];
+    $("#secTitle").textContent = {hoy:"Hoy · "+hoyTxt, tareas:"Tareas", provcat:"Proveedores · precios y stock", proveedores:((S.provView||"ped")==="ped"?"Pedidos y pagos":S.provView==="gr"?"Grass · cuenta corriente":S.provView==="eq"?"Empleados":"A pagar · por proveedor"), archivadas:"Tareas archivadas", tejedoras:"Equipo · tejedoras y Damián", links:"Links importantes", stock:"Stock", ventas:"Ventas", costos:"Costos y márgenes", calendario:"Calendario", presupuestos:"Presupuestos", envios:"Envíos · para embalar y listos", mayoristas:"Mayoristas · novedades y seguimiento", contenido:"Contenido · Instagram y mails", web:"Tienda web · ventas y carritos", fotos:"Fotos para mandar", catalogos:"Catálogos", promos:"Promos", base:"Nervo Design 2026"}[S.tab];
     renderNews();
 
     const list=$("#list"); list.replaceChildren(); list.classList.remove("hoygrid");
@@ -3038,6 +3040,7 @@ button.stk-sin{all:unset;display:block;cursor:pointer;font-size:11.5px;color:#8A
     if(S.tab==="links"){ $("#filters").hidden=true; $("#summary").hidden=true; if(S.loaded) $("#status").hidden=true; renderLinks(list); return; }
     if(S.tab==="hoy"){ $("#filters").hidden=true; $("#summary").hidden=true; if(S.loaded) $("#status").hidden=true; renderHoy(list); proHoy(list); return; }
     if(S.tab==="stock"){ $("#filters").hidden=true; $("#summary").hidden=true; if(S.loaded) $("#status").hidden=true; renderStock(list); return; }
+    if(S.tab==="provcat"){ $("#filters").hidden=true; $("#summary").hidden=true; if(S.loaded) $("#status").hidden=true; renderProvCat(list); return; }
     if(S.tab==="proveedores"){ provSw(list); $("#summary").hidden=true; if((S.provView||"ped")==="ped"){ $("#filters").hidden=true; $("#summary").hidden=true; if(S.loaded) $("#status").hidden=true; renderPedidos(list); return; } if(S.provView==="cat"){ $("#filters").hidden=true; $("#summary").hidden=true; if(S.loaded) $("#status").hidden=true; renderProvCat(list); return; }
     if(S.provView==="gr"){ $("#filters").hidden=true; $("#summary").hidden=true; if(S.loaded) $("#status").hidden=true; renderGrass(list); return; } if(S.provView==="pag"){ const bk=el("button","btn-link pc-back","← Volver a pedidos y pagos"); bk.type="button"; bk.onclick=()=>{ S.provView="ped"; render(); }; list.append(bk); } if(S.provView==="eq"){ $("#filters").hidden=true; $("#summary").hidden=true; if(S.loaded) $("#status").hidden=true; renderTej(list); return; } }
     const all = isT ? S.tareas : S.proveedores;
