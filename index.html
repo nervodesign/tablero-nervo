@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795648517732"></script>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795648584669"></script>
 <base target="_top">
 <meta charset="utf-8">
 <title>Nervo Design</title>
@@ -8497,6 +8497,15 @@ function chk(k,r,f,max,solo){ const box=el("div","ck"); const txt=String(r[f]||"
   const pcEst = x => x.estado==="pedir"||x.estado==="curso"||x.estado==="espera" ? x.estado : "entregado";
   const pcFin = x => pcEst(x)==="entregado" && pedDone(x);
   function pcAll(){ const L=[]; S.proveedores.forEach(p=>p.pedidos.forEach(x=>L.push({p,x}))); return L; }
+  function pcatFotos(b){
+    if(!S.pcat||!Array.isArray(S.pcat.items)) return; const it=S.pcat.items.filter(p=>p.n&&p.i).sort((x,y)=>y.n.length-x.n.length);
+    const W=document.createTreeWalker(b,NodeFilter.SHOW_TEXT); const ns=[]; while(W.nextNode()) ns.push(W.currentNode);
+    ns.forEach(n=>{ const s=n.nodeValue||""; const x=it.find(p=>s.indexOf(p.n)>=0); if(!x||!n.parentNode) return; const im=document.createElement("img"); im.src=x.i; im.className="pcat-thumb"; im.loading="lazy"; im.alt=""; im.title=x.n; n.parentNode.insertBefore(im,n); });
+  }
+  (function(){ try{ if(window.__pcatTx||typeof chTexto!=="function") return; window.__pcatTx=1;
+    const st=document.createElement("style"); st.textContent=".pcat-thumb{width:36px;height:36px;object-fit:cover;border-radius:7px;vertical-align:middle;margin:3px 8px 3px 0;background:#F5EEE6;box-shadow:0 0 0 1px rgba(0,0,0,.06)}"; document.head.append(st);
+    const T0=chTexto; chTexto=function(t){ const b=T0.apply(this,arguments); try{ if(b&&/revisar Grass/.test(String(t||""))) pcatFotos(b); }catch(e){} return b; };
+  }catch(e){} })();
   function pcatAvisar(d){
     try{
       if(!d||!Array.isArray(d.cambios)||!d.cambios.length) return;
