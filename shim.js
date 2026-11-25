@@ -1600,7 +1600,7 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
   function procesar(){
     [].forEach.call(document.querySelectorAll('a[href*="drive.google.com/file/d/"]:not([data-nvin])'), function(a){
       a.setAttribute("data-nvin", "1");
-      if (a.closest(".nvpv-cap") || a.closest(".nvin")) return;
+      if (a.closest(".nvpv-cap") || a.closest(".nvin") || !a.closest(".chw, #nvmc")) return;
       var m = RX.exec(a.href || ""); if (!m) return;
       var id = m[1], tx = (a.textContent || "") + " " + (a.title || ""), n = nombre(a);
       if (a.classList.contains("chimg") || a.closest(".chaud") || /🎤|audio|\.webm|\.m4a|\.mp3/i.test(tx)) return;   /* fotos del chat principal y audios ya se ven */
