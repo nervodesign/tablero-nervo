@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795646715299"></script>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795646941602"></script>
 <base target="_top">
 <meta charset="utf-8">
 <title>Nervo Design</title>
@@ -8508,7 +8508,7 @@ function chk(k,r,f,max,solo){ const box=el("div","ck"); const txt=String(r[f]||"
         const sube=L.filter(x=>x.s0==="agotado"&&R[x.s1]!==undefined&&x.s1!=="agotado");
         const nue=L.filter(x=>x.s0==="nuevo");
         if(!baja.length&&!sube.length&&!nue.length) return;
-        const t=["🌿 Grass · novedades"];
+        const t=["@Pau @Euge — revisar Grass 🌿"];
         baja.sort((a,b)=>R[a.s1]-R[b.s1]).forEach(x=>t.push(E[x.s1]+" "+x.n+" — "+(x.s1==="agotado"?"SIN STOCK":x.s1==="rojo"?"poco stock":"stock intermedio")+" (antes "+E[x.s0]+")"));
         sube.forEach(x=>t.push("✅ "+x.n+" — volvió a tener stock "+E[x.s1]));
         nue.forEach(x=>t.push("🆕 Producto nuevo: "+x.n+(x.p1?" · "+money(Math.round(x.p1)):"")+" "+(E[x.s1]||"")));
