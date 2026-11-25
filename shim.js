@@ -1579,3 +1579,43 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
   }
   setInterval(miniaturas, 1500); setTimeout(miniaturas, 500);
 })();
+
+/* ---------- Archivos en el chat: PDF y fotos se ven abiertos directo en el mensaje ---------- */
+;(function(){
+  if (window.__nvPrev2) return; window.__nvPrev2 = 1;
+  var RX = /drive\.google\.com\/file\/d\/([\w-]{10,})\//;
+  var st = document.createElement("style"); st.id = "nv-prev2-css";
+  st.textContent = ".nvpv-th{display:none!important}" +
+    ".nvin{display:block;margin:6px 0 2px;max-width:420px;width:100%;border:1px solid #EADFD6;border-radius:10px;overflow:hidden;background:#fff}" +
+    ".nvin-h{display:flex;align-items:center;gap:6px;padding:6px 8px;font-size:12px;color:#6B5047;background:#FAF6F2;border-bottom:1px solid #EFE6DE}" +
+    ".nvin-h span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
+    ".nvin-h button{flex:none;border:0;background:#fff;border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;color:#3B2418;cursor:pointer;box-shadow:0 0 0 1px #E4D9D1}" +
+    ".nvin iframe{display:block;width:100%;height:380px;border:0;background:#fff}" +
+    ".nvin img{display:block;width:100%;height:auto;max-height:520px;object-fit:contain;background:#fff;cursor:zoom-in}" +
+    ".nvin-oc{display:none!important}" +
+    "@media(max-width:700px){.nvin iframe{height:300px}}";
+  document.head.appendChild(st);
+  function nombre(a){ return ((a.querySelector("b") && a.querySelector("b").textContent) || a.title || a.textContent || "").replace(/^[^\w¿¡]+/, "").trim(); }
+  function abrir(id, n){ if (window.__nvVerArchivo) window.__nvVerArchivo(id, n); }
+  function procesar(){
+    [].forEach.call(document.querySelectorAll('a[href*="drive.google.com/file/d/"]:not([data-nvin])'), function(a){
+      a.setAttribute("data-nvin", "1");
+      if (a.closest(".nvpv-cap") || a.closest(".nvin")) return;
+      var m = RX.exec(a.href || ""); if (!m) return;
+      var id = m[1], tx = (a.textContent || "") + " " + (a.title || ""), n = nombre(a);
+      if (a.classList.contains("chimg") || a.closest(".chaud") || /🎤|audio|\.webm|\.m4a|\.mp3/i.test(tx)) return;   /* fotos del chat principal y audios ya se ven */
+      var esPdf = /📄|\.pdf\b/i.test(tx), esImg = /\.(jpe?g|png|webp|heic|heif|gif)\b/i.test(tx);
+      if (!esPdf && !esImg) return;
+      var bx = document.createElement("div"); bx.className = "nvin";
+      var hd = document.createElement("div"); hd.className = "nvin-h";
+      var nm = document.createElement("span"); nm.textContent = (esPdf ? "📄 " : "🖼 ") + (n || "Archivo");
+      var bt = document.createElement("button"); bt.type = "button"; bt.textContent = "Ampliar";
+      bt.onclick = function(e){ e.preventDefault(); e.stopPropagation(); abrir(id, n); };
+      hd.append(nm, bt); bx.appendChild(hd);
+      if (esPdf){ var fr = document.createElement("iframe"); fr.loading = "lazy"; fr.src = "https://drive.google.com/file/d/" + id + "/preview"; fr.title = n || "PDF"; bx.appendChild(fr); }
+      else { var im = document.createElement("img"); im.loading = "lazy"; im.alt = n || "Foto"; im.src = "https://drive.google.com/thumbnail?id=" + id + "&sz=w1000"; im.onclick = function(e){ e.preventDefault(); e.stopPropagation(); abrir(id, n); }; im.onerror = function(){ bx.remove(); a.classList.remove("nvin-oc"); }; bx.appendChild(im); }
+      a.after(bx); a.classList.add("nvin-oc");
+    });
+  }
+  setInterval(procesar, 1200); setTimeout(procesar, 300);
+})();
