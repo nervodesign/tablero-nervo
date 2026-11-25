@@ -1506,3 +1506,21 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
   "}";
   document.head.appendChild(s);
 })();
+
+/* ---------- Nervo 2026 en el celu: solapas en una fila y tarjetas de estado más chicas ---------- */
+;(function(){
+  if (document.getElementById("nv-movil-n26")) return;
+  var P = "html:not(#a):not(#b):not(#c):not(#d):not(#e) body ";
+  var s = document.createElement("style"); s.id = "nv-movil-n26";
+  s.textContent = "@media (max-width:700px){" +
+    P + "nav.tabs.nv2{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:none!important;gap:4px!important;padding:4px!important;max-width:100%!important;box-sizing:border-box!important}" +
+    P + "nav.tabs.nv2::-webkit-scrollbar{display:none!important}" +
+    P + "nav.tabs.nv2 .bt{flex:0 0 auto!important;white-space:nowrap!important;font-size:13.5px!important;padding:7px 12px!important;min-height:0!important;width:auto!important}" +
+    P + ".views{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;overflow:visible!important}" +
+    P + ".views .vw{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:2px!important;min-width:0!important;width:auto!important;height:auto!important;min-height:0!important;padding:8px 4px!important;border-radius:12px!important;text-align:center!important}" +
+    P + ".views .vw span{font-size:11.5px!important;line-height:1.2!important;white-space:normal!important;word-break:normal!important;overflow-wrap:normal!important;hyphens:none!important}" +
+    P + ".views .vw small{font-size:19px!important;line-height:1.1!important;font-weight:600!important}" +
+    P + ".mods .md{font-size:13.5px!important;padding:8px 10px!important}" +
+  "}";
+  document.head.appendChild(s);
+})();
