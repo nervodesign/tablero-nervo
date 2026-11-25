@@ -1474,3 +1474,35 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
   "}";
   document.head.appendChild(s);
 })();
+
+/* ---------- Movimientos en el celu (2): tarjetas más compactas, sin desbordes ---------- */
+;(function(){
+  if (document.getElementById("nv-movil-ventas2")) return;
+  var R = "html:not(#a):not(#b):not(#c):not(#d) body section.nvmovp .nvmov-vt";
+  var F = R + " .nvmov-tr.nvmov-vr:not(.nvmov-th)";
+  var s = document.createElement("style"); s.id = "nv-movil-ventas2";
+  s.textContent = "@media (max-width:700px){" +
+    R + "{overflow-x:hidden!important;max-width:100%!important}" +
+    R + " .nvmov-tb," + R + " .nvmov-it," + F + "{width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important}" +
+    F + "{gap:6px 10px!important;padding:10px!important}" +
+    F + " > .nvmov-c{max-width:100%!important;box-sizing:border-box!important;overflow:hidden!important}" +
+    F + " > .nvmov-c:nth-child(2){order:1!important;flex:1 1 45%!important}" +
+    F + " > .nvmov-c:nth-child(6){order:2!important;flex:1 1 45%!important}" +
+    F + " > .nvmov-c:nth-child(11){order:3!important;flex:1 1 100%!important;display:flex!important;align-items:center!important;gap:8px!important}" +
+    F + " > .nvmov-c:nth-child(11)::before{margin:0!important}" +
+    F + " > .nvmov-c:nth-child(1){order:4!important;flex:1 1 100%!important;display:flex!important;flex-wrap:nowrap!important;gap:6px!important}" +
+    F + " > .nvmov-c:nth-child(1) > *{flex:1 1 0!important;min-width:0!important;width:auto!important;max-width:none!important;height:auto!important;min-height:34px!important;padding:6px 8px!important;font-size:13px!important;line-height:1.2!important;text-align:center!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;box-sizing:border-box!important;border-radius:10px!important}" +
+    F + " > .nvmov-c:nth-child(1) > small{display:none!important}" +
+    F + " .nvmov-in{font-size:14px!important;padding:4px 6px!important;min-height:0!important;height:auto!important}" +
+    F + " > .nvmov-c:nth-child(2) .nvmov-in{font-size:15px!important;font-weight:700!important;padding:0!important}" +
+    F + " > .nvmov-c:nth-child(2) small{font-size:11px!important}" +
+    F + " > .nvmov-c:nth-child(6) .nvmov-in{font-size:15px!important;text-align:right!important}" +
+    F + " > .nvmov-c:nth-child(11) .nvmov-in{flex:1 1 auto!important;width:auto!important}" +
+    R + " .nvmay-sw{margin:8px 10px 2px!important;font-size:12px!important}" +
+    R + " .nvmay-sw button{padding:4px 10px!important;font-size:12px!important}" +
+    R + " .nvmov-sub{padding:0 10px 10px!important;transform:none!important}" +
+    R + " .nvmov-sub > *{font-size:12px!important}" +
+    R + " .nvmov-sub .nvmov-fin{padding:4px 10px!important}" +
+  "}";
+  document.head.appendChild(s);
+})();
