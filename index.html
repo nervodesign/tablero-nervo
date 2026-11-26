@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795699226211"></script>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795700085354"></script>
 <base target="_top">
 <meta charset="utf-8">
 <title>Nervo Design</title>
@@ -4918,7 +4918,7 @@ function renderPres(list){
     t=t.replace(/\s+/g," ");
     return t.split(/GU[IÍ]A\s*:/i).slice(1).map(c=>({ guia:(c.match(/^\s*(\d{9,14})/)||[])[1]||"", web:(c.match(/TIENDA\s*NUBE\s*:?\s*#?\s*(\d{3,6})/i)||[])[1]||it.web||"", tel:(c.match(/TELEF\w*\s*:?\s*(\d{8,13})/i)||[])[1]||"", nombre:((c.match(/CD\s+DESTINO\s+(?:CD\s+)?([A-ZÁÉÍÓÚÑ]{2,}(?:\s+[A-ZÁÉÍÓÚÑ]{2,}){1,3})/)||[])[1]||"").trim(), dni:"", fecha:it.fecha })).filter(x=>x.guia); }
   function evAutoGuias(){
-    if(!S.envios||!Array.isArray(S.seguimiento)) return; if(S.agRun&&Date.now()-S.agRun<180000) return; S.agRun=Date.now();
+    if(!S.envios||!Array.isArray(S.seguimiento)) return; const agD=new Date().getDay(); const agEvery=(agD===2||agD===4)?180000:3600000; if(S.agRun&&Date.now()-S.agRun<agEvery) return; S.agRun=Date.now();
     call("mailEnvios").then(async L=>{ if(!Array.isArray(L)||!L.length) return;
       const all=evAll(); const tiene=g=>(S.seguimiento||[]).some(x=>x&&x.guia===g);
       const nn=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z ]/g," ").split(" ").filter(w=>w.length>2);
