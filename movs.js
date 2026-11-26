@@ -1,3 +1,4 @@
+window.TACHO = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
 /* #movimientos: cada mensaje del canal pasa por la IA y queda "pendiente de aprobación" en la solapa Movimientos */
 (function(){
   if (window.__nvMov) return; window.__nvMov = 1;
@@ -1320,8 +1321,7 @@
   try { SB().auth.getUser().then(function(r){ var e = r && r.data && r.data.user && r.data.user.email; SOY = QUIEN[e] || ""; }); } catch(e){}
 
   /* ---------- comandos ---------- */
-  var TACHO = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
-  var CMDS = [
+    var CMDS = [
     { c: "/pago Euge", d: "Euge pagó algo (transferencia o efectivo)", top: 1 },
     { c: "/pago Pau", d: "Pau pagó algo (transferencia o efectivo)", top: 1 },
     { c: "/nueva venta", d: "Pasar una venta minorista", top: 1 },
