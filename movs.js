@@ -355,8 +355,8 @@
       if (!a || !a.id) return; var l = h("a", "nvmov-adj", /pdf/i.test(a.t || a.n || "") ? "PDF" : "📎"); l.title = a.n || "Ver comprobante";
       l.href = "https://drive.google.com/file/d/" + a.id + "/view"; l.target = "_blank"; l.rel = "noopener"; ad.append(l);
     });
-    var x = h("button", "nvmov-x", r.estado === "descartado" ? "↺" : "✕"); x.type = "button"; x.title = r.estado === "descartado" ? "Recuperar" : "Descartar";
-    x.onclick = function(){ guardar(r, { estado: r.estado === "descartado" ? "pendiente" : "descartado" }); };
+    var x = h("button", "nvmov-x", r.estado === "descartado" ? "↺" : ""); x.type = "button"; x.title = r.estado === "descartado" ? "Recuperar" : "Borrar"; if (r.estado !== "descartado") { x.innerHTML = TACHO; x.setAttribute("aria-label", "Borrar movimiento"); }
+    x.onclick = function(){ if (r.estado !== "descartado" && !confirm("Seguro que querés borrar este movimiento? Queda en Descartados y se puede recuperar.")) return; guardar(r, { estado: r.estado === "descartado" ? "pendiente" : "descartado" }); };
     if (r.cargado) [co, fe, ca, cu, to, no, qu].forEach(function(e){ e.disabled = true; });
     [ckw, co, fe, ca, to, cu, no, qu, ad, x].forEach(function(e){ var cc = h("div", "nvmov-c"); cc.append(e); f.append(cc); });
     w.append(f);
@@ -554,8 +554,8 @@
       ps.forEach(function(p, i){
         var r = h("div", "nvmov-pl");
         var pi = h("span", "nvmov-chip", p || ""); pi.title = p || "";
-        var del = h("button", "nvmov-pdel", "✕"); del.type = "button"; del.title = "Sacar este producto";
-        del.onclick = function(){ ps.splice(i, 1); cs.splice(i, 1); guardar2(); pintarL(); };
+        var del = h("button", "nvmov-pdel", ""); del.innerHTML = TACHO; del.setAttribute("aria-label", "Sacar este producto"); del.type = "button"; del.title = "Sacar este producto";
+        del.onclick = function(){ if (!confirm("Sacar “" + (p || "este producto") + "” de la venta?")) return; ps.splice(i, 1); cs.splice(i, 1); guardar2(); pintarL(); };
         r.append(pi, del); cp.append(r);
         var pc = partirCant(cs[i]);
         var ci = h("input", "nvmov-in nvmov-pn"); ci.value = pc.tx; ci.placeholder = "1"; ci.title = "Cantidad / detalle";
@@ -1320,6 +1320,7 @@
   try { SB().auth.getUser().then(function(r){ var e = r && r.data && r.data.user && r.data.user.email; SOY = QUIEN[e] || ""; }); } catch(e){}
 
   /* ---------- comandos ---------- */
+  var TACHO = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
   var CMDS = [
     { c: "/pago Euge", d: "Euge pagó algo (transferencia o efectivo)", top: 1 },
     { c: "/pago Pau", d: "Pau pagó algo (transferencia o efectivo)", top: 1 },
