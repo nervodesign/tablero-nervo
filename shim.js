@@ -1622,8 +1622,8 @@ new MutationObserver(tick).observe(document.documentElement,{childList:true,subt
 
 /* nv-chw-fit: el chat entra siempre en la pantalla (Windows/Mac/celu) */
 (function(){ if(window.__nvChwFit) return; window.__nvChwFit=1;
-  function fit(){ document.querySelectorAll('.chw').forEach(function(w){ if(!w.offsetParent) return; var top=w.getBoundingClientRect().top+(window.scrollY||0); var h=Math.max(320, Math.floor(window.innerHeight-top-12)); if(w.style.getPropertyValue('height')!==h+'px'){ w.style.setProperty('height',h+'px','important'); w.style.setProperty('min-height','0','important'); } }); }
-  window.addEventListener('resize',fit); setInterval(fit,700); fit();
+  function fit(){ document.querySelectorAll('.chw').forEach(function(w){ if(!w.offsetParent) return; var vv=window.visualViewport; var vh=vv?vv.height:window.innerHeight, vt=vv?vv.offsetTop:0; var top=w.getBoundingClientRect().top-vt; var h=Math.max(200, Math.floor(vh-Math.max(top,0)-8)); if(w.style.getPropertyValue('height')!==h+'px'){ w.style.setProperty('height',h+'px','important'); w.style.setProperty('min-height','0','important'); } }); }
+  window.addEventListener('resize',fit); if(window.visualViewport){ window.visualViewport.addEventListener('resize',function(){ fit(); setTimeout(fit,250); }); window.visualViewport.addEventListener('scroll',fit); } document.addEventListener('focusin',function(e){ if(e.target&&e.target.closest&&e.target.closest('.chw')){ setTimeout(function(){ fit(); var f=e.target.closest('.chf')||e.target; try{ f.scrollIntoView({block:'end'}); }catch(x){} },350); } }); setInterval(fit,700); fit();
 })();
 
 /* nv-chpend-fix: la foto adjunta antes de mandar se ve completa (celu) */
