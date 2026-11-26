@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795648754212"></script>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Nervo Design</title><meta name="theme-color" content="#FEFAF8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nervo"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="img/logo.svg"><link rel="apple-touch-icon" href="img/icon-192.png"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script><script src="shim.js?v=1795699226211"></script>
 <base target="_top">
 <meta charset="utf-8">
 <title>Nervo Design</title>
@@ -6137,7 +6137,7 @@ function renderPres(list){
    
   (function(){ if(window.__bzAR) return; window.__bzAR=1; const ok=()=>{ const a=document.activeElement; if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return false; if(a&&a.isContentEditable) return false; if(document.querySelector(".sheet,.modal,[role=dialog]")) return false; return document.visibilityState==="visible"; };
     const go=()=>{ try{ if(S.bzData&&!S.bzBusy&&ok()) bzLoad(true); }catch(e){} };
-    setInterval(go,90000); window.addEventListener("focus",()=>{ if(Date.now()-(S.bzAt||0)>20000) go(); }); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&Date.now()-(S.bzAt||0)>20000) go(); });
+    setInterval(go,300000); window.addEventListener("focus",()=>{ if(Date.now()-(S.bzAt||0)>20000) go(); }); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&Date.now()-(S.bzAt||0)>20000) go(); });
   })();
   function bzLoad(force){ if(S.bzBusy) return; if(S.bzData&&!force) return; S.bzBusy=true;
     call("baseLeer").then(d=>{ S.bzData=bzParse(d); S.bzAt=Date.now(); S.bzBusy=false; if(S.tab==="base"||S.tab==="mayoristas"||S.tab==="envios") render(); }).catch(e=>{ S.bzBusy=false; S.bzErr=String(e&&e.message||e); if(S.tab==="base") render(); }); }
@@ -6171,7 +6171,7 @@ function renderPres(list){
   function etqSegLista(box){
     if(!S.envios&&!S.envErr) evLoad(); else evAutoGuias();
     if(!S.bzData) bzLoad();
-    (S.seguimiento||[]).forEach(x=>{ if(!x||!x.guia||(x.nombre&&x.tel)) return; let p=segVentaDe(x.venta); const nu={}; if(!p&&!x.venta&&x.nombre&&S.bzData&&Array.isArray(S.bzData.min)){ const nn=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z ]/g," ").split(" ").filter(w=>w.length>2); const a=nn(x.nombre); if(a.length>=2){ const L=S.bzData.min.slice(-400).reverse(); for(const rr of L){ let q; try{ q=evParse(Object.assign({tipoC:"min"},rr)); }catch(e){ continue; } const b=nn(q.nombre); if(a.filter(w=>b.indexOf(w)>=0).length>=2){ p=q; nu.venta=rr.num||""; break; } } } } if(!p) return; if(!x.nombre&&p.nombre) nu.nombre=p.nombre; if(!x.tel&&p.tel){ const tt=myWaNum(p.tel); if(tt) nu.tel=tt; } if(Object.keys(nu).length) setTimeout(()=>write("seguimiento",Object.assign({},x,nu,{cambiado:x.cambiado||Date.now()})),0); });
+    S.segEnr=S.segEnr||{}; (S.seguimiento||[]).forEach(x=>{ if(!x||!x.guia||(x.nombre&&x.tel)) return; if(S.segEnr[x.id]) return; S.segEnr[x.id]=1; let p=segVentaDe(x.venta); const nu={}; if(!p&&!x.venta&&x.nombre&&S.bzData&&Array.isArray(S.bzData.min)){ const nn=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z ]/g," ").split(" ").filter(w=>w.length>2); const a=nn(x.nombre); if(a.length>=2){ const L=S.bzData.min.slice(-400).reverse(); for(const rr of L){ let q; try{ q=evParse(Object.assign({tipoC:"min"},rr)); }catch(e){ continue; } const b=nn(q.nombre); if(a.filter(w=>b.indexOf(w)>=0).length>=2){ p=q; nu.venta=rr.num||""; break; } } } } if(!p) return; if(!x.nombre&&p.nombre) nu.nombre=p.nombre; if(!x.tel&&p.tel){ const tt=myWaNum(p.tel); if(tt) nu.tel=tt; } if(Object.keys(nu).length) setTimeout(()=>write("seguimiento",Object.assign({},x,nu,{cambiado:x.cambiado||Date.now()})),0); });
     const c=el("div","etq-card"); c.append(el("h3",null,"Seguimientos"), el("p",null,"Todas las guías cargadas. Tocá un botón para copiar la guía o el celular del cliente."));
     const tel=t=>{ let d=String(t||"").replace(/\D/g,""); if(!d) return ""; if(d.indexOf("549")===0) return "+"+d; if(d.indexOf("54")===0) return "+549"+d.slice(2); return "+549"+d.replace(/^0/,""); };
     const seen={}; const arr=(S.seguimiento||[]).filter(x=>x&&x.guia).slice().sort((a,b)=>((+b.cambiado||0)-(+a.cambiado||0))||((String(a.id).indexOf("vc")===0)-(String(b.id).indexOf("vc")===0))).filter(x=>{ const g=String(x.guia).replace(/[^0-9]/g,""); if(seen[g]){ const o=seen[g]; if(!o.nombre&&x.nombre) o.nombre=x.nombre; if(!o.tel&&x.tel) o.tel=x.tel; if(!o.venta&&x.venta) o.venta=x.venta; if(!o.enviado&&x.enviado) o.enviado=x.enviado; return false; } seen[g]=Object.assign({},x); return true; }).map(x=>seen[String(x.guia).replace(/[^0-9]/g,"")]);
@@ -8504,7 +8504,7 @@ function chk(k,r,f,max,solo){ const box=el("div","ck"); const txt=String(r[f]||"
   }
   (function(){ try{ if(window.__pcatTx) return; window.__pcatTx=1;
     const st=document.createElement("style"); st.textContent=".pcat-thumb{width:52px;height:52px;object-fit:cover;border-radius:7px;vertical-align:middle;margin:3px 8px 3px 0;background:#F5EEE6;box-shadow:0 0 0 1px rgba(0,0,0,.06)}"; document.head.append(st);
-    setInterval(()=>{ try{ if(!S.pcat||!Array.isArray(S.pcat.items)) return; document.querySelectorAll(".chmsg:not([data-pf]), #nvmc .nvmc-m:not([data-pf])").forEach(mm=>{ if((mm.textContent||"").indexOf("revisar Grass")<0) return; mm.setAttribute("data-pf","1"); pcatFotos(mm); }); }catch(e){} },1500);
+    setInterval(()=>{ try{ if(!S.pcat||!Array.isArray(S.pcat.items)) return; document.querySelectorAll(".chmsg:not([data-pf])").forEach(mm=>{ mm.setAttribute("data-pf","1"); if((mm.textContent||"").indexOf("revisar Grass")>=0) pcatFotos(mm); }); }catch(e){} },1500);
   }catch(e){} })();
   function pcatAvisar(d){
     try{
