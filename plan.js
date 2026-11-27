@@ -1093,11 +1093,7 @@
     var hh = new Date(); if (LUCHAT || !sb() || !provs().length || !LOADED || hh.getHours() * 60 + hh.getMinutes() < 510 || hh.getDay() === 0 || hh.getDay() === 6) return;
     var id = "luci-" + hoyISO(); LUCHAT = true;
     var txt = textoChat(); if (!txt) return;
-    sb().from("registros").select("id").eq("tabla", "chat").eq("id", id).then(function(r){
-      if (r.error || (r.data && r.data.length)) return;
-            var now = Date.now();
-      sb().from("registros").upsert({ tabla: "chat", id: id, data: { id: id, adj: [], por: "luci", reac: {}, canal: "prov", texto: txt, creado: now, borrado: false, cambiado: now }, borrado: false, actualizado: new Date().toISOString(), por: "luci" }, { onConflict: "tabla,id", ignoreDuplicates: true });
-    });
+    luciDecir(id, txt, "¡Buen día, chicas! Les dejé el resumen de hoy 🌷");
   }
   setInterval(function(){ try { luciChat(); } catch(e){} }, 30000);
   window.__nvLuciAbrir = function(){ V.vista = "luci"; V.id = null; try { localStorage.setItem(LSV, "luci"); } catch(x){} if (N().setTab) N().setTab("provcat"); setTimeout(montar, 50); window.scrollTo(0,0); };
@@ -1161,6 +1157,64 @@
     }
     return h + '</div>';
   }
+  /* ---------- Luci: mensajes en el chat + aviso al celu ---------- */
+  var LUCI_CANAL = "dm";
+  function luciPush(texto, tag){ try { if (sb() && sb().functions) sb().functions.invoke("avisos", { body: { accion: "luci", texto: texto, tag: tag || "" } }).then(function(){}, function(){}); } catch(e){} }
+  /* publica un mensaje de Luci una sola vez por id (si ya existe, no hace nada) */
+  function luciDecir(id, texto, aviso){
+    if (!sb()) return Promise.resolve(false);
+    return sb().from("registros").select("id").eq("tabla", "chat").eq("id", id).then(function(r){
+      if (r.error || (r.data && r.data.length)) return false;
+      var now = Date.now();
+      return sb().from("registros").upsert({ tabla: "chat", id: id, data: { id: id, adj: [], por: "luci", reac: {}, canal: LUCI_CANAL, texto: texto, creado: now, borrado: false, cambiado: now }, borrado: false, actualizado: new Date().toISOString(), por: "luci" }, { onConflict: "tabla,id", ignoreDuplicates: true })
+        .then(function(w){ if (w.error) return false; luciPush(aviso || texto.replace(/@Pau @Euge\s*/g, "").split("\n")[0], id); return true; });
+    });
+  }
+  /* avisos urgentes en el momento (vence hoy / venció, algo listo para retirar) — una vez por día cada uno */
+  var LUURG = 0;
+  function luciUrgentes(){
+    if (!provs().length || !LOADED || Date.now() - LUURG < 25 * 60e3) return; LUURG = Date.now();
+    var hh = new Date(); if (hh.getHours() < 8 || hh.getHours() >= 21) return;
+    alertas().filter(function(a){ return a.p <= 2; }).slice(0, 3).forEach(function(a){
+      var t = String(a.t).replace(/<[^>]+>/g, "");
+      luciDecir("luci-u-" + a.d.id + "-" + a.c + "-" + hoyISO(), "@Pau @Euge Chicas, ojo con esto: " + t + " 🙏\nLo pueden resolver desde Proveedores → Luci.", t);
+    });
+  }
+  setInterval(function(){ try { luciUrgentes(); } catch(e){} }, 60000);
+
+  /* ---------- Dólares publicidad · Euge (desde #movimientos) ---------- */
+  function numAR(s){ s = String(s || "").trim(); if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, "").replace(",", "."); else s = s.replace(",", "."); return Number(s) || 0; }
+  function usdDe(t){
+    var m = t.match(/(?:u\$s|us\$|usd|d[oó]lares?)\s*([\d.,]+)/i) || t.match(/([\d.,]+)\s*(?:u\$s|us\$|usd|d[oó]lares?)/i);
+    return m ? numAR(m[1]) : 0;
+  }
+  var LUUSD = 0;
+  function luciUsd(){
+    if (!sb() || Date.now() - LUUSD < 90e3) return; LUUSD = Date.now();
+    var desde = new Date(Date.now() - 3 * 864e5).toISOString();
+    sb().from("movimientos").select("id,msg_id,texto,autor,monto,creado").gte("creado", desde).order("id", { ascending: false }).limit(60).then(function(r){
+      (r.data || []).forEach(function(mv){
+        var t = String(mv.texto || ""), low = t.toLowerCase();
+        if (!/(u\$s|us\$|usd|d[oó]lar)/i.test(t)) return;
+        var usd = usdDe(t); if (!usd) return;
+        var compra = /compr[eéoó]|compra/i.test(low), publi = /publicidad|facebook|meta|instagram|\bfb\b|\bads?\b/i.test(low);
+        if (!compra && !publi) return;
+        var id = "usdm-" + mv.id, monto = compra ? -usd : usd;
+        var fila = { id: id, at: "", por: mv.autor || "", fecha: String(mv.creado || "").slice(0, 10) || hoyISO(), monto: String(monto), notas: "desde #movimientos · " + t.slice(0, 120), creado: String(Date.now()), inicial: "", cambiado: String(Date.now()), concepto: compra ? "COMPRA " + usd + " USD PARA RECUPERAR PUBLICIDAD" : "USD PUBLICIDAD" };
+        sb().from("registros").select("id").eq("tabla", "fin_usd").eq("id", id).then(function(x){
+          if (x.error || (x.data && x.data.length)) return;
+          sb().from("registros").upsert({ tabla: "fin_usd", id: id, data: fila, borrado: false, actualizado: new Date().toISOString(), por: "luci" }, { onConflict: "tabla,id", ignoreDuplicates: true }).then(function(w){
+            if (w.error) return;
+            var sinPesos = compra && !(Number(mv.monto) > 0) && !/\$\s*[\d.]{4,}/.test(t);
+            luciDecir("luci-usd-" + mv.id, (compra ? "Anoté la compra de " + usd + " USD en Dólares publicidad · Euge: se restan de lo que Nervo te debe 💵" : "Anoté " + usd + " USD de publicidad en Dólares publicidad · Euge: se suman a lo que Nervo te debe 💵") +
+              (sinPesos ? "\n¿Cuántos pesos salieron? Escribilo en #movimientos así lo descuento también en pesos (ej: compré 100 usd $180.000)." : ""), compra ? "Compra de " + usd + " USD anotada" : usd + " USD de publicidad anotados");
+          });
+        });
+      });
+    }, function(){});
+  }
+  setInterval(function(){ try { luciUsd(); } catch(e){} }, 30000);
+  window.__nvLuci = { alertas: function(){ return alertas(); }, texto: function(){ return textoChat(); }, usd: function(){ LUUSD = 0; luciUsd(); }, push: luciPush };
   function pintar(){
     if (!ROOT || !ROOT.isConnected) return;
     ROOT.innerHTML = V.vista === "luci" ? vLuci() : V.id ? vFicha() : vLista();
