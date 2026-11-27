@@ -1520,6 +1520,14 @@
       w.addEventListener("click", function(e){ var o = e.target.closest(".chb"); if (o && o.id !== "nluChb" && LC.open) lcCerrar(); }, true);
     }
     var cb = document.getElementById("nluChb"); if (cb && cb.previousElementSibling !== mov) mov.parentNode.insertBefore(cb, mov.nextSibling);
+    if (cb){
+      var cs = getComputedStyle(mov), mi = mov.querySelector(".chi"), ci = cb.querySelector(".chi");
+      ["boxShadow","borderRadius","padding","backgroundColor","border"].forEach(function(k){ cb.style[k] = cs[k]; }); cb.style.marginTop = "8px";
+      if (mi && ci){ var z = Math.max(26, mi.getBoundingClientRect().width || 0); ci.style.cssText = "width:" + z + "px;height:" + z + "px;min-width:" + z + "px;border-radius:50%;overflow:hidden;background:#F3E4EA;padding:0;flex:none;display:block"; var im = ci.querySelector("img"); if (im) im.style.cssText = "width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block"; }
+      var ult = LC.msgs.filter(function(m){ return m.por === "luci"; }).slice(-1)[0], cp = cb.querySelector(".chp"), ct = cb.querySelector(".chtm");
+      if (cp){ var tx = ult ? String(ult.texto).replace(/@(Pau|Euge)\s*/g, "").split("\n")[0] : "Tu compañera para compras, pagos y stock 🌷"; if (cp.textContent !== tx) cp.textContent = tx; }
+      if (ct && ult){ var hh = hora(ult.creado); if (ct.textContent !== hh) ct.textContent = hh; }
+    }
     if (LC.open){ w.classList.add("nlu-chon"); lcPos(); }
   }
   setInterval(function(){ try { lcMontar(); } catch(e){} }, 700);
