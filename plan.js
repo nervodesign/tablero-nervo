@@ -1511,6 +1511,7 @@
       if (cmdT){ t = cmdT; }
       else {
         if (/^(ver\s+|los\s+)?seguimientos?\b/i.test(t)){ segAbrir(); return; }
+        if (/^(conteo|contar|d[ií]a cero|contar stock|conteo de stock)\b/i.test(t)){ c0Abrir(); return; }
         if (/^(luci[,:]?\s*)?(aprend[eé]|acordate|record[aá]|anot[aá] que|sab[eé] que)\b/i.test(t)){ luAprender(t); return; }
         var qq = quien(t), pal = t.split(/\s+/).length;
         if (/retir/i.test(t) && !qq.pv && (qq.tj || !/\b(aurora|licari|grass|bicentenario)\b/i.test(t))){ LC.tip = true; lcPintar(); setTimeout(function(){ LC.tip = false; luci(qq.tj ? retirarTej(qq.tj) : retirarTodas()); }, 450); return; }
@@ -1522,7 +1523,7 @@
     });
   }
   function lcAccion(id, x, i){
-    var m = LC.msgs.find(function(z){ return z.id === id; }); if (m && m.acc && m.acc.tipo === "seg"){ segAbrir(); return; } if (!m || m.est) return;
+    var m = LC.msgs.find(function(z){ return z.id === id; }); if (m && m.acc && m.acc.tipo === "seg"){ segAbrir(); return; } if (m && m.acc && m.acc.tipo === "conteo"){ c0Abrir(); return; } if (!m || m.est) return;
     if (m.acc && m.acc.tipo === "pedok"){
       lcMarcar(m, x === "no" ? "no" : "ok");
       if (x === "no"){ luci("Dale, mañana a las 18 te lo vuelvo a recordar 😉"); return; }
@@ -1612,6 +1613,7 @@
       var lu = m.por === "luci", yo = !lu && m.por === me, a = m.acc, bt = "";
       if (a && !m.est){
         if (a.tipo === "elegir") bt = '<div class="bt">' + a.ops.map(function(o, i){ return '<button data-lc="' + m.id + '" data-x="ok" data-i="' + i + '">' + esc(o[1]) + '</button>'; }).join("") + '<button data-lc="' + m.id + '" data-x="no">Ninguno</button></div>';
+        else if (a.tipo === "conteo") bt = '<div class="bt"><button class="dk" data-lc="' + m.id + '" data-x="c0">📦 Abrir conteo</button></div>';
         else if (a.tipo === "seg") bt = '<div class="bt"><button class="dk" data-lc="' + m.id + '" data-x="seg">📋 Ver seguimientos</button></div>';
         else if (a.tipo === "pedok") bt = '<div class="bt"><button class="dk" data-lc="' + m.id + '" data-x="ok">Ya está pedido ✓</button><button data-lc="' + m.id + '" data-x="no">Todavía no</button></div>';
         else bt = '<div class="bt"><button class="dk" data-lc="' + m.id + '" data-x="ok">Sí, cargalo</button><button data-lc="' + m.id + '" data-x="no">No</button></div>';
@@ -1850,6 +1852,108 @@
   }
   setInterval(function(){ try { luciSeg(); } catch(e){} }, 60000);
   window.__nvSeg = { abrir: segAbrir, lista: segLista, msg: segMsg };
+  /* ---------- Día cero del stock: conteo guiado y compartido (Pau y Euge) ---------- */
+  var C0 = { n: {}, grupo: null, q: "", busy: false };
+  function c0Items(){ return (ST().stock || []).filter(function(s){ return !s.borrado && s.producto; }); }
+  function c0Grupo(s){ return (s.tipo || "terminado") === "armazon" ? "Armazones" : (s.categoria || "Otros"); }
+  function c0Grupos(){
+    var G = {}; c0Items().forEach(function(s){ var g = c0Grupo(s); (G[g] = G[g] || []).push(s); });
+    var orden = Object.keys(G).sort(function(a, b){ return (a === "Armazones" ? -1 : b === "Armazones" ? 1 : G[b].length - G[a].length); });
+    return orden.map(function(g){ return { g: g, L: G[g].sort(function(a, b){ return String(a.producto).localeCompare(String(b.producto)); }) }; });
+  }
+  function c0Leer(){ if (!sb()) return Promise.resolve(); return sb().from("registros").select("id,data").eq("tabla", "luci_conteo").limit(3000).then(function(r){ if (r.error) return; C0.n = {}; (r.data || []).forEach(function(x){ if (x.data && x.data.sid && !x.data.cerrado) C0.n[x.data.sid] = x.data; }); }, function(){}); }
+  var C0T = {};
+  function c0Set(sid, n){
+    n = Math.max(0, Math.round(n)); C0.n[sid] = { sid: sid, n: n, por: soy(), at: Date.now() }; c0Pintar();
+    clearTimeout(C0T[sid]); C0T[sid] = setTimeout(function(){ sb().from("registros").upsert({ tabla: "luci_conteo", id: "c0-" + sid, data: C0.n[sid], borrado: false, actualizado: new Date().toISOString(), por: soy() || "luci" }, { onConflict: "tabla,id" }).then(function(r){ if (r.error) toast("No se guardó, revisá la conexión"); }); }, 500);
+  }
+  function c0Pintar(){
+    var B = document.getElementById("nluC0"); if (!B) return;
+    var GS = c0Grupos(), tot = c0Items().length, hechos = c0Items().filter(function(s){ return C0.n[s.id]; }).length, pct = tot ? Math.round(hechos * 100 / tot) : 0;
+    var h = '<div class="sh"><button class="x" data-c0="cerrar">✕</button><b>Conteo día cero</b><small>' + hechos + ' de ' + tot + ' contados · se guarda solo, pueden contar las dos a la vez</small><div class="pr"><i style="width:' + pct + '%"></i></div></div>';
+    if (!C0.grupo){
+      h += '<div class="sl">' + GS.map(function(G){ var c = G.L.filter(function(s){ return C0.n[s.id]; }).length; return '<button class="gr" data-c0="g" data-g="' + esc(G.g) + '"><b>' + esc(G.g) + '</b><span>' + c + ' / ' + G.L.length + (c === G.L.length ? " ✓" : "") + '</span></button>'; }).join("") + '</div>';
+      h += '<button class="all" data-c0="fin">Terminar el día cero</button>';
+    } else {
+      var G = GS.filter(function(x){ return x.g === C0.grupo; })[0] || { L: [] }, q = nrm(C0.q);
+      var L = G.L.filter(function(s){ return !q || nrm(s.producto).indexOf(q) >= 0; });
+      h += '<div class="tb"><button data-c0="volver">← Grupos</button><input id="nluC0q" placeholder="Buscar en ' + esc(C0.grupo) + '…" value="' + esc(C0.q) + '"></div><div class="sl">';
+      h += L.map(function(s){
+        var c = C0.n[s.id], ac = +s.cantidad || 0, v = c ? c.n : null;
+        return '<div class="row' + (c ? " ok" : "") + '"><div class="n">' + esc(s.producto) + '<small>El tablero dice ' + ac + (c && c.n !== ac ? ' <i class="dif">contaste ' + c.n + '</i>' : "") + (c && c.por ? ' · ' + (c.por === "pau" ? "Pau" : "Euge") : "") + '</small></div><div class="q"><button data-c0="m" data-id="' + esc(s.id) + '">−</button><input data-c0in="' + esc(s.id) + '" inputmode="numeric" value="' + (v == null ? "" : v) + '" placeholder="·"><button data-c0="p" data-id="' + esc(s.id) + '">+</button></div></div>';
+      }).join("") + (L.length ? "" : '<p class="vac">No hay productos con ese nombre.</p>') + '</div>';
+      var i = GS.map(function(x){ return x.g; }).indexOf(C0.grupo), sig = GS[i + 1];
+      h += '<button class="all" data-c0="' + (sig ? "g" : "volver") + '"' + (sig ? ' data-g="' + esc(sig.g) + '"' : "") + '>' + (sig ? "Seguir con " + esc(sig.g) + " →" : "Listo, volver a los grupos") + '</button>';
+    }
+    var ae = document.activeElement, foc = ae && ae.id === "nluC0q", sel = foc ? ae.selectionStart : 0, sc = (B.querySelector(".sl") || {}).scrollTop || 0;
+    B.innerHTML = h;
+    var nsl = B.querySelector(".sl"); if (nsl) nsl.scrollTop = sc;
+    if (foc){ var qi = document.getElementById("nluC0q"); if (qi){ qi.focus(); try { qi.setSelectionRange(sel, sel); } catch(e){} } }
+  }
+  function c0Terminar(){
+    var it = c0Items(), cont = it.filter(function(s){ return C0.n[s.id]; }), falta = it.length - cont.length, cambian = cont.filter(function(s){ return C0.n[s.id].n !== (+s.cantidad || 0); });
+    if (!cont.length){ toast("Todavía no contaron nada"); return; }
+    if (!window.confirm("Contaron " + cont.length + " productos (" + cambian.length + " cambian).\n" + (falta ? falta + " sin contar quedan como están.\n" : "") + "¿Cierro el día cero y paso estos números al stock?")) return;
+    if (C0.busy) return; C0.busy = true; toast("Guardando el stock…");
+    var log = cambian.map(function(s){ return [s.id, s.producto, +s.cantidad || 0, C0.n[s.id].n]; }), i = 0;
+    function sig(){
+      if (i >= cambian.length){
+        var id = "dia0-" + hoyISO();
+        return sb().from("registros").upsert({ tabla: "luci_conteo", id: id, data: { id: id, cerrado: true, fecha: hoyISO(), por: soy(), contados: cont.length, cambios: log }, borrado: false, actualizado: new Date().toISOString(), por: soy() || "luci" }, { onConflict: "tabla,id" }).then(function(){
+          C0.busy = false; var B = document.getElementById("nluC0"); if (B) B.remove();
+          luci("Listo ✓ Cerré el día cero: contaron " + cont.length + " productos y " + cambian.length + " cambiaron.\nDesde hoy este es el stock oficial 💪");
+        });
+      }
+      var s = cambian[i++]; s.cantidad = C0.n[s.id].n; s.nota = (s.nota ? s.nota + " · " : "") + "día cero " + fcorta(hoyISO());
+      return guardarFila("stock", s).then(sig, function(){ C0.busy = false; toast("Se cortó guardando, tocá Terminar de nuevo"); });
+    }
+    sig();
+  }
+  function c0Abrir(){
+    var P = LC.pane || document.body, B = document.getElementById("nluC0");
+    if (!B){
+      B = document.createElement("div"); B.id = "nluC0"; P.appendChild(B);
+      B.onclick = function(e){
+        var b = e.target.closest("[data-c0]"); if (!b) return; var a = b.dataset.c0, s = b.dataset.id;
+        if (a === "cerrar"){ B.remove(); return; }
+        if (a === "g"){ C0.grupo = b.dataset.g; C0.q = ""; c0Pintar(); var sl = B.querySelector(".sl"); if (sl) sl.scrollTop = 0; return; }
+        if (a === "volver"){ C0.grupo = null; C0.q = ""; c0Pintar(); return; }
+        if (a === "m" || a === "p"){ var st = stockId(s), cur = C0.n[s] ? C0.n[s].n : (+(st || {}).cantidad || 0); c0Set(s, cur + (a === "p" ? 1 : -1)); return; }
+        if (a === "fin"){ c0Terminar(); }
+      };
+      B.oninput = function(e){
+        if (e.target.id === "nluC0q"){ C0.q = e.target.value; c0Pintar(); return; }
+        var sid = e.target.dataset && e.target.dataset.c0in; if (!sid) return; var v = String(e.target.value).replace(/\D/g, ""); if (v === "") return; c0Set(sid, +v);
+      };
+    }
+    c0Pintar(); c0Leer().then(c0Pintar);
+  }
+  (function(){ var s = document.createElement("style"); s.textContent = [
+    "#nluC0{position:absolute;inset:0;z-index:6;background:#FFFCFA;display:flex;flex-direction:column;font-family:Outfit,system-ui,sans-serif;color:#2A211C}",
+    "#nluC0 .sh{padding:14px 16px 12px;border-bottom:1px solid #EFE4E0;background:#fff;position:relative}#nluC0 .sh b{font-size:17px;font-weight:600}#nluC0 .sh small{display:block;color:#8A7A72;font-size:13px;margin:2px 0 8px;padding-right:34px}",
+    "#nluC0 .pr{height:8px;border-radius:9px;background:#F3E9EC}#nluC0 .pr i{display:block;height:8px;border-radius:9px;background:#C98AA3}",
+    "#nluC0 .x{position:absolute;right:12px;top:12px;width:32px;height:32px;border-radius:50%;border:1px solid #EFE4E0;background:#fff;font-size:15px;cursor:pointer;color:#5A4334}",
+    "#nluC0 .sl{flex:1;overflow:auto;padding:10px 14px}#nluC0 .vac{color:#8A7A72}",
+    "#nluC0 .gr{display:flex;width:100%;justify-content:space-between;align-items:center;padding:13px 14px;margin-bottom:8px;border:1px solid #EFE4E0;border-radius:14px;background:#fff;font:inherit;font-size:15px;cursor:pointer;color:#2A211C}#nluC0 .gr span{color:#8A4F65;font-size:13.5px}",
+    "#nluC0 .tb{display:flex;gap:8px;padding:10px 14px 0}#nluC0 .tb button{border:1px solid #E6D8D3;background:#fff;border-radius:10px;padding:8px 10px;font:inherit;font-size:13.5px;cursor:pointer;color:#2A211C;white-space:nowrap}#nluC0 .tb input{flex:1;min-width:0;border:1px solid #E6D8D3;border-radius:10px;padding:8px 10px;font:inherit;font-size:16px}",
+    "#nluC0 .row{display:flex;align-items:center;gap:10px;border:1px solid #EFE4E0;border-radius:12px;padding:9px 10px;background:#fff;margin-bottom:7px}#nluC0 .row.ok{background:#F7FBF7;border-color:#D9EAD9}",
+    "#nluC0 .row .n{flex:1;min-width:0;font-size:14px}#nluC0 .row .n small{display:block;color:#8A7A72;font-size:12px;margin-top:1px}#nluC0 .dif{font-style:normal;color:#8A4F65;background:#FBEEF3;border-radius:6px;padding:0 5px}",
+    "#nluC0 .q{display:flex;align-items:center;gap:5px;flex:none}#nluC0 .q button{width:34px;height:34px;border-radius:10px;border:1px solid #E6D8D3;background:#fff;font-size:18px;cursor:pointer;color:#2A211C}#nluC0 .q input{width:44px;height:34px;text-align:center;border:1px solid #E6D8D3;border-radius:10px;font:inherit;font-size:16px;font-weight:600}",
+    "#nluC0 .all{margin:8px 14px 14px;padding:13px;border-radius:12px;border:0;background:#54433D;color:#fff;font:inherit;font-size:15px;cursor:pointer}"
+  ].join("\n"); document.head.appendChild(s); })();
+  /* el martes 1/12 Luci avisa que arranca el día cero */
+  var LUC0 = 0;
+  function luciDia0(){
+    if (!sb() || !(LOADED || ST().loaded) || Date.now() - LUC0 < 10 * 60e3) return; LUC0 = Date.now();
+    var d = new Date(); if (hoyISO() !== "2026-12-01" || d.getHours() * 60 + d.getMinutes() < 510) return;
+    var id = "luci-dia0-" + hoyISO();
+    sb().from("registros").select("id").eq("tabla", "chat").eq("id", id).then(function(r){
+      if (r.error || (r.data && r.data.length)) return; var now = Date.now();
+      sb().from("registros").upsert({ tabla: "chat", id: id, data: { id: id, adj: [], por: "luci", reac: {}, canal: "luci", texto: "@Pau @Euge ¡Hoy es el día cero del stock! 📦\nVamos contando por grupos desde el celu. Pueden contar las dos a la vez y pausar cuando quieran; se guarda solo.\nCuando terminen, tocan «Terminar» y desde ahí el stock queda oficial.", creado: now, borrado: false, cambiado: now, acc: { tipo: "conteo" } }, borrado: false, actualizado: new Date().toISOString(), por: "luci" }, { onConflict: "tabla,id", ignoreDuplicates: true }).then(function(w){ if (!w.error){ luciPush("¡Hoy es el día cero del stock! 📦", id); lcLeer(); } });
+    });
+  }
+  setInterval(function(){ try { luciDia0(); } catch(e){} }, 60000);
+  window.__nvC0 = { abrir: c0Abrir, grupos: c0Grupos };
   function pintar(){
     if (!ROOT || !ROOT.isConnected) return;
     ROOT.innerHTML = V.vista === "luci" ? vLuci() : V.id ? vFicha() : vLista();
