@@ -153,7 +153,7 @@
     SEED.pasos.forEach(function(p, i){
       var o = { t: "paso", id: p[0], etapa: p[1], nombre: p[2], obj: p[3], tablero: p[4], orden: i + 1, resp: "", sop: p[6] || {} };
       arr.push(o);
-      p[5].forEach(function(tx, j){ arr.push({ t: "tarea", id: p[0] + "t" + (j + 1), paso: p[0], texto: tx, orden: j + 1, hecha: false, resp: "", fecha: "", coms: [] }); });
+      p[5].forEach(function(tx, j){ arr.push({ t: "tarea", id: p[0] + "t" + (j + 1), paso: p[0], texto: tx, orden: j + 1, hecha: false, resp: "", fecha: "", coms: [], link: (p[0] === "p01" && j === 0) ? "fichas" : "" }); });
     });
     return guardarVarios(arr).then(function(){ pintar(); });
   }
@@ -305,6 +305,7 @@
         var nc = (t.coms || []).length;
         h += '<div class="npl-t' + (t.hecha ? " done" : "") + '"><button class="npl-ck' + (t.hecha ? " on" : "") + '" data-a="t-ck" data-id="' + t.id + '" aria-label="Lista"></button>' +
           '<div class="tx" data-a="t-abrir" data-id="' + t.id + '"><span>' + esc(t.texto) + '</span>' +
+          (t.link === "fichas" ? '<div class="npl-tm"><a href="#" data-a="ir-fichas" style="color:#46618A;text-decoration:none;font-weight:500">Abrir fichas de proveedores →</a></div>' : "") +
           ((t.resp || t.fecha || nc) ? '<div class="npl-tm">' + av(t.resp) + (t.fecha ? '<span class="' + (!t.hecha && vencida(t.fecha) ? "late" : "") + '">' + (t.hecha ? "" : "vence ") + fechaTxt(t.fecha) + '</span>' : "") + (nc ? '<span>💬 ' + nc + '</span>' : "") + '</div>' : "") +
           '</div><button class="npl-ic" data-a="t-menu" data-id="' + t.id + '">⋯</button></div>';
       });
@@ -346,6 +347,7 @@
     var p = DB[t.paso] || {};
     var h = '<button class="npl-back" data-a="t-volver">‹ ' + esc(p.nombre || "Volver") + '</button>' +
       '<div class="npl-title"><span style="flex:1">' + esc(t.texto) + '</span><button class="npl-ic" data-a="t-ren" data-id="' + t.id + '">✎</button></div>' +
+      (t.link === "fichas" ? '<div class="npl-note" style="margin:0 0 6px"><a href="#" data-a="ir-fichas" style="color:#46618A;font-weight:500">Abrir fichas de proveedores →</a></div>' : "") +
       '<div class="npl-fld"><span>Responsable</span><span>' + personaSel("npl-tresp", t.resp || "", 'data-id="' + t.id + '"') + '</span></div>' +
       '<div class="npl-fld"><span>Fecha</span><span><input type="date" class="npl-sel npl-tfecha" data-id="' + t.id + '" value="' + esc(t.fecha || "") + '"></span></div>' +
       '<div class="npl-fld"><span>Estado</span><span><button class="npl-btn' + (t.hecha ? " on" : "") + '" data-a="t-ck" data-id="' + t.id + '">' + (t.hecha ? "✓ Lista" : "Pendiente · marcar lista") + '</button></span></div>' +
@@ -479,6 +481,7 @@
           { ic: "🗑", t: "Eliminar tarea", del: true, fn: function(){ if (confirm("¿Eliminar la tarea “" + t.texto + "”?")) borrar(t); } }
         ]); break;
       }
+      case "ir-fichas": if (window.__nvFichasAbrir) window.__nvFichasAbrir(); break;
       case "c-new": nuevoCom(id); break;
       case "c-del": { var i = +el.dataset.i; if (!confirm("¿Borrar este comentario?")) return; o.coms.splice(i, 1); guardar(o, true).then(pintar); pintar(); break; }
       case "men": { var inp = document.getElementById("nplCom"); if (!inp) return; inp.value = inp.value.replace(/@\w*$/, "") + "@" + el.dataset.v + " "; inp.focus(); document.getElementById("nplSug").style.display = "none"; break; }
@@ -519,4 +522,176 @@
   setInterval(montar, 600); setTimeout(montar, 200);
   setInterval(function(){ if (V.vista === "plan" && ROOT && ROOT.isConnected && !document.hidden && !document.getElementById("nplSheet")) leer(); }, 20000);
   document.addEventListener("visibilitychange", function(){ if (!document.hidden && V.vista === "plan" && ROOT && ROOT.isConnected) leer(); });
+})();
+
+/* ================= Proveedores → Fichas de proveedores ================= */
+(function(){
+  if (window.__nvFichas) return; window.__nvFichas = 1;
+  var TABLA = "fichas", LSV = "nvProvVista";
+  var DB = {}, LOADED = false, BUSY = false, ROOT = null, SEG = null;
+  var V = { vista: "fichas", id: null, q: "" };
+  try { var lv = localStorage.getItem(LSV); if (lv !== null) V.vista = lv; } catch(e){}
+  var CAMPOS = [
+    ["contacto","Contacto"],["tel","Teléfono"],["ciudad","Ciudad"],["direccion","Dirección"],["horario","Horario"],
+    ["transporte","Transporte para el retiro"],["web","Web"],["pago","Forma de pago"]
+  ];
+  var SEED = [{ id: "f-licari", nombre: "Licari Ilumina", contacto: "Cintia", tel: "+54 9 11 3189-6910", ciudad: "Buenos Aires",
+    direccion: "Julián Álvarez 1130, dto 5 · Palermo, CABA", horario: "Lunes a viernes de 12 a 18 h", transporte: "Bicentenario",
+    web: "No trabajamos con web", pago: "", productos: [{ n: "Colgante Vat" }, { n: "Colgante Roma" }, { n: "Aplique Pisa · rafia natural" }, { n: "Aplique Pisa · esterilla francesa" }], extras: [], notas: "" }];
+
+  function N(){ return window.__nv || {}; }
+  function ST(){ return N().S || {}; }
+  function soy(){ return (ST().soy || "").toLowerCase(); }
+  function sb(){ return window.__sb; }
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function uid(p){ return p + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+  function toast(m){ var t = document.createElement("div"); t.className = "npl-toast"; t.textContent = m; document.body.appendChild(t); setTimeout(function(){ t.remove(); }, 2000); }
+  function fichas(){ return Object.keys(DB).map(function(k){ return DB[k]; }).filter(function(o){ return !o._b; }).sort(function(a,b){ return String(a.nombre).localeCompare(String(b.nombre)); }); }
+  function pedir(msg, val){ var r = window.prompt(msg, val || ""); return r == null ? null : r.trim(); }
+
+  function guardar(o, quiet){
+    o.mod = Date.now(); o.modPor = soy(); DB[o.id] = o;
+    return sb().from("registros").upsert({ tabla: TABLA, id: o.id, data: o, borrado: false, actualizado: new Date().toISOString(), por: soy() || "nervo" }, { onConflict: "tabla,id" })
+      .then(function(r){ if (r.error){ toast("No se pudo guardar: " + r.error.message); throw r.error; } if (!quiet) toast("Guardado"); });
+  }
+  function leer(){
+    if (!sb() || BUSY) return Promise.resolve(); BUSY = true;
+    return sb().from("registros").select("id,data,borrado").eq("tabla", TABLA).limit(2000).then(function(r){
+      BUSY = false; if (r.error) return;
+      var n = {}; (r.data || []).forEach(function(x){ var o = x.data || {}; o.id = x.id; if (x.borrado) o._b = 1; n[x.id] = o; });
+      DB = n; var prim = !LOADED; LOADED = true;
+      if (!(r.data || []).length){ SEED.forEach(function(f){ guardar(JSON.parse(JSON.stringify(f)), true).then(pintar); }); }
+      var a = document.activeElement; if (prim || !(a && ROOT && ROOT.contains(a) && /INPUT|TEXTAREA/.test(a.tagName))) pintar();
+    }, function(){ BUSY = false; });
+  }
+
+  var CSS = [
+    "body.nfi-on #list{display:none!important}",
+    "#nfiSeg{display:flex;gap:6px;margin:4px 0 12px;font-family:Outfit,system-ui,sans-serif}",
+    "#nfiSeg button{border:0;font:inherit;font-size:14px;padding:8px 15px;border-radius:999px;background:#F4F1EE;color:#7A6D64;cursor:pointer}",
+    "#nfiSeg button.on{background:#2B211B;color:#fff}",
+    "#nfiRoot{font-family:Outfit,system-ui,sans-serif;color:#2B211B;max-width:760px;padding-bottom:120px}",
+    "#nfiRoot *{box-sizing:border-box}",
+    ".nfi-top{display:flex;gap:8px;align-items:center;margin-bottom:12px}",
+    ".nfi-card{background:#fff;border:1px solid #EFEBE7;border-radius:16px;padding:14px 16px;margin-bottom:8px;cursor:pointer;display:flex;gap:12px;align-items:center}",
+    ".nfi-card:hover{border-color:#DCD4CC}",
+    ".nfi-ini{width:42px;height:42px;border-radius:12px;background:#F4EEE8;color:#5A4334;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:16px;flex:none}",
+    ".nfi-card .bd{flex:1;min-width:0}.nfi-card b{font-weight:500;font-size:15.5px;display:block}",
+    ".nfi-card small{color:#7A6D64;font-size:12.5px;display:block;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+    ".nfi-acts{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}",
+    ".nfi-acts a{display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:13.5px;padding:8px 13px;border-radius:999px;border:1px solid #EFEBE7;color:#2B211B;background:#fff}",
+    ".nfi-acts a.wa{background:#EBF1E6;border-color:#EBF1E6;color:#3F5E31}",
+    ".nfi-sec{background:#fff;border:1px solid #EFEBE7;border-radius:16px;padding:4px 16px;margin-bottom:12px}",
+    ".nfi-f{display:grid;grid-template-columns:120px 1fr auto;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid #F2EEEA;font-size:14.5px;cursor:pointer}",
+    ".nfi-f:last-child{border-bottom:0}",
+    ".nfi-f>span:first-child{color:#7A6D64;font-size:13px}",
+    ".nfi-f .v{word-break:break-word;line-height:1.4}.nfi-f .v.vacio{color:#C2B8AF}",
+    ".nfi-f .ed{color:#C2B8AF;font-size:13px}",
+    ".nfi-pr{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #F2EEEA;font-size:14.5px}",
+    ".nfi-pr:last-child{border-bottom:0}.nfi-pr span{flex:1}",
+    ".nfi-h{font-size:12px;letter-spacing:.08em;color:#7A6D64;font-weight:500;margin:18px 2px 8px;text-transform:uppercase;display:flex;align-items:center}",
+    ".nfi-h span{flex:1}",
+    ".nfi-note{font-size:13px;color:#7A6D64;margin:-4px 2px 12px}",
+    "@media (max-width:640px){.nfi-f{grid-template-columns:96px 1fr auto}}"
+  ].join("");
+  var st = document.createElement("style"); st.id = "nfi-css"; st.textContent = CSS; document.head.appendChild(st);
+
+  function telLimpio(t){ var d = String(t || "").replace(/\D/g, ""); return d; }
+  function aliasPago(nombre){
+    var pv = ST().proveedores || [], n = String(nombre || "").toLowerCase().split(/\s+/)[0];
+    var m = pv.find(function(p){ return n && String(p.proveedor || "").toLowerCase().indexOf(n) === 0; });
+    return m && m.alias ? m.alias : "";
+  }
+
+  function vLista(){
+    var fs = fichas(), q = V.q.toLowerCase();
+    if (q) fs = fs.filter(function(f){ return JSON.stringify(f).toLowerCase().indexOf(q) >= 0; });
+    var h = '<div class="nfi-top"><input class="npl-in" id="nfiQ" placeholder="Buscar proveedor o producto…" value="' + esc(V.q) + '"><button class="npl-btn dark" data-a="nuevo">+ Proveedor</button></div>';
+    if (!fs.length) h += '<div class="npl-empty">' + (q ? "No hay resultados." : "Todavía no hay fichas.") + '</div>';
+    fs.forEach(function(f){
+      var sub = [f.contacto, f.ciudad, (f.productos || []).length ? (f.productos.length + " productos") : ""].filter(Boolean).join(" · ");
+      h += '<div class="nfi-card" data-a="abrir" data-id="' + f.id + '"><div class="nfi-ini">' + esc(String(f.nombre || "?").charAt(0).toUpperCase()) + '</div><div class="bd"><b>' + esc(f.nombre) + '</b><small>' + esc(sub) + '</small></div><span style="color:#C2B8AF">›</span></div>';
+    });
+    return h;
+  }
+  function vFicha(){
+    var f = DB[V.id]; if (!f || f._b){ V.id = null; return vLista(); }
+    var tel = telLimpio(f.tel), al = aliasPago(f.nombre);
+    var h = '<button class="npl-back" data-a="volver">‹ Proveedores</button>' +
+      '<div class="npl-title"><span style="flex:1">' + esc(f.nombre) + '</span><button class="npl-ic" data-a="ren">✎</button></div>' +
+      '<div class="nfi-acts">' +
+      (tel ? '<a class="wa" href="https://wa.me/' + tel + '" target="_blank" rel="noopener">WhatsApp' + (f.contacto ? " · " + esc(f.contacto) : "") + '</a><a href="tel:+' + tel + '">Llamar</a>' : "") +
+      (f.direccion ? '<a href="https://www.google.com/maps/search/' + encodeURIComponent(f.direccion) + '" target="_blank" rel="noopener">Ver en el mapa</a>' : "") +
+      (/^https?:/i.test(f.web || "") ? '<a href="' + esc(f.web) + '" target="_blank" rel="noopener">Web ↗</a>' : "") + '</div>';
+    h += '<div class="nfi-h"><span>Datos</span></div><div class="nfi-sec">';
+    CAMPOS.forEach(function(c){ var v = f[c[0]] || ""; h += '<div class="nfi-f" data-a="campo" data-k="' + c[0] + '"><span>' + c[1] + '</span><span class="v' + (v ? "" : " vacio") + '">' + (v ? esc(v) : "Agregar") + '</span><span class="ed">✎</span></div>'; });
+    (f.extras || []).forEach(function(x, i){ h += '<div class="nfi-f" data-a="extra" data-i="' + i + '"><span>' + esc(x.k) + '</span><span class="v">' + esc(x.v) + '</span><span class="ed">✎</span></div>'; });
+    h += '</div>';
+    if (al) h += '<div class="nfi-note">Alias de pago (de A pagar): <b>' + esc(al) + '</b></div>';
+    h += '<button class="npl-add" data-a="extra-new">+ Agregar otro dato</button>';
+    var ps = f.productos || [];
+    h += '<div class="nfi-h"><span>Productos que le compramos · ' + ps.length + '</span></div><div class="nfi-sec">';
+    if (!ps.length) h += '<div class="npl-empty">Sin productos cargados.</div>';
+    ps.forEach(function(p, i){ h += '<div class="nfi-pr"><span>' + esc(p.n) + (p.nota ? '<br><small style="color:#7A6D64">' + esc(p.nota) + '</small>' : "") + '</span><button class="npl-ic" data-a="prod-ed" data-i="' + i + '">✎</button><button class="npl-ic del" data-a="prod-del" data-i="' + i + '">🗑</button></div>'; });
+    h += '</div><div class="npl-quick" style="margin-top:0"><input class="npl-in" id="nfiProd" placeholder="+ Agregar producto…" enterkeyhint="done"><button class="npl-btn dark" data-a="prod-new">Agregar</button></div>';
+    h += '<div class="nfi-h"><span>Notas</span></div><textarea class="npl-ta" id="nfiNotas" placeholder="Lo que haya que recordar de este proveedor…">' + esc(f.notas || "") + '</textarea>' +
+      '<div class="npl-foot"><span>' + (f.mod ? "Último cambio: " + esc(f.modPor === "pau" ? "Pau" : f.modPor === "euge" ? "Euge" : (f.modPor || "")) : "") + '</span><button class="npl-btn" style="color:#B4533F" data-a="del">Eliminar ficha</button></div>';
+    return h;
+  }
+  function pintar(){
+    if (!ROOT || !ROOT.isConnected) return;
+    if (!LOADED){ ROOT.innerHTML = '<div class="npl-empty">Cargando fichas…</div>'; return; }
+    ROOT.innerHTML = V.id ? vFicha() : vLista();
+  }
+
+  function onClick(e){
+    var el = e.target.closest("[data-a]"); if (!el || !ROOT.contains(el)) return;
+    var a = el.dataset.a, f = V.id ? DB[V.id] : null, i = +el.dataset.i;
+    switch (a){
+      case "abrir": V.id = el.dataset.id; pintar(); window.scrollTo(0,0); break;
+      case "volver": V.id = null; pintar(); window.scrollTo(0,0); break;
+      case "nuevo": { var n = pedir("Nombre del proveedor"); if (!n) return; var o = { id: uid("f"), nombre: n, productos: [], extras: [], notas: "" }; guardar(o).then(pintar); V.id = o.id; pintar(); break; }
+      case "ren": { var n2 = pedir("Nombre del proveedor", f.nombre); if (!n2) return; f.nombre = n2; guardar(f).then(pintar); pintar(); break; }
+      case "campo": { var k = el.dataset.k, lab = (CAMPOS.find(function(c){ return c[0] === k; }) || [k, k])[1]; var v = pedir(lab, f[k]); if (v == null) return; f[k] = v; guardar(f).then(pintar); pintar(); break; }
+      case "extra": { var x = f.extras[i]; var v2 = pedir(x.k + " (dejalo vacío para sacarlo)", x.v); if (v2 == null) return; if (!v2){ if (!confirm("¿Sacar el dato “" + x.k + "”?")) return; f.extras.splice(i, 1); } else x.v = v2; guardar(f).then(pintar); pintar(); break; }
+      case "extra-new": { var k2 = pedir("Nombre del dato (ej: CUIT, Mail, Mínimo de compra)"); if (!k2) return; var v3 = pedir(k2); if (v3 == null) return; f.extras = (f.extras || []).concat([{ k: k2, v: v3 }]); guardar(f).then(pintar); pintar(); break; }
+      case "prod-new": { var inp = document.getElementById("nfiProd"), t = inp && inp.value.trim(); if (!t) return; f.productos = (f.productos || []).concat([{ n: t }]); guardar(f, true).then(pintar); pintar(); var n3 = document.getElementById("nfiProd"); if (n3) n3.focus(); break; }
+      case "prod-ed": { var p = f.productos[i]; var t2 = pedir("Producto", p.n); if (!t2) return; var nt = pedir("Nota (precio, medida, color… opcional)", p.nota || ""); p.n = t2; if (nt != null) p.nota = nt; guardar(f).then(pintar); pintar(); break; }
+      case "prod-del": { if (!confirm("¿Sacar “" + f.productos[i].n + "” de la lista?")) return; f.productos.splice(i, 1); guardar(f).then(pintar); pintar(); break; }
+      case "del": { if (!confirm("¿Eliminar la ficha de " + f.nombre + "?")) return; f._b = 1; V.id = null;
+        sb().from("registros").update({ borrado: true, actualizado: new Date().toISOString(), por: soy() || "nervo" }).eq("tabla", TABLA).eq("id", f.id).then(function(){ toast("Eliminada"); pintar(); }); pintar(); break; }
+    }
+  }
+  function onKey(e){ if (e.key === "Enter" && e.target.id === "nfiProd" && !e.isComposing){ e.preventDefault(); onClick({ target: ROOT.querySelector('[data-a="prod-new"]') }); } }
+  function onInput(e){ if (e.target.id === "nfiQ"){ V.q = e.target.value; var pos = e.target.selectionStart; pintar(); var q = document.getElementById("nfiQ"); if (q){ q.focus(); try { q.setSelectionRange(pos, pos); } catch(x){} } } }
+  function onBlur(e){ if (e.target.id === "nfiNotas" && V.id){ var f = DB[V.id]; if (f && (f.notas || "") !== e.target.value){ f.notas = e.target.value; guardar(f); } } }
+
+  function montar(){
+    var s = ST(), list0 = document.getElementById("list");
+    if (s.tab !== "provcat" || !list0){
+      document.body.classList.remove("nfi-on");
+      if (SEG && SEG.parentNode) SEG.remove(); if (ROOT && ROOT.parentNode) ROOT.remove(); return;
+    }
+    if (!SEG || !SEG.isConnected){
+      SEG = document.createElement("div"); SEG.id = "nfiSeg";
+      SEG.innerHTML = '<button data-v="fichas">Fichas</button><button data-v="">Grass · precios y stock</button>';
+      SEG.addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; V.vista = b.dataset.v; try { localStorage.setItem(LSV, V.vista); } catch(x){} montar(); window.scrollTo(0,0); });
+      list0.parentNode.insertBefore(SEG, list0);
+    }
+    [].forEach.call(SEG.children, function(b){ b.classList.toggle("on", (b.dataset.v || "") === (V.vista || "")); });
+    if (V.vista === "fichas"){
+      document.body.classList.add("nfi-on");
+      if (!ROOT || !ROOT.isConnected){
+        ROOT = document.createElement("div"); ROOT.id = "nfiRoot"; list0.parentNode.insertBefore(ROOT, list0.nextSibling);
+        ROOT.addEventListener("click", onClick); ROOT.addEventListener("keydown", onKey); ROOT.addEventListener("input", onInput); ROOT.addEventListener("focusout", onBlur);
+        pintar();
+      }
+      if (!LOADED) leer();
+    } else {
+      document.body.classList.remove("nfi-on"); if (ROOT && ROOT.parentNode) ROOT.remove();
+    }
+  }
+  window.__nvFichasAbrir = function(){ V.vista = "fichas"; V.id = null; try { localStorage.setItem(LSV, "fichas"); } catch(x){} if (N().setTab) N().setTab("provcat"); setTimeout(montar, 50); window.scrollTo(0,0); };
+  setInterval(montar, 600); setTimeout(montar, 250);
+  setInterval(function(){ if (V.vista === "fichas" && ROOT && ROOT.isConnected && !document.hidden) leer(); }, 30000);
 })();
