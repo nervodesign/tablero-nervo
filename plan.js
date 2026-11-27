@@ -665,9 +665,9 @@
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).catch(viejo); else viejo();
     toast(msg || "Copiado ✓");
   }
-  function hoja(html, onReady){
+  function hoja(html, onReady, modal){
     var sh = document.createElement("div"); sh.className = "npl-shade";
-    var hj = document.createElement("div"); hj.className = "npl-sheet"; hj.innerHTML = '<div class="hd"></div>' + html;
+    var hj = document.createElement("div"); hj.className = "npl-sheet nfi-modal"; hj.innerHTML = html;
     function cerrar(){ sh.remove(); hj.remove(); }
     sh.onclick = cerrar; document.body.appendChild(sh); document.body.appendChild(hj);
     if (onReady) onReady(hj, cerrar);
@@ -785,6 +785,15 @@
     ".nfi-sh-row{display:flex;gap:10px;margin:0 0 12px}.nfi-sh-row label{flex:1;font-size:12.5px;color:#7A6D64}.nfi-sh-row .npl-in{width:100%;margin-top:4px}",
     ".nfi-pre{white-space:pre-wrap;background:#F7F5F3;border-radius:14px;padding:12px 14px;font:13.5px/1.5 Outfit,system-ui,sans-serif;margin:0 0 12px;color:#241C17}",
     ".nfi-fl{display:block;font-size:12.5px;color:#7A6D64;margin:0 0 12px}.nfi-fl .npl-ta{display:block;margin-top:4px;min-height:200px;font-size:15px}",
+    ".npl-sheet.nfi-modal{top:50%;bottom:auto;left:50%;right:auto;transform:translate(-50%,-50%);width:min(680px,94vw);max-width:none;max-height:90vh;overflow:auto;border-radius:12px;padding:18px 20px calc(18px + env(safe-area-inset-bottom));margin:0}",
+    ".nfi-modal *{box-sizing:border-box}.nfi-modal .npl-ta,.nfi-modal .npl-in{width:100%;max-width:100%}",
+    ".nfi-mh{display:flex;align-items:center;gap:8px;margin-bottom:14px}",
+    ".nfi-sh-row select.npl-in{width:100%;margin-top:4px;padding:10px}",
+    ".nfi-pgs{border:1px solid #EFEBE7;border-radius:8px;padding:4px 12px;margin-bottom:10px}",
+    ".nfi-pgr{display:grid;grid-template-columns:60px 1fr 60px 30px;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #F4F0EC;font-size:14px}",
+    ".nfi-pgt{font-size:13px;color:#7A6D64;padding:8px 0 4px}",
+    ".nfi-pgadd label{min-width:0}",
+    "@media (max-width:560px){.nfi-sh-row{flex-wrap:wrap}.nfi-sh-row label{flex:1 1 40%}}",
     ".nfi-sh-btns{display:flex;gap:8px}.nfi-sh-btns .npl-btn{flex:1;padding:12px;font-size:15px}",
     "@media (min-width:760px){.nfi-list{grid-template-columns:repeat(2,minmax(0,1fr))}.nfi-body{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);padding:22px;gap:22px}.nfi-hero{padding:26px 26px 22px}}",
     "@media (min-width:1300px){#nfiRoot{max-width:1060px}}"
@@ -879,46 +888,49 @@
     return Promise.resolve(p).then(function(){ toast("Guardado"); try { N().render && N().render(); } catch(e){} pintar(); }, function(e){ toast("No se pudo guardar: " + (e && e.message || e)); });
   }
   function pedidoNuevo(f){ formPedido(f, null); }
+  function pedidoMenu(f, pid){
+    var pv = provDe(f); if (!pv) return; var d = (pv.pedidos || []).find(function(x){ return x.id === pid; }); if (d) formPedido(f, d);
+  }
   function formPedido(f, d){
-    var nuevo = !d;
-    hoja('<h5 class="nfi-sh-t">' + (nuevo ? "Pedido nuevo · " + esc(f.nombre) : "Editar pedido") + '</h5>' +
-      '<label class="nfi-fl">Detalle del pedido<textarea id="pdDet" class="npl-ta" rows="10" placeholder="Ej:&#10;- 8 Aplique Pisa rafia&#10;- 2 Colgante Vat 40 cm">' + esc(d ? d.detalle || "" : "") + '</textarea></label>' +
+    var nuevo = !d, pagos = d ? (d.pagos || []).map(function(p){ return Object.assign({}, p); }) : [];
+    function nom(p){ return p === "pau" ? "Pau" : p === "euge" ? "Euge" : (p || ""); }
+    function listaPagos(){
+      var tot = Number(String((document.getElementById("pdTot") || {}).value || (d && d.total) || "").replace(/[^\d]/g, "")) || 0;
+      var pg = pagos.reduce(function(a, p){ return a + (Number(p.monto) || 0); }, 0);
+      return (pagos.length ? pagos.map(function(p, i){ return '<div class="nfi-pgr"><span>' + fcorta(p.fecha) + '</span><span>' + plata(p.monto) + '</span><span>' + esc(nom(p.por)) + '</span><button class="npl-ic del" data-pq="' + i + '" title="Sacar">🗑</button></div>'; }).join("") : '<div class="npl-empty" style="padding:4px 0">Sin pagos todavía.</div>') +
+        '<div class="nfi-pgt">Pagado ' + plata(pg) + (tot ? ' · falta ' + plata(Math.max(0, tot - pg)) : "") + '</div>';
+    }
+    hoja('<div class="nfi-mh"><h5 class="nfi-sh-t" style="margin:0!important;flex:1">' + (nuevo ? "Pedido nuevo · " + esc(f.nombre) : "Pedido" + (d.fecha ? " del " + fcorta(d.fecha) : "") + " · " + esc(f.nombre)) + '</h5><button class="npl-ic" id="pdX" title="Cerrar">✕</button></div>' +
+      '<label class="nfi-fl">Detalle del pedido<textarea id="pdDet" class="npl-ta" rows="10" placeholder="Un renglón por producto. Ej:&#10;- 8 Arezzo tostadas&#10;- 6 Poli arpillera natural">' + esc(d ? d.detalle || "" : "") + '</textarea></label>' +
       '<div class="nfi-sh-row"><label>Total a pagar<input id="pdTot" class="npl-in" inputmode="numeric" placeholder="Vacío si no lo sabés" value="' + (d && d.total ? d.total : "") + '"></label>' +
-      '<label>Vence<input id="pdVen" type="date" class="npl-in" value="' + esc(d ? d.vence || "" : "") + '"></label></div>' +
-      '<div class="nfi-sh-btns"><button class="npl-btn" id="pdNo">Cancelar</button><button class="npl-btn dark" id="pdOk">Guardar</button></div>',
+      '<label>Vence<input id="pdVen" type="date" class="npl-in" value="' + esc(d ? d.vence || "" : "") + '"></label>' +
+      '<label>Estado<select id="pdEst" class="npl-in">' + ["espera","curso","entregado"].map(function(k){ return '<option value="' + k + '"' + ((d ? d.estado || "espera" : "espera") === k ? " selected" : "") + '>' + EST[k] + '</option>'; }).join("") + '</select></label></div>' +
+      '<div class="nfi-fl" style="margin-bottom:6px">Pagos</div><div id="pdPagos" class="nfi-pgs">' + listaPagos() + '</div>' +
+      '<div class="nfi-sh-row nfi-pgadd"><label>Monto<input id="pgM" class="npl-in" inputmode="numeric" placeholder="$"></label><label>Quién pagó<select id="pgP" class="npl-in"><option value="euge"' + (soy() === "euge" ? " selected" : "") + '>Euge</option><option value="pau"' + (soy() === "pau" ? " selected" : "") + '>Pau</option></select></label><label>Fecha<input id="pgF" type="date" class="npl-in" value="' + hoyISO() + '"></label><button class="npl-btn" id="pgAdd" style="align-self:flex-end;padding:11px 14px">+ Pago</button></div>' +
+      '<div class="nfi-sh-btns" style="margin-top:14px"><button class="npl-btn" id="pdNo">Cancelar</button><button class="npl-btn dark" id="pdOk">Guardar</button></div>',
       function(hj, cerrar){
         if (nuevo) setTimeout(function(){ var t = hj.querySelector("#pdDet"); if (t) t.focus(); }, 60);
-        hj.querySelector("#pdNo").onclick = cerrar;
+        function rep(){ hj.querySelector("#pdPagos").innerHTML = listaPagos(); }
+        hj.querySelector("#pdNo").onclick = cerrar; hj.querySelector("#pdX").onclick = cerrar;
+        hj.querySelector("#pdTot").oninput = rep;
+        hj.querySelector("#pdPagos").onclick = function(ev){ var b = ev.target.closest("[data-pq]"); if (!b) return; if (!confirm("¿Sacar este pago?")) return; pagos.splice(+b.dataset.pq, 1); rep(); };
+        hj.querySelector("#pgAdd").onclick = function(){
+          var m = Number(String(hj.querySelector("#pgM").value).replace(/[^\d]/g, "")) || 0; if (!m){ hj.querySelector("#pgM").focus(); return; }
+          pagos.push({ monto: m, fecha: hj.querySelector("#pgF").value || hoyISO(), nota: "", por: hj.querySelector("#pgP").value }); hj.querySelector("#pgM").value = ""; rep();
+        };
         hj.querySelector("#pdOk").onclick = function(){
           var det = hj.querySelector("#pdDet").value.trim(); if (!det){ hj.querySelector("#pdDet").focus(); return; }
-          var tot = Number(String(hj.querySelector("#pdTot").value).replace(/[^\d]/g, "")) || 0, ven = hj.querySelector("#pdVen").value;
+          var pm = Number(String(hj.querySelector("#pgM").value).replace(/[^\d]/g, "")) || 0;
+          if (pm) pagos.push({ monto: pm, fecha: hj.querySelector("#pgF").value || hoyISO(), nota: "", por: hj.querySelector("#pgP").value });
+          var tot = Number(String(hj.querySelector("#pdTot").value).replace(/[^\d]/g, "")) || 0, ven = hj.querySelector("#pdVen").value, est = hj.querySelector("#pdEst").value;
           var pv = provDe(f);
           if (!pv){ pv = { id: uid("pv"), proveedor: String(f.nombre || "").split(/\s+[·|-]\s+/)[0], alias: aliasDe(f), moneda: "ARS", nota: "", pedidos: [], creado: Date.now() }; (ST().proveedores = ST().proveedores || []).push(pv); f.pagarId = pv.id; guardar(f, true); }
           pv.pedidos = pv.pedidos || [];
-          if (nuevo) pv.pedidos.push({ id: uid("pd"), orden: "", total: tot, vence: ven, nota: "", pagos: [], estado: "espera", detalle: det, fecha: hoyISO(), retiro: "", retiroOk: false });
-          else { d.detalle = det; d.total = tot; d.vence = ven; }
+          if (nuevo) pv.pedidos.push({ id: uid("pd"), orden: "", total: tot, vence: ven, nota: "", pagos: pagos, estado: est, detalle: det, fecha: hoyISO(), retiro: "", retiroOk: false });
+          else { d.detalle = det; d.total = tot; d.vence = ven; d.estado = est; d.pagos = pagos; }
           cerrar(); guardarProv(pv);
         };
-      });
-  }
-  function pedidoMenu(f, pid){
-    var pv = provDe(f); if (!pv) return; var d = (pv.pedidos || []).find(function(x){ return x.id === pid; }); if (!d) return;
-    var pg = pagado(d), sal = Math.max(0, (Number(d.total) || 0) - pg);
-    var pagos = (d.pagos || []).map(function(p){ return fcorta(p.fecha) + " · " + plata(p.monto) + (p.por ? " (" + (p.por === "pau" ? "Pau" : p.por === "euge" ? "Euge" : p.por) + ")" : ""); }).join("<br>");
-    hoja('<h5 class="nfi-sh-t">Pedido' + (d.fecha ? " del " + fcorta(d.fecha) : "") + ' <span class="nfi-est e-' + esc(d.estado || "espera") + '">' + (EST[d.estado] || "En espera") + '</span></h5>' + '<div class="nfi-det">' + esc(d.detalle || d.nota || "Sin detalle") + '</div>' +
-      '<p style="margin:-6px 0 12px;color:#7A6D64;font-size:13.5px;line-height:1.5">Total ' + (Number(d.total) ? plata(d.total) : "a confirmar") + ' · pagado ' + plata(pg) + (Number(d.total) ? " · falta " + plata(sal) : "") + (pagos ? "<br>" + pagos : "") + '</p>' +
-      '<button class="it" data-x="pago"><i>$</i>Registrar un pago</button>' +
-      '<button class="it" data-x="est"><i>↻</i>Estado: ' + (EST[d.estado] || "En espera") + ' (tocá para cambiar)</button>' +
-      '<button class="it" data-x="edit"><i>✎</i>Editar pedido (detalle, total y vencimiento)</button>',
-      function(hj, cerrar){ hj.onclick = function(ev){ var b = ev.target.closest("button.it"); if (!b) return; cerrar(); var x = b.dataset.x;
-        if (x === "edit"){ formPedido(f, d); return; }
-        if (x === "pago"){ var m = pedir("Monto del pago", sal ? String(sal) : ""); if (!m) return; var mm = Number(String(m).replace(/[^\d]/g, "")) || 0; if (!mm) return;
-          var por = pedir("¿Quién pagó? (euge o pau)", soy() || ""); if (por == null) return; d.pagos = (d.pagos || []).concat([{ monto: mm, fecha: hoyISO(), nota: "", por: String(por).toLowerCase().trim() }]); }
-        else if (x === "est"){ d.estado = d.estado === "espera" ? "curso" : d.estado === "curso" ? "entregado" : "espera"; }
-        else if (x === "tot"){ var t = pedir("Total a pagar", String(d.total || "")); if (t == null) return; d.total = Number(String(t).replace(/[^\d]/g, "")) || 0; }
-        else if (x === "det"){ var dt = pedir("Detalle del pedido", d.detalle || ""); if (dt == null) return; d.detalle = dt; }
-        else if (x === "ven"){ var v = pedir("Vence (AAAA-MM-DD, vacío para sacarlo)", d.vence || ""); if (v == null) return; d.vence = v; }
-        guardarProv(pv); }; });
+      }, true);
   }
 
   function pintar(){
