@@ -1329,6 +1329,12 @@
       if (b.precio){ tj.cargos = arr(tj.cargos).concat([{ monto: b.precio * b.n, fecha: hoyISO(), concepto: b.n + " × " + b.que + " retiradas", por: soy() }]); }
       return guardarFila("tejedoras", tj).then(function(){ return stk(b.n); }).then(function(){ return "Listo ✓ Sumé " + b.n + " al stock (" + s.cantidad + " en total)" + (e ? " y lo marqué en el encargo de " + tj.nombre : "") + "."; });
     }
+    if (acc.cmd === "usdfb"){
+      var its = arr(b.items), now0 = Date.now();
+      return Promise.all(its.map(function(x, i){ var id = "usd" + (now0 + i), d = { id: id, at: "", por: soy() || "euge", fecha: x.fecha, monto: String(+x.usd), notas: "Facebook · desde captura (Luci)" + (/proceso/i.test(x.estado || "") ? " · figuraba en proceso" : ""), creado: String(now0 + i), inicial: "", cambiado: String(now0 + i), concepto: "PAGO " + (+x.usd) + " USD PUBLICIDAD" };
+        return sb().from("registros").upsert({ tabla: "fin_usd", id: id, data: d, borrado: false, actualizado: new Date().toISOString(), por: soy() || "luci" }, { onConflict: "tabla,id" }); }))
+        .then(function(){ return "Listo ✓ Cargué " + its.length + (its.length === 1 ? " pago" : " pagos") + " de Facebook en Dólares publicidad 💵"; });
+    }
     if (acc.cmd === "pagotej"){
       var tp = (ST().tejedoras || []).find(function(t){ return t.id === b.tej; }); if (!tp) return Promise.resolve("No encontré a esa persona en Equipo 🙈");
       tp.pagos = arr(tp.pagos).concat([{ monto: b.monto, fecha: hoyISO(), nota: b.nota || "desde Luci", por: soy() }]);
@@ -1957,6 +1963,59 @@
   /* no traer más clientes solos desde Airtable (creaba duplicados) */
   function sinSyncAT(){ try { if (window.__nv && window.__nv.S) window.__nv.S.mcSynced = true; } catch(e){} }
   sinSyncAT(); setInterval(sinSyncAT, 1000);
+  /* ---------- Luci lee fotos: capturas de pagos de Facebook (USD) y preguntas con foto ---------- */
+  function fotoA64(file){
+    return new Promise(function(res, rej){
+      var fr = new FileReader(); fr.onerror = rej;
+      fr.onload = function(){ var im = new Image(); im.onerror = rej; im.onload = function(){
+        var M = 1600, w = im.width, h = im.height, k = Math.min(1, M / Math.max(w, h)), c = document.createElement("canvas"); c.width = Math.round(w * k); c.height = Math.round(h * k);
+        c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); res(c.toDataURL("image/jpeg", 0.85).split(",")[1]);
+      }; im.src = fr.result; };
+      fr.readAsDataURL(file);
+    });
+  }
+  function usdCargados(){ return sb().from("registros").select("data,borrado").eq("tabla", "fin_usd").limit(2000).then(function(r){ return (r.data || []).filter(function(x){ return !x.borrado && x.data; }).map(function(x){ return x.data; }); }); }
+  function dDias(a, b){ return Math.abs((Date.parse(a) - Date.parse(b)) / 864e5); }
+  function luFoto(file, txt){
+    var run = window.google && google.script && google.script.run; if (!run){ luci("Ahora no puedo ver fotos 🙈 Probá en un rato."); return; }
+    lcEnviar("📷 " + (txt || "Te mandé una captura"), soy() || "euge");
+    LC.tip = true; lcPintar();
+    fotoA64(file).then(function(b64){
+      var fb = !txt || /facebook|meta|publicidad|usd|d[oó]lar/i.test(txt);
+      var q = fb ? "Mirá esta captura de movimientos de una billetera o banco. Devolvé SOLO un JSON (sin texto extra) con los pagos a Facebook o Meta (publicidad), así: [{\"fecha\":\"YYYY-MM-DD\",\"usd\":156.45,\"estado\":\"hecho o en proceso\"}]. Usá el monto en USD/USDs/USDc, nunca el de ARS. Si no dice el año, es " + new Date().getFullYear() + ". Si no hay pagos de Facebook devolvé []." : String(txt);
+      run.withSuccessHandler(function(r){
+        LC.tip = false; lcPintar();
+        var t = String(r && r.t || "");
+        if (!fb){ luci(t.replace(/\*\*(.+?)\*\*/g, "$1") || "No pude leer la foto 🙈"); return; }
+        var m = t.match(/\[[\s\S]*\]/), L = []; try { L = JSON.parse(m ? m[0] : "[]"); } catch(e){ L = null; }
+        if (!L){ luci("No pude leer bien la captura 🙈 ¿Me mandás otra más nítida?"); return; }
+        L = L.filter(function(x){ return x && x.fecha && +x.usd > 0; });
+        if (!L.length){ luci("En esa captura no vi pagos de Facebook 🤔"); return; }
+        usdCargados().then(function(C){
+          var usados = {}, falta = [], ya = [];
+          L.forEach(function(x){
+            var hit = C.filter(function(c, i){ return !usados[c.id] && Math.abs((+c.monto || 0) - (+x.usd)) < 0.02 && dDias(c.fecha, x.fecha) <= 3; })[0];
+            if (hit){ usados[hit.id] = 1; ya.push(x); } else falta.push(x);
+          });
+          var lin = function(x){ return "• " + fcorta(x.fecha) + " · " + String((+x.usd).toFixed(2)).replace(".", ",") + " USD" + (/proceso/i.test(x.estado || "") ? " (en proceso)" : ""); };
+          if (!falta.length){ luci("Revisé la captura: los " + L.length + " pagos de Facebook ya están cargados en Dólares publicidad ✓"); return; }
+          luci("Revisé la captura 👀\n" + (ya.length ? "Ya estaban cargados " + ya.length + ".\n" : "") + "Faltan cargar:\n" + falta.map(lin).join("\n") + "\n¿Los cargo como pago tuyo de publicidad (plata a recuperar)?", { tipo: "cmd", cmd: "usdfb", b: { items: falta } });
+        });
+      }).withFailureHandler(function(e){ LC.tip = false; lcPintar(); var s = String(e && e.message || e); luci(/429|quota/i.test(s) ? "Hoy ya usé todas mis consultas de IA 🙈 Mañana vuelvo a poder." : "No pude leer la foto 🙈 Probá de nuevo."); })
+        .luciIA(q, fb ? "{}" : luContexto(), [], { mime: "image/jpeg", data: b64 });
+    }, function(){ LC.tip = false; lcPintar(); luci("No pude abrir esa imagen 🙈"); });
+  }
+  function luFotoMontar(){
+    var P = LC.pane; if (!P || P.querySelector(".cam")) return;
+    var f = P.querySelector("form"), ta = P.querySelector("textarea"); if (!f) return;
+    var b = document.createElement("button"); b.type = "button"; b.className = "cam"; b.title = "Mandar una foto"; b.textContent = "📷";
+    var inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*"; inp.style.display = "none";
+    b.onclick = function(){ inp.click(); };
+    inp.onchange = function(){ var fl = inp.files && inp.files[0]; if (!fl) return; var t = ta.value.trim(); ta.value = ""; inp.value = ""; luFoto(fl, t); };
+    f.insertBefore(inp, f.firstChild); f.insertBefore(b, f.firstChild);
+  }
+  setInterval(function(){ try { luFotoMontar(); } catch(e){} }, 800);
+  (function(){ var s = document.createElement("style"); s.textContent = "#nluPane form .cam{background:#FBF6F8!important;color:#8A4F65!important;border:1px solid #EAD6DE!important;padding:0 12px!important;font-size:18px!important}"; document.head.appendChild(s); })();
   function pintar(){
     if (!ROOT || !ROOT.isConnected) return;
     ROOT.innerHTML = V.vista === "luci" ? vLuci() : V.id ? vFicha() : vLista();
