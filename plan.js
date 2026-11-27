@@ -1954,6 +1954,9 @@
   }
   setInterval(function(){ try { luciDia0(); } catch(e){} }, 60000);
   window.__nvC0 = { abrir: c0Abrir, grupos: c0Grupos };
+  /* no traer más clientes solos desde Airtable (creaba duplicados) */
+  function sinSyncAT(){ try { if (window.__nv && window.__nv.S) window.__nv.S.mcSynced = true; } catch(e){} }
+  sinSyncAT(); setInterval(sinSyncAT, 1000);
   function pintar(){
     if (!ROOT || !ROOT.isConnected) return;
     ROOT.innerHTML = V.vista === "luci" ? vLuci() : V.id ? vFicha() : vLista();
