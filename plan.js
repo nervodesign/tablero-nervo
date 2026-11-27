@@ -1750,6 +1750,24 @@
   }
   setInterval(function(){ try { luci18(); } catch(e){} }, 60000);
   window.__nvLuci18 = { faltan: luFaltantes, correr: function(){ LU6 = 0; return luci18(true); } };
+  /* pedidos de clientes con más de 12 días sin entregar → aviso diario */
+  var LU12 = 0;
+  function luci12(forzar){
+    if (!sb() || !LOADED || !ST().bzData || (!forzar && Date.now() - LU12 < 15 * 60e3)) return []; LU12 = Date.now();
+    var d = new Date(); if (!forzar && (d.getDay() === 0 || d.getHours() < 9 || d.getHours() >= 21)) return [];
+    var B = ST().bzData, hoy = hoyISO(), lim = hoyMenos(12), viejo = hoyMenos(60), out = [];
+    [].concat(B.min || [], B.may || []).forEach(function(x){
+      var e = luEnv(x).trim(), f = String(x.fecha || "").slice(0, 10);
+      if (!e || /ENVIAD|ENTREGAD|CANCEL|RETIRAD/.test(e) || !f || f > lim || f < viejo) return;
+      var dias = Math.round((Date.parse(hoy) - Date.parse(f)) / 864e5), q = x.venta || x.num || x.cliente || "";
+      out.push(q);
+      if (forzar === "ver") return;
+      luciDecir("luci-12d-" + String(q).replace(/\s+/g, "") + "-" + hoy, "@Pau @Euge Chicas, ¿qué está pasando con el pedido " + q + (x.cliente && x.cliente !== q ? " (" + x.cliente + ")" : "") + "? 🤔\nPasaron " + dias + " días desde su compra y todavía figura «" + e.charAt(0) + e.slice(1).toLowerCase() + "».", "¿Qué pasa con el pedido " + q + "? Pasaron " + dias + " días");
+    });
+    return out;
+  }
+  setInterval(function(){ try { luci12(); } catch(e){} }, 60000);
+  window.__nvLuci12 = function(){ LU12 = 0; return luci12("ver"); };
   function pintar(){
     if (!ROOT || !ROOT.isConnected) return;
     ROOT.innerHTML = V.vista === "luci" ? vLuci() : V.id ? vFicha() : vLista();
