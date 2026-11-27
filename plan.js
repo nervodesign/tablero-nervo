@@ -1246,7 +1246,10 @@
   function sinCant(t){ return String(t).replace(/(?:^|\s)\d{1,3}\s*[x×]?\s+(?=[a-záéíóú])/i, " ").trim(); }
 
   /* ---- búsquedas ---- */
-  function provPor(q){ q = nrm(q).split(" ")[0]; if (!q) return null; return provs().find(function(p){ return nrm(p.proveedor).split(" ")[0].indexOf(q) === 0 || nrm(p.proveedor).indexOf(q) === 0; }) || null; }
+  var ALIAS = { gabriel: "herrero", herreria: "herrero", tica: "tikka", tika: "tikka", afortunada: "afortunada", dehierro: "hierro", grass: "grass" };
+  function provPor(q){ q = nrm(q).split(" ")[0]; if (!q || q.length < 3) return null; q = ALIAS[q] || q; return provs().find(function(p){ var n = nrm(p.proveedor); return n.split(" ").some(function(w){ return w.indexOf(q) === 0; }); }) || null; }
+  var CONECT = { a: 1, al: 1, de: 1, del: 1, la: 1, el: 1, para: 1, por: 1, le: 1 };
+  function quien(r){ var ws = String(r).replace(/\$\s*[\d.,]+/g, " ").replace(/\b\d[\d.,]*\b/g, " ").split(/\s+/).filter(function(w){ return w && !CONECT[nrm(w)]; }); for (var i = 0; i < ws.length; i++){ var p = provPor(ws[i]); if (p) return { pv: p, w: ws[i] }; var t = tejPor(ws[i]); if (t) return { tj: t, w: ws[i] }; } return { w: ws[0] || "" }; }
   function tejPor(q){ q = nrm(q).split(" ")[0]; if (!q) return null; var ts = (ST().tejedoras || []).filter(function(t){ return !t.borrado && nrm(t.nombre).split(" ")[0] === q; });
     ts.sort(function(a, b){ function n(t){ return arr(t.encargos).length + arr(t.cargos).length + arr(t.pagos).length; } return n(b) - n(a) || (+b.cambiado || 0) - (+a.cambiado || 0); }); return ts[0] || null; }
   function stockPor(q, tipo){
@@ -1255,6 +1258,8 @@
     return (ST().stock || []).filter(function(s){ if (s.borrado) return false; if (tipo && (s.tipo || "terminado") !== tipo) return false; var n = nrm(s.producto); return w.every(function(x){ return n.indexOf(x) >= 0; }); }).slice(0, 12);
   }
   function pedAbierto(pv){ var ds = pedidosDe(pv).filter(function(d){ return !d.borrado && etapaDe(pv, d) !== "deposito"; }); ds.sort(function(a, b){ return String(b.fecha || "").localeCompare(String(a.fecha || "")); }); return ds[0] || null; }
+  function pedConDeuda(pv){ var ds = pedidosDe(pv).filter(function(d){ return !d.borrado && Math.max(0, (+d.total || 0) - pagado(d)) > 0; }); ds.sort(function(a, b){ return String(a.fecha || "").localeCompare(String(b.fecha || "")); }); return ds[0] || pedAbierto(pv); }
+  function plataN2(t){ var v = plataN(t); if (v) return v; var m = String(t).match(/\b(\d{2,3})\s*(?:mil|k)\b/i); if (m) return +m[1] * 1000; m = String(t).match(/\b(\d{1,3}(?:[.,]\d{3})+|\d{4,})\b/); return m ? numAR(m[1]) : 0; }
 
   /* ---- mensajes ---- */
   function lcEnviar(texto, por, acc){
@@ -1346,8 +1351,8 @@
     }
     if (acc.cmd === "pedido"){
       var pv3 = provs().find(function(p){ return p.id === b.pv; }); if (!pv3) return Promise.resolve("No encontré ese proveedor 🙈");
-      var nd = { id: uid("pd"), orden: "", total: b.total || 0, vence: "", nota: "", pagos: [], estado: "espera", detalle: b.det, fecha: hoyISO(), retiro: "", retiroOk: false };
-      aplicarEtapa(nd, FLU[tipoDe(pv3.proveedor)][0][0]); pv3.pedidos = pedidosDe(pv3).concat([nd]);
+      var nd = { id: uid("pd"), orden: "", total: b.total || 0, vence: "", nota: "", pagos: b.pagado ? [{ monto: b.pagado, fecha: hoyISO(), nota: "desde Luci", por: soy() }] : [], estado: "espera", detalle: b.det, fecha: hoyISO(), retiro: "", retiroOk: false };
+      aplicarEtapa(nd, b.pagado ? "deposito" : FLU[tipoDe(pv3.proveedor)][0][0]); pv3.pedidos = pedidosDe(pv3).concat([nd]);
       return guardarProv(pv3).then(function(){ return "Listo ✓ Anoté el pedido a " + pv3.proveedor + ". Te aviso cuando haya que pagar o retirar 😉"; });
     }
     return Promise.resolve("No sé hacer eso todavía 🙈");
@@ -1373,6 +1378,8 @@
   function procesar(t){
     var m = String(t).trim().match(/^\/(\S+)\s*([\s\S]*)$/); if (!m){ return; }
     var c = nrm(m[1]), r = m[2].trim(), n = cantDe(r) || 1;
+    if (/^(agreg|carg|anot|sum|registr)/.test(c) && /^(un |el )?pagos?\b/i.test(r)){ c = "pague"; r = r.replace(/^(un |el )?pagos?\s*/i, ""); }
+    if (c === "pagamos" || c === "pagaste" || c === "pague" || c === "pagar") c = "pague";
     if (c === "ayuda" || c === "comandos") return luci(AYUDA);
     if (c === "ver" || c === "info") return ver(r);
     if (c === "entra" || c === "sale") return elegir(c, { n: n }, stockPor(sinCant(r)));
@@ -1386,17 +1393,20 @@
     }
     var prov = c === "pedido" || c === "sena" || c === "pague" || c === "pago" || c === "retiro" || c === "llego" ? c : "";
     if (prov){
-      var pp = r.split(/\s+/), pv = provPor(pp[0] || ""), resto = pp.slice(1).join(" ");
-      var tq = !pv && (prov === "pague" || prov === "pago") ? tejPor(pp[0] || "") : null;
+      var qn = quien(r), pv = qn.pv || null, pp = [qn.w || ""], resto = r.replace(new RegExp("\\b(a|al|de|del)?\\s*" + (qn.w || "§").replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b", "i"), " ").trim();
+      var tq = !pv && (prov === "pague" || prov === "pago") ? (qn.tj || tejPor(pp[0] || "")) : null;
       if (tq){
-        var mt = plataN(resto); if (!mt) return luci("¿De cuánto fue? Ej: /" + m[1] + " " + pp[0] + " $30.000");
-        return luci("Voy a cargar un pago de " + plata(mt) + " a " + tq.nombre + " en Equipo" + (resto.replace(/\$\s*[\d.,]+/, "").trim() ? " (" + resto.replace(/\$\s*[\d.,]+/, "").trim() + ")" : "") + ".\n¿Lo cargo?", { tipo: "cmd", cmd: "pagotej", b: { tej: tq.id, monto: mt, nota: resto.replace(/\$\s*[\d.,]+/, "").trim() } });
+        var mt = plataN2(resto); if (!mt) return luci("¿De cuánto fue? Ej: /" + m[1] + " " + pp[0] + " $30.000");
+        var nt = resto.replace(/\$?\s*\d[\d.,]*\s*(mil|k)?/gi, " ").replace(/\b(a|al|de|pesos)\b/gi, " ").replace(/\s+/g, " ").trim();
+        return luci("Voy a cargar un pago de " + plata(mt) + " a " + tq.nombre + " en Equipo" + (nt ? " (" + nt + ")" : "") + ".\n¿Lo cargo?", { tipo: "cmd", cmd: "pagotej", b: { tej: tq.id, monto: mt, nota: nt } });
       }
       if (!pv) return luci("¿De qué proveedor? No encontré «" + (pp[0] || "") + "» 🙈");
       if (prov === "pedido") return luci("Voy a anotar un pedido nuevo a " + pv.proveedor + ":\n" + (resto || "(sin detalle)") + (plataN(resto) ? "\nTotal " + plata(plataN(resto)) : "") + "\n¿Lo cargo?", { tipo: "cmd", cmd: "pedido", b: { pv: pv.id, det: resto.replace(/\$\s*[\d.,]+/, "").trim() || "Pedido", total: plataN(resto) } });
-      var d = pedAbierto(pv); if (!d) return luci(pv.proveedor + " no tiene pedidos abiertos. Si es nuevo, usá /pedido " + pp[0] + " …");
+      var d = (prov === "pague" || prov === "pago") ? pedConDeuda(pv) : pedAbierto(pv);
+      if (!d && (prov === "pague" || prov === "pago")){ var mo = plataN2(resto); if (!mo) return luci("¿De cuánto fue? Ej: /pagué " + pp[0] + " $200.000"); return luci(pv.proveedor + " no tiene pedidos con deuda. ¿Anoto un pedido nuevo ya pagado de " + plata(mo) + "?", { tipo: "cmd", cmd: "pedido", b: { pv: pv.id, det: "Pago a " + pv.proveedor, total: mo, pagado: mo } }); }
+      if (!d) return luci(pv.proveedor + " no tiene pedidos abiertos. Si es nuevo, usá /pedido " + pp[0] + " …");
       if (prov === "sena" || prov === "pague" || prov === "pago"){
-        var monto = plataN(resto); if (!monto) return luci("¿De cuánto fue? Ej: /" + m[1] + " " + pp[0] + " $200.000");
+        var monto = plataN2(resto); if (!monto) return luci("¿De cuánto fue? Ej: /" + m[1] + " " + pp[0] + " $200.000");
         return luci("Voy a cargar un pago de " + plata(monto) + " a " + pv.proveedor + " (pedido " + fcorta(d.fecha) + ": " + resumen(d, 1) + ").\n¿Lo cargo?", { tipo: "cmd", cmd: "pago", b: { pv: pv.id, d: d.id, monto: monto, sena: prov === "sena" } });
       }
       var e = prov === "retiro" ? (tipoDe(pv.proveedor, d) === "encargo" ? "retiro" : "traslado") : "deposito";
@@ -1406,7 +1416,9 @@
   }
   function lcMandar(t){
     t = String(t || "").trim(); if (!t) return;
+    var cmdT = t.charAt(0) === "/" ? t : (/^(pagu[eé]|pago|pagamos|se[ñn]a|lleg[oó]|retiro|entra|sale|ver|pedido|llev[eé]|ayuda|agreg\S*|carg\S*|anot\S*)(?=\s|$)/i.test(t) ? "/" + t : (tejPor(t.split(/\s+/)[0]) && /\d/.test(t) ? "/" + t : ""));
     lcEnviar(t, soy() || "euge").then(function(){
+      if (cmdT){ t = cmdT; }
       if (t.charAt(0) === "/") { LC.tip = true; lcPintar(); setTimeout(function(){ LC.tip = false; try { procesar(t); } catch(e){ luci("Uy, algo me salió mal 🙈 Probá de nuevo."); } }, 450); }
     });
   }
@@ -1427,7 +1439,7 @@
       (r.data || []).forEach(function(mv){
         if (!(+mv.monto > 0) || mv.signo === "ingreso") return;
         var txt = (mv.contraparte || "") + " " + (mv.texto || ""), pv = null;
-        provs().some(function(p){ var k = nrm(p.proveedor).split(" ")[0]; if (k.length > 3 && nrm(txt).split(" ").indexOf(k) >= 0){ pv = p; return true; } return false; });
+        nrm(txt).split(" ").some(function(w){ if (w.length < 4) return false; var p = provPor(w); if (p){ pv = p; return true; } return false; });
         if (!pv){
           var tm = null; (ST().tejedoras || []).some(function(t){ var k = nrm(t.nombre).split(" ")[0]; if (k.length > 2 && nrm(txt).split(" ").indexOf(k) >= 0){ tm = tejPor(k); return true; } return false; });
           if (!tm) return; var idt = "luci-mv-" + mv.id;
