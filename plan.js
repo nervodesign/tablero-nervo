@@ -1475,6 +1475,12 @@
   }
   function lcAccion(id, x, i){
     var m = LC.msgs.find(function(z){ return z.id === id; }); if (!m || m.est) return;
+    if (m.acc && m.acc.tipo === "pedok"){
+      lcMarcar(m, x === "no" ? "no" : "ok");
+      if (x === "no"){ luci("Dale, mañana a las 18 te lo vuelvo a recordar 😉"); return; }
+      sb().from("registros").upsert({ tabla: "luci_ok", id: m.acc.ok, data: { id: m.acc.ok, txt: m.acc.txt, por: soy(), fecha: hoyISO() }, borrado: false, actualizado: new Date().toISOString(), por: soy() || "luci" }, { onConflict: "tabla,id" }).then(function(){ luci("Genial, lo taché ✓ (" + (soy() === "pau" ? "Pau" : "Euge") + ": " + m.acc.txt.replace(/^No hay /, "") + " pedido)"); });
+      return;
+    }
     if (x === "no"){ lcMarcar(m, "no"); luci("Dale, no toco nada 👍"); return; }
     if (m.acc && m.acc.tipo === "elegir"){ var op = m.acc.ops[+i]; if (!op) return; lcMarcar(m, "ok"); var b = m.acc.base; b.sid = op[0]; luciPropone(m.acc.cmd, b); return; }
     lcMarcar(m, "ok");
@@ -1558,8 +1564,9 @@
       var lu = m.por === "luci", yo = !lu && m.por === me, a = m.acc, bt = "";
       if (a && !m.est){
         if (a.tipo === "elegir") bt = '<div class="bt">' + a.ops.map(function(o, i){ return '<button data-lc="' + m.id + '" data-x="ok" data-i="' + i + '">' + esc(o[1]) + '</button>'; }).join("") + '<button data-lc="' + m.id + '" data-x="no">Ninguno</button></div>';
+        else if (a.tipo === "pedok") bt = '<div class="bt"><button class="dk" data-lc="' + m.id + '" data-x="ok">Ya está pedido ✓</button><button data-lc="' + m.id + '" data-x="no">Todavía no</button></div>';
         else bt = '<div class="bt"><button class="dk" data-lc="' + m.id + '" data-x="ok">Sí, cargalo</button><button data-lc="' + m.id + '" data-x="no">No</button></div>';
-      } else if (a && m.est) bt = '<div class="est">' + (m.est === "ok" ? "✓ Aprobado" : "✕ Cancelado") + '</div>';
+      } else if (a && m.est) bt = '<div class="est">' + (a.tipo === "pedok" ? (m.est === "ok" ? "✓ Pedido" : "Pendiente — te lo recuerdo mañana") : m.est === "ok" ? "✓ Aprobado" : "✕ Cancelado") + '</div>';
       return '<div class="m' + (yo ? " yo" : lu ? "" : " otra") + '">' + (yo ? "" : '<div class="a">' + (lu ? '<img src="' + LUCI_IMG + '">' : esc(String(m.por || "?").charAt(0).toUpperCase())) + '</div>') +
         '<div class="b">' + esc(m.texto).replace(/@(Pau|Euge)/g, "<b>@$1</b>") + bt + '<small>' + (lu || yo ? "" : esc(m.por === "pau" ? "Pau" : m.por === "euge" ? "Euge" : m.por) + " · ") + hora(m.creado) + '</small></div></div>';
     }).join("") + (LC.tip ? '<div class="tip">Luci está escribiendo…</div>' : "");
@@ -1619,6 +1626,73 @@
   setInterval(function(){ if (!document.hidden && !LC.open) lcLeer(); }, 60000);
   window.__nvLuciChat = lcAbrir;
   window.__nvLuciCmd = function(t){ procesar(t); return LC.msgs; }; window.__nvLuciAcc = lcAccion; window.__nvLuciVer = { ficha: fichaTej, retirar: retirarTej, todas: retirarTodas, quien: quien };
+  /* ---------- Luci 18:00: pedidos sin armazón / sin stock ---------- */
+  var LU_EXT = { aurora: ["mantua", "ravenna", "arezzo"], licari: ["vat", "roma", "pisa"], "la afortunada": ["gaetta"], grass: ["puglia", "cinque", "taormina", "liguria", "lombardia", "arauco", "brescia"] };
+  var LU_GEN = { aplique: 1, colgante: 1, velador: 1, de: 1, pie: 1, mesa: 1, luz: 1, tipo: 1, set: 1, x: 1 };
+  function luPalabras(s){ return nrm(s).split(" ").filter(function(w){ return w && !LU_GEN[w]; }); }
+  function luEnv(x){ var e = x.env || x.estado || ""; if (Array.isArray(e)) e = e.join(" "); return String(e).toUpperCase(); }
+  function luAbiertos(){
+    var B = ST().bzData || {}, L = [].concat(B.min || [], B.may || []);
+    return L.filter(function(x){ return /REVISAR|PARA HACER|EN PROCESO/.test(luEnv(x)); });
+  }
+  function luFaltantes(){
+    var arms = (ST().stock || []).filter(function(s){ return !s.borrado && s.tipo === "armazon"; });
+    var ters = (ST().stock || []).filter(function(s){ return !s.borrado && (s.tipo || "terminado") !== "armazon" && (+s.cantidad || 0) > 0; });
+    var F = {};
+    luAbiertos().forEach(function(x){
+      var ps = arr(x.prods).length ? arr(x.prods) : String(x.productos || "").split(/\n|,/).filter(Boolean);
+      var cs = String(x.cant || "").split("\n").filter(function(l){ return /\[.\]/.test(l); });
+      var vta = x.venta || x.num || x.cliente || "";
+      ps.forEach(function(p, i){
+        var ln = cs[i] || "", hecho = /\[x\]/i.test(ln), q = +((ln.match(/\]\s*(\d+)/) || [])[1]) || 1;
+        if (hecho) return;
+        var np = nrm(p), wp = np.split(" "), wq = luPalabras(p).filter(function(z){ return z.length > 1; });
+        var hayTer = ters.some(function(s){ var n = nrm(s.producto), nw = n.split(" "); return wq.every(function(z){ return nw.indexOf(z) >= 0 || /\d/.test(z) && n.indexOf(z.replace(/cm$/, "")) >= 0; }); });
+        if (hayTer) return;
+        /* producto propio: buscar su armazón (todas sus palabras en el nombre del producto) */
+        var cand = arms.filter(function(a){ var w = luPalabras(a.producto); return w.length && w.every(function(z){ return wp.indexOf(z) >= 0 || /\d/.test(z) && np.indexOf(z) >= 0; }); });
+        cand.sort(function(a, b){ return luPalabras(b.producto).length - luPalabras(a.producto).length; });
+        if (cand.length){
+          var a = cand[0], wa = luPalabras(a.producto);
+          var k = "arm:" + a.id; F[k] = F[k] || { k: k, txt: "No hay armazón " + a.producto, q: 0, hay: +a.cantidad || 0, v: [] }; F[k].q += q; if (F[k].v.indexOf(vta) < 0) F[k].v.push(vta);
+          return;
+        }
+        /* producto de proveedor */
+        Object.keys(LU_EXT).some(function(pv){
+          var mo = LU_EXT[pv].filter(function(m){ return wp.indexOf(m) >= 0; })[0]; if (!mo) return false;
+          var k = "ext:" + np.replace(/\s+/g, ""), nom = pv === "la afortunada" ? "La Afortunada" : pv.charAt(0).toUpperCase() + pv.slice(1);
+          F[k] = F[k] || { k: k, txt: "No hay stock de " + String(p).replace(/^(Colgante|Aplique|Velador)\s+/i, "") + " → pedir a " + nom, q: 0, hay: 0, v: [] }; F[k].q += q; if (F[k].v.indexOf(vta) < 0) F[k].v.push(vta);
+          return true;
+        });
+      });
+    });
+    return Object.keys(F).map(function(k){ return F[k]; }).filter(function(f){ return f.q > f.hay; });
+  }
+  function luOkId(f){ return "lok-" + f.k.replace(/[^\w:]/g, "") + "-" + f.v.slice().sort().join("_").replace(/\s+/g, ""); }
+  var LU6 = 0;
+  function luci18(forzar){
+    if (!sb() || !LOADED || (!forzar && Date.now() - LU6 < 10 * 60e3)) return Promise.resolve(); LU6 = Date.now();
+    var d = new Date(), dw = d.getDay();
+    if (!forzar && (dw === 0 || dw === 6 || d.getHours() < 18 || d.getHours() >= 22)) return Promise.resolve();
+    if (!ST().bzData) return Promise.resolve();
+    var fs = luFaltantes(); if (!fs.length) return Promise.resolve();
+    var hoy = hoyISO(), cab = "luci-18-" + hoy;
+    return sb().from("registros").select("id").eq("tabla", "luci_ok").then(function(r){
+      var ok = {}; (r.data || []).forEach(function(x){ ok[x.id] = 1; });
+      fs = fs.filter(function(f){ return !ok[luOkId(f)]; }); if (!fs.length) return;
+      return sb().from("registros").select("id").eq("tabla", "chat").eq("id", cab).then(function(x){
+        if (x.error || (x.data && x.data.length)) return;
+        var now = Date.now(), filas = [{ tabla: "chat", id: cab, data: { id: cab, adj: [], por: "luci", reac: {}, canal: "luci", texto: "@Pau @Euge Chicas, no se olviden de los pedidos 🙏\n" + fs.map(function(f){ return "• " + f.txt; }).join("\n") + "\nCuando esté pedido, tocá el botón así lo tacho.", creado: now, borrado: false, cambiado: now }, borrado: false, actualizado: new Date(now).toISOString(), por: "luci" }];
+        fs.forEach(function(f, i){
+          var id = "luci-18-" + hoy + "-" + i, t = now + i + 1;
+          filas.push({ tabla: "chat", id: id, data: { id: id, adj: [], por: "luci", reac: {}, canal: "luci", texto: f.txt + " (faltan " + (f.q - f.hay) + ")\nPara: " + f.v.join(", "), creado: t, borrado: false, cambiado: t, acc: { tipo: "pedok", ok: luOkId(f), txt: f.txt } }, borrado: false, actualizado: new Date(t).toISOString(), por: "luci" });
+        });
+        return sb().from("registros").upsert(filas, { onConflict: "tabla,id", ignoreDuplicates: true }).then(function(w){ if (!w.error){ luciPush("Chicas, no se olviden de los pedidos: " + fs.map(function(f){ return f.txt.replace(/^No hay /, ""); }).join(", "), cab); lcLeer(); } });
+      });
+    }, function(){});
+  }
+  setInterval(function(){ try { luci18(); } catch(e){} }, 60000);
+  window.__nvLuci18 = { faltan: luFaltantes, correr: function(){ LU6 = 0; return luci18(true); } };
   function pintar(){
     if (!ROOT || !ROOT.isConnected) return;
     ROOT.innerHTML = V.vista === "luci" ? vLuci() : V.id ? vFicha() : vLista();
