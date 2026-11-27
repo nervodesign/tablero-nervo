@@ -1474,7 +1474,21 @@
     var B = S.bzData || {}; o.pedidos_clientes_abiertos = [].concat(B.min || [], B.may || []).filter(function(x){ return !/ENVIAD|ENTREGAD|CANCEL/.test(luEnvC(x)) && (x.fecha || "") >= hoyMenos(45); }).map(function(x){ return { venta: x.venta || "", cliente: x.cliente || "", estado: luEnvC(x), productos: arr(x.prods), cant: x.cant || "", fecha: x.fecha || "" }; });
     var V = S.ven; if (V && V.ord){ var mes = hoyISO().slice(0, 7), om = V.ord.filter(function(x){ return String(x.f || "").slice(0, 7) === mes; }); o.ventas_mes = { cantidad: om.length, facturado: om.reduce(function(a, x){ return a + (+x.t || 0); }, 0), ultimas: om.slice(-15).map(function(x){ return [x.f, x.v, x.c, +x.t || 0]; }) }; o.productos_vendidos_mes = (V.items || []).filter(function(x){ return x.m === mes; }).map(function(x){ return [x.p, x.q]; }); }
     try { o.rutina_hoy = textoChat(); } catch(e){}
+    o.lo_que_nos_contaron_las_chicas = LSAB.l;
     return JSON.stringify(o);
+  }
+  var LSAB = { l: [], at: 0 };
+  function luSaber(){
+    if (!sb() || Date.now() - LSAB.at < 5 * 60e3) return; LSAB.at = Date.now();
+    sb().from("registros").select("data").eq("tabla", "luci_saber").eq("borrado", false).then(function(r){ if (!r.error) LSAB.l = (r.data || []).map(function(x){ return x.data && x.data.texto; }).filter(Boolean); }, function(){});
+  }
+  setTimeout(function(){ try { luSaber(); } catch(e){} }, 3000); setInterval(function(){ try { luSaber(); } catch(e){} }, 5 * 60e3);
+  function luAprender(t){
+    var id = "sab-" + Date.now().toString(36), q = t.replace(/^(luci[,:]?\s*)?(aprend[eé]|acordate|record[aá]|anot[aá] que|sab[eé] que)\s*(que\s*)?[:,]?\s*/i, "").trim();
+    if (q.length < 4){ luci("¿Qué querés que aprenda? Escribime por ejemplo: aprendé que Gabriel tarda hasta 1 semana."); return; }
+    sb().from("registros").upsert({ tabla: "luci_saber", id: id, data: { id: id, texto: q, por: soy(), fecha: hoyISO() }, borrado: false, actualizado: new Date().toISOString(), por: soy() || "luci" }, { onConflict: "tabla,id" }).then(function(r){
+      if (r.error){ luci("No pude guardarlo 🙈 Probá de nuevo."); return; } LSAB.l.push(q); luci("Anotado ✓ Ya lo sé: «" + q + "» 📝");
+    });
   }
   function luEnvC(x){ var e = x.env || x.estado || ""; if (Array.isArray(e)) e = e.join(" "); return String(e).toUpperCase().trim(); }
   function hoyMenos(n){ var d = new Date(Date.now() - n * 864e5); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
@@ -1485,7 +1499,7 @@
     function listo(){ if (fin) return false; fin = true; LC.tip = false; lcPintar(); return true; }
     setTimeout(function(){ if (listo()) luci("Uy, me estoy tardando mucho 🙈 Probá de nuevo en un ratito."); }, 45000);
     try {
-      run.withSuccessHandler(function(r){ if (!listo()) return; if (r && r.t) luci(r.t); else siFalla(); })
+      run.withSuccessHandler(function(r){ if (!listo()) return; if (r && r.t) luci(String(r.t).replace(/\*\*(.+?)\*\*/g, "$1").replace(/^\s*[*-]\s+/gm, "• ").replace(/^#+\s*/gm, "")); else siFalla(); })
         .withFailureHandler(function(e){ if (!listo()) return; var m = String(e && e.message || e); if (/no disponible/i.test(m)) siFalla(); else if (/429|quota/i.test(m)) luci("Hoy ya usé todas mis consultas de IA 🙈 Mañana vuelvo a poder. Mientras tanto probá /ayuda."); else luci("Uy, no pude pensar eso ahora 🙈 Probá de nuevo en un rato."); })
         .luciIA(t, luContexto(), hist);
     } catch(e){ listo(); siFalla(); }
@@ -1496,6 +1510,7 @@
     lcEnviar(t, soy() || "euge").then(function(){
       if (cmdT){ t = cmdT; }
       else {
+        if (/^(luci[,:]?\s*)?(aprend[eé]|acordate|record[aá]|anot[aá] que|sab[eé] que)\b/i.test(t)){ luAprender(t); return; }
         var qq = quien(t), pal = t.split(/\s+/).length;
         if (/retir/i.test(t) && !qq.pv && (qq.tj || !/\b(aurora|licari|grass|bicentenario)\b/i.test(t))){ LC.tip = true; lcPintar(); setTimeout(function(){ LC.tip = false; luci(qq.tj ? retirarTej(qq.tj) : retirarTodas()); }, 450); return; }
         if ((qq.pv || qq.tj) && (pal <= 2 || /saldo|favor|deb[oe]|debemos|deuda|al d[ií]a/i.test(t))){ LC.tip = true; lcPintar(); setTimeout(function(){ LC.tip = false; ver(qq.w); }, 450); return; }
@@ -1701,11 +1716,21 @@
     return Object.keys(F).map(function(k){ return F[k]; }).filter(function(f){ return f.q > f.hay; });
   }
   function luOkId(f){ return "lok-" + f.k.replace(/[^\w:]/g, "") + "-" + f.v.slice().sort().join("_").replace(/\s+/g, ""); }
+  /* a las 18: si hoy se retiró de una tejedora y falta pagarle */
+  function luciPagosHoy(){
+    var hoy = hoyISO();
+    (ST().tejedoras || []).filter(function(t){ return !t.borrado && arr(t.cargos).some(function(c){ return c.fecha === hoy; }); }).forEach(function(t){
+      var d = tjCuenta(t); if (d <= 0) return;
+      var hoyM = arr(t.cargos).filter(function(c){ return c.fecha === hoy; }).reduce(function(a, c){ return a + (+c.monto || 0); }, 0);
+      luciDecir("luci-pago-" + t.id + "-" + hoy, "@Pau @Euge Hoy le retiraron a " + t.nombre + " por " + plata(hoyM) + " y le falta cobrar " + plata(d) + " 🧶\nAcuérdense de pagarle hoy. Cuando lo hagan escribime: pagué " + plata(d).replace("$ ", "") + " a " + t.nombre, "Falta pagarle " + plata(d) + " a " + t.nombre);
+    });
+  }
   var LU6 = 0;
   function luci18(forzar){
     if (!sb() || !LOADED || (!forzar && Date.now() - LU6 < 10 * 60e3)) return Promise.resolve(); LU6 = Date.now();
     var d = new Date(), dw = d.getDay();
     if (!forzar && (dw === 0 || dw === 6 || d.getHours() < 18 || d.getHours() >= 22)) return Promise.resolve();
+    try { luciPagosHoy(); } catch(e){}
     if (!ST().bzData) return Promise.resolve();
     var fs = luFaltantes(); if (!fs.length) return Promise.resolve();
     var hoy = hoyISO(), cab = "luci-18-" + hoy;
