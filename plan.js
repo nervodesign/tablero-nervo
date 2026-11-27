@@ -1430,9 +1430,14 @@
 
   /* ---- interfaz: botón en la lista de canales + panel ---- */
   var LCSS = [
-    "#nluChb .chi{background:none!important;overflow:hidden;border-radius:50%}#nluChb .chi img{width:100%;height:100%;object-fit:cover;display:block}",
-    "#nluChb.on{background:#F3E4EA}",
-    "#nluBadge{background:#8A4F65;color:#fff;font-size:11px;border-radius:9px;padding:0 6px;margin-left:auto}",
+    "#nluChb{display:flex!important;align-items:center;gap:12px;width:100%;box-sizing:border-box;padding:12px 14px;margin:10px 0 6px;border:1px solid #F1E4EA;border-radius:14px;background:#fff;box-shadow:0 4px 14px rgba(138,79,101,.10);text-align:left;font:inherit;color:#2A211C;cursor:pointer}",
+    "#nluChb.on{background:#FBF3F6;border-color:#EAD6DE}",
+    "#nluChb .av{width:46px;height:46px;min-width:46px;border-radius:50%;overflow:hidden;background:#F3E4EA;box-shadow:0 0 0 3px #fff,0 2px 8px rgba(138,79,101,.18)}",
+    "#nluChb .av img{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}",
+    "#nluChb .tx{flex:1;min-width:0}#nluChb .r1{display:flex;align-items:baseline;gap:8px}#nluChb .r1 b{font-weight:600;font-size:16px;flex:1}",
+    "#nluChb .tm{font-style:normal;font-size:12px;color:#ABA097}",
+    "#nluChb .pv{display:block;font-size:13.5px;color:#7A6D64;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}",
+    "#nluBadge{background:#8A4F65;color:#fff;font-size:11px;font-weight:600;border-radius:9px;padding:2px 7px;flex:none}",
     "#nluPane{position:fixed;z-index:60;background:#fff;display:flex;flex-direction:column;font-family:Outfit,system-ui,sans-serif;color:#2A211C;border-left:1px solid #EFEBE7}",
     "#nluPane *{box-sizing:border-box}",
     "#nluPane .hd{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#F3E4EA;border-bottom:1px solid #EAD6DE}",
@@ -1509,24 +1514,16 @@
     var mov = document.querySelector(".chw .chb.nvmovtop"), w = document.querySelector(".chw");
     if (!mov || !w){ if (LC.open) lcCerrar(); return; }
     if (!document.getElementById("nluChb")){
-      var b = mov.cloneNode(true); b.id = "nluChb"; b.classList.remove("nvmovtop"); b.classList.remove("on"); b.setAttribute("data-nvg", "top"); b.style.setProperty("--chc", "#C98AA0");
-      var ic = b.querySelector(".chi"); if (ic){ ic.removeAttribute("data-l"); ic.innerHTML = '<img src="' + LUCI_IMG + '">'; }
-      var t1 = b.querySelector(".chl1"); if (t1) t1.textContent = "Luci";
-      [].forEach.call(b.querySelectorAll(".chbt span"), function(s){ if (s !== t1 && !s.contains(t1) && s.children.length === 0 && s !== b.querySelector(".chr1")) s.textContent = ""; });
-      [].forEach.call(b.querySelectorAll("[class*=n], .chn, .chu"), function(s){ if (/^\d+$/.test(s.textContent.trim())) s.textContent = ""; });
-      var bd = document.createElement("span"); bd.id = "nluBadge"; (b.querySelector(".chr1") || b).appendChild(bd);
+      var b = document.createElement("button"); b.type = "button"; b.id = "nluChb"; b.setAttribute("data-nvg", "top");
+      b.innerHTML = '<span class="av"><img src="' + LUCI_IMG + '" alt=""></span><span class="tx"><span class="r1"><b>Luci</b><em class="tm"></em></span><span class="pv">Tu compañera para compras, pagos y stock 🌷</span></span><span id="nluBadge"></span>';
       b.addEventListener("click", function(e){ e.preventDefault(); e.stopPropagation(); lcAbrir(); }, true);
       mov.parentNode.insertBefore(b, mov.nextSibling); lcBadge();
-      w.addEventListener("click", function(e){ var o = e.target.closest(".chb"); if (o && o.id !== "nluChb" && LC.open) lcCerrar(); }, true);
+      if (!w.__nlu){ w.__nlu = 1; w.addEventListener("click", function(e){ var o = e.target.closest(".chb"); if (o && o.id !== "nluChb" && LC.open) lcCerrar(); }, true); }
     }
     var cb = document.getElementById("nluChb"); if (cb && cb.previousElementSibling !== mov) mov.parentNode.insertBefore(cb, mov.nextSibling);
     if (cb){
-      var cs = getComputedStyle(mov), mi = mov.querySelector(".chi"), ci = cb.querySelector(".chi");
-      ["boxShadow","borderRadius","padding","backgroundColor","border"].forEach(function(k){ cb.style[k] = cs[k]; }); cb.style.marginTop = "8px";
-      if (mi && ci){ var z = Math.max(26, mi.getBoundingClientRect().width || 0); ci.style.cssText = "width:" + z + "px;height:" + z + "px;min-width:" + z + "px;border-radius:50%;overflow:hidden;background:#F3E4EA;padding:0;flex:none;display:block"; var im = ci.querySelector("img"); if (im) im.style.cssText = "width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block"; }
-      var ult = LC.msgs.filter(function(m){ return m.por === "luci"; }).slice(-1)[0], cp = cb.querySelector(".chp"), ct = cb.querySelector(".chtm");
-      if (cp){ var tx = ult ? String(ult.texto).replace(/@(Pau|Euge)\s*/g, "").split("\n")[0] : "Tu compañera para compras, pagos y stock 🌷"; if (cp.textContent !== tx) cp.textContent = tx; }
-      if (ct && ult){ var hh = hora(ult.creado); if (ct.textContent !== hh) ct.textContent = hh; }
+      var ult = LC.msgs.filter(function(m){ return m.por === "luci"; }).slice(-1)[0], cp = cb.querySelector(".pv"), ct = cb.querySelector(".tm");
+      if (ult){ var tx = String(ult.texto).replace(/@(Pau|Euge)\s*/g, "").split("\n")[0]; if (cp.textContent !== tx) cp.textContent = tx; var hh = hora(ult.creado); if (ct.textContent !== hh) ct.textContent = hh; }
     }
     if (LC.open){ w.classList.add("nlu-chon"); lcPos(); }
   }
