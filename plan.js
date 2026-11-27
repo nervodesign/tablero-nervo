@@ -524,7 +524,7 @@
   document.addEventListener("visibilitychange", function(){ if (!document.hidden && V.vista === "plan" && ROOT && ROOT.isConnected) leer(); });
 })();
 
-/* ================= Proveedores → Fichas de proveedores ================= */
+/* ================= Proveedores → Fichas de proveedores (diseño Agenda) ================= */
 (function(){
   if (window.__nvFichas) return; window.__nvFichas = 1;
   var TABLA = "fichas", LSV = "nvProvVista";
@@ -532,12 +532,30 @@
   var V = { vista: "fichas", id: null, q: "" };
   try { var lv = localStorage.getItem(LSV); if (lv !== null) V.vista = lv; } catch(e){}
   var CAMPOS = [
-    ["contacto","Contacto"],["tel","Teléfono"],["ciudad","Ciudad"],["direccion","Dirección"],["horario","Horario"],
-    ["transporte","Transporte para el retiro"],["web","Web"],["pago","Forma de pago"]
+    ["contacto","Contacto","user"],["tel","Teléfono","tel"],["direccion","Dirección","map"],["ciudad","Ciudad / zona","pin"],["horario","Horario","clock"],
+    ["transporte","Transporte para el retiro","truck"],["web","Web","globe"],["pago","Forma de pago","card"]
   ];
-  var SEED = [{ id: "f-licari", nombre: "Licari Ilumina", contacto: "Cintia", tel: "+54 9 11 3189-6910", ciudad: "Buenos Aires",
-    direccion: "Julián Álvarez 1130, dto 5 · Palermo, CABA", horario: "Lunes a viernes de 12 a 18 h", transporte: "Bicentenario",
-    web: "No trabajamos con web", pago: "", productos: [{ n: "Colgante Vat" }, { n: "Colgante Roma" }, { n: "Aplique Pisa · rafia natural" }, { n: "Aplique Pisa · esterilla francesa" }], extras: [], notas: "" }];
+  var IC = {
+    wa: '<path d="M4 20l1.3-3.8A8 8 0 1 1 8 19.2z"/><path d="M9 9.5c.3 1.8 1.7 3.6 3.6 4.3l1.2-1 1.7.8"/>',
+    tel: '<path d="M5 4h3l2 5-2 1a11 11 0 0 0 6 6l1-2 5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+    map: '<path d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+    pin: '<path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3z"/><path d="M9 4v13M15 7v13"/>',
+    copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/>',
+    clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    truck: '<path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>',
+    user: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>',
+    mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5l8.5 6 8.5-6"/>',
+    card: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/>',
+    globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.5 2.5 14.5 0 17M12 3.5c-2.5 2.5-2.5 14.5 0 17"/>',
+    search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>',
+    box: '<path d="M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5L12 12l8.5-4.5M12 12v9"/>',
+    note: '<path d="M5 4h10l4 4v12H5z"/><path d="M14 4v5h5M8 13h8M8 17h5"/>',
+    tag: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.3"/>',
+    send: '<path d="M4 12l16-8-6 16-2.5-6.5z"/>'
+  };
+  function ic(n, cls){ return '<svg class="nfi-ic' + (cls ? " " + cls : "") + '" viewBox="0 0 24 24">' + (IC[n] || IC.tag) + '</svg>'; }
+  var PAL = [["#F4E7DF","#8A5440"],["#E8EFE4","#4C6A3E"],["#E6EDF6","#46618A"],["#F6EEDC","#8A6A2A"],["#EEE7F4","#6A4E86"],["#E3F0EE","#3C6E66"]];
+  function col(n){ var h = 0; String(n || "").split("").forEach(function(c){ h = (h * 31 + c.charCodeAt(0)) >>> 0; }); return PAL[h % PAL.length]; }
 
   function N(){ return window.__nv || {}; }
   function ST(){ return N().S || {}; }
@@ -560,55 +578,62 @@
       BUSY = false; if (r.error) return;
       var n = {}; (r.data || []).forEach(function(x){ var o = x.data || {}; o.id = x.id; if (x.borrado) o._b = 1; n[x.id] = o; });
       DB = n; var prim = !LOADED; LOADED = true;
-      if (!(r.data || []).length){ SEED.forEach(function(f){ guardar(JSON.parse(JSON.stringify(f)), true).then(pintar); }); }
       var a = document.activeElement; if (prim || !(a && ROOT && ROOT.contains(a) && /INPUT|TEXTAREA/.test(a.tagName))) pintar();
     }, function(){ BUSY = false; });
   }
 
-  var CSS = [
-    "body.nfi-on #list{display:none!important}",
-    "#nfiSeg{display:flex;gap:6px;margin:4px 0 12px;font-family:Outfit,system-ui,sans-serif}",
-    "#nfiSeg button{border:0;font:inherit;font-size:14px;padding:8px 15px;border-radius:999px;background:#F4F1EE;color:#7A6D64;cursor:pointer}",
-    "#nfiSeg button.on{background:#2B211B;color:#fff}",
-    "#nfiRoot{font-family:Outfit,system-ui,sans-serif;color:#2B211B;max-width:760px;padding-bottom:120px}",
-    "#nfiRoot *{box-sizing:border-box}",
-    ".nfi-top{display:flex;gap:8px;align-items:center;margin-bottom:12px}",
-    ".nfi-card{background:#fff;border:1px solid #EFEBE7;border-radius:16px;padding:14px 16px;margin-bottom:8px;cursor:pointer;display:flex;gap:12px;align-items:center}",
-    ".nfi-card:hover{border-color:#DCD4CC}",
-    ".nfi-ini{width:42px;height:42px;border-radius:12px;background:#F4EEE8;color:#5A4334;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:16px;flex:none}",
-    ".nfi-card .bd{flex:1;min-width:0}.nfi-card b{font-weight:500;font-size:15.5px;display:block}",
-    ".nfi-card small{color:#7A6D64;font-size:12.5px;display:block;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-    ".nfi-acts{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}",
-    ".nfi-acts a{display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:13.5px;padding:8px 13px;border-radius:999px;border:1px solid #EFEBE7;color:#2B211B;background:#fff}",
-    ".nfi-acts a.dark{background:#2B211B;border-color:#2B211B;color:#fff}",
-    ".nfi-acts a.wa{background:#EBF1E6;border-color:#EBF1E6;color:#3F5E31}",
-    ".nfi-sec{background:#fff;border:1px solid #EFEBE7;border-radius:16px;padding:4px 16px;margin-bottom:12px}",
-    ".nfi-f{display:grid;grid-template-columns:120px 1fr auto;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid #F2EEEA;font-size:14.5px;cursor:pointer}",
-    ".nfi-f:last-child{border-bottom:0}",
-    ".nfi-f>span:first-child{color:#7A6D64;font-size:13px}",
-    ".nfi-f .v{word-break:break-word;line-height:1.4}.nfi-f .v.vacio{color:#C2B8AF}",
-    ".nfi-f .ed{color:#C2B8AF;font-size:13px}",
-    ".nfi-pr{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #F2EEEA;font-size:14.5px}",
-    ".nfi-pr:last-child{border-bottom:0}.nfi-pr span{flex:1}",
-    ".nfi-h{font-size:12px;letter-spacing:.08em;color:#7A6D64;font-weight:500;margin:18px 2px 8px;text-transform:uppercase;display:flex;align-items:center}",
-    ".nfi-h span{flex:1}",
-    ".nfi-note{font-size:13px;color:#7A6D64;margin:-4px 2px 12px}",
-    "@media (max-width:640px){.nfi-f{grid-template-columns:96px 1fr auto}}"
-  ].join("");
-  var st = document.createElement("style"); st.id = "nfi-css"; st.textContent = CSS; document.head.appendChild(st);
+  /* ---------- abierto / cerrado según el horario ---------- */
+  var DIAS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+  function diaIdx(w){ w = w.toLowerCase().replace("miercoles","miércoles").replace("sabado","sábado"); for (var i = 0; i < 7; i++) if (w.indexOf(DIAS[i].slice(0,3)) === 0) return i; return -1; }
+  function horario(h){
+    h = String(h || "").toLowerCase(); if (!h) return null;
+    var m = h.match(/(\d{1,2})(?:[:.](\d{2}))?\s*(?:hs|h)?\s*(?:a|-|–|al)\s*(\d{1,2})(?:[:.](\d{2}))?/); if (!m) return null;
+    var ab = +m[1] + (+m[2] || 0) / 60, ci = +m[3] + (+m[4] || 0) / 60; if (ci <= ab) return null;
+    var dias = [1,2,3,4,5];
+    var r = h.match(/(lun|mar|mi[eé]|jue|vie|s[aá]b|dom)[a-záé]*\s*(?:a|-|–|al)\s*(lun|mar|mi[eé]|jue|vie|s[aá]b|dom)[a-záé]*/);
+    if (r){ var a = diaIdx(r[1]), b = diaIdx(r[2]); if (a >= 0 && b >= 0){ dias = []; for (var i = a; ; i = (i + 1) % 7){ dias.push(i); if (i === b) break; } } }
+    return { dias: dias, ab: ab, ci: ci };
+  }
+  function hh(x){ var H = Math.floor(x), M = Math.round((x - H) * 60); return H + (M ? ":" + String(M).padStart(2,"0") : "") + " h"; }
+  function estadoAbierto(f){
+    var H = horario(f.horario); if (!H) return null;
+    var now = new Date(), d = now.getDay(), t = now.getHours() + now.getMinutes() / 60;
+    if (H.dias.indexOf(d) >= 0 && t >= H.ab && t < H.ci) return { on: true, t: "Abierto · cierra " + hh(H.ci) };
+    for (var k = 0; k < 8; k++){
+      var dd = (d + k) % 7; if (H.dias.indexOf(dd) < 0) continue;
+      if (k === 0 && t >= H.ab) continue;
+      return { on: false, t: "Abre " + (k === 0 ? "hoy" : k === 1 ? "mañana" : "el " + DIAS[dd]) + " " + hh(H.ab) };
+    }
+    return null;
+  }
+  function badge(f){ var e = estadoAbierto(f); return e ? '<span class="nfi-open ' + (e.on ? "on" : "") + '"><i></i>' + e.t + '</span>' : ""; }
 
-  function telLimpio(t){ var d = String(t || "").replace(/\D/g, ""); return d; }
-  function aliasPago(nombre){
-    var pv = ST().proveedores || [], n = String(nombre || "").toLowerCase().split(/\s+/)[0];
+  /* ---------- helpers ---------- */
+  function telLimpio(t){ return String(t || "").replace(/\D/g, ""); }
+  function extraDe(f, re){ var x = (f.extras || []).find(function(e){ return re.test(e.k || ""); }); return x ? x.v : ""; }
+  function aliasDe(f){
+    var a = extraDe(f, /alias/i); if (a) return a;
+    var pv = ST().proveedores || [], n = String(f.nombre || "").toLowerCase().split(/\s+/)[0];
     var m = pv.find(function(p){ return n && String(p.proveedor || "").toLowerCase().indexOf(n) === 0; });
     return m && m.alias ? m.alias : "";
   }
+  function copiar(t, msg){
+    function viejo(){ var ta = document.createElement("textarea"); ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch(e){} ta.remove(); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).catch(viejo); else viejo();
+    toast(msg || "Copiado ✓");
+  }
+  function hoja(html, onReady){
+    var sh = document.createElement("div"); sh.className = "npl-shade";
+    var hj = document.createElement("div"); hj.className = "npl-sheet"; hj.innerHTML = '<div class="hd"></div>' + html;
+    function cerrar(){ sh.remove(); hj.remove(); }
+    sh.onclick = cerrar; document.body.appendChild(sh); document.body.appendChild(hj);
+    if (onReady) onReady(hj, cerrar);
+  }
 
-  /* ---------- pedir retiro (texto para copiar) ---------- */
+  /* ---------- pedir retiro ---------- */
   var DEST = ["Datos del destinatario:", "Nervo Design", "Dirección: La Pampa 1895, Córdoba Capital, CP 5000.", "Teléfono: 3512124025", "Email: nervodesigncba@gmail.com"];
-  function extraDe(f, re){ var x = (f.extras || []).find(function(e){ return re.test(e.k || ""); }); return x ? x.v : ""; }
   function punto(s){ s = String(s || "").trim(); return s && !/[.!?]$/.test(s) ? s + "." : s; }
-  function diaTxt(v){ if (!v) return ""; var d = new Date(v + "T12:00:00"); return ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"][d.getDay()] + " " + d.getDate() + "/" + (d.getMonth() + 1); }
+  function diaTxt(v){ if (!v) return ""; var d = new Date(v + "T12:00:00"); return DIAS[d.getDay()] + " " + d.getDate() + "/" + (d.getMonth() + 1); }
   function textoRetiro(f, dia, bultos){
     var cu = extraDe(f, /cuit/i), ml = extraDe(f, /^mail/i), L = [];
     L.push("Solicito el retiro el día " + diaTxt(dia) + " en:", "");
@@ -620,91 +645,167 @@
     L.push("Cantidad de bultos: " + (bultos || ""), "");
     return L.concat(DEST).join("\n");
   }
-  function copiar(t){
-    function viejo(){ var ta = document.createElement("textarea"); ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch(e){} ta.remove(); }
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).catch(viejo); else viejo();
-    toast("Copiado ✓");
-  }
   function retiro(f){
     var d = new Date(); d.setDate(d.getDate() + 1); while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
-    var hoy = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-    var sh = document.createElement("div"); sh.className = "npl-shade"; sh.id = "nplShade";
-    var hj = document.createElement("div"); hj.className = "npl-sheet"; hj.id = "nplSheet";
-    hj.innerHTML = '<div class="hd"></div><h5 style="font-size:16px;color:#2B211B;font-weight:600">Pedir retiro · ' + esc(f.nombre) + '</h5>' +
-      '<div style="display:flex;gap:10px;margin:8px 0 12px"><label style="flex:1;font-size:12.5px;color:#7A6D64">Día del retiro<input type="date" id="nfiDia" class="npl-in" style="width:100%;margin-top:4px" value="' + hoy + '"></label>' +
-      '<label style="width:110px;font-size:12.5px;color:#7A6D64">Bultos<input type="number" min="1" inputmode="numeric" id="nfiBul" class="npl-in" style="width:100%;margin-top:4px" placeholder="—"></label></div>' +
-      '<pre id="nfiTxt" style="white-space:pre-wrap;background:#F7F5F3;border-radius:14px;padding:12px 14px;font:13.5px/1.5 Outfit,system-ui,sans-serif;margin:0 0 12px;color:#2B211B"></pre>' +
-      '<div style="display:flex;gap:8px"><button class="npl-btn dark" id="nfiCop" style="flex:1;padding:12px;font-size:15px">Copiar</button><button class="npl-btn" id="nfiWa" style="flex:1;padding:12px;font-size:15px">Mandar por WhatsApp</button></div>';
-    document.body.appendChild(sh); document.body.appendChild(hj);
-    function txt(){ return textoRetiro(f, document.getElementById("nfiDia").value, document.getElementById("nfiBul").value.trim()); }
-    function upd(){ document.getElementById("nfiTxt").textContent = txt(); }
-    function cerrar(){ sh.remove(); hj.remove(); }
-    sh.onclick = cerrar; hj.addEventListener("input", upd); upd();
-    document.getElementById("nfiCop").onclick = function(){ copiar(txt()); cerrar(); };
-    document.getElementById("nfiWa").onclick = function(){ window.open("https://wa.me/?text=" + encodeURIComponent(txt()), "_blank"); cerrar(); };
+    var dia = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    hoja('<h5 class="nfi-sh-t">Pedir retiro · ' + esc(f.nombre) + '</h5>' +
+      '<div class="nfi-sh-row"><label>Día del retiro<input type="date" id="nfiDia" class="npl-in" value="' + dia + '"></label>' +
+      '<label style="width:110px;flex:none">Bultos<input type="number" min="1" inputmode="numeric" id="nfiBul" class="npl-in" placeholder="—"></label></div>' +
+      '<pre id="nfiTxt" class="nfi-pre"></pre>' +
+      '<div class="nfi-sh-btns"><button class="npl-btn dark" id="nfiCop">Copiar</button><button class="npl-btn" id="nfiWa">Mandar por WhatsApp</button></div>',
+      function(hj, cerrar){
+        function txt(){ return textoRetiro(f, hj.querySelector("#nfiDia").value, hj.querySelector("#nfiBul").value.trim()); }
+        function upd(){ hj.querySelector("#nfiTxt").textContent = txt(); }
+        hj.addEventListener("input", upd); upd();
+        hj.querySelector("#nfiCop").onclick = function(){ copiar(txt()); cerrar(); };
+        hj.querySelector("#nfiWa").onclick = function(){ window.open("https://wa.me/?text=" + encodeURIComponent(txt()), "_blank"); cerrar(); };
+      });
   }
 
+  /* ---------- estilos ---------- */
+  var CSS = [
+    "body.nfi-on #list{display:none!important}",
+    "#nfiSeg{display:flex;gap:6px;margin:4px 0 12px;font-family:Outfit,system-ui,sans-serif}",
+    "#nfiSeg button{border:0;font:inherit;font-size:14px;padding:8px 15px;border-radius:999px;background:#F4F1EE;color:#7A6D64;cursor:pointer}",
+    "#nfiSeg button.on{background:#2B211B;color:#fff}",
+    "#nfiRoot{font-family:Outfit,system-ui,sans-serif;color:#241C17;max-width:640px;padding-bottom:120px}",
+    "#nfiRoot *{box-sizing:border-box}",
+    ".nfi-ic{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}",
+    ".nfi-top{display:flex;gap:10px;align-items:center;margin-bottom:6px}",
+    ".nfi-q{flex:1;display:flex;align-items:center;gap:8px;background:#F7F5F3;border-radius:14px;padding:0 12px;color:#ABA097}",
+    ".nfi-q input{flex:1;border:0;background:transparent;font:inherit;font-size:15px;padding:12px 0;color:#241C17;outline:none;min-width:0}",
+    ".nfi-plus{width:44px;height:44px;border-radius:14px;background:#241C17;color:#fff;border:0;font-size:22px;cursor:pointer;flex:none}",
+    ".nfi-it{display:flex;gap:13px;padding:14px 4px;border-bottom:1px solid #EFEBE7;align-items:center;cursor:pointer}",
+    ".nfi-it:hover{background:#FCFBFA}",
+    ".nfi-av{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:18px;flex:none}",
+    ".nfi-it .bd{flex:1;min-width:0}",
+    ".nfi-it b{font-weight:500;font-size:16px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+    ".nfi-it small{display:block;color:#7A6D64;font-size:13px;margin:2px 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+    ".nfi-open{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:3px 9px;border-radius:20px;background:#F3EFEB;color:#7A6D64}",
+    ".nfi-open i{width:6px;height:6px;border-radius:50%;background:currentColor}",
+    ".nfi-open.on{background:#E9F3EA;color:#3F7A4A}",
+    ".nfi-wa{width:40px;height:40px;border-radius:50%;background:#E9F3EA;color:#3F7A4A;display:flex;align-items:center;justify-content:center;flex:none;text-decoration:none}",
+    ".nfi-hero{background:linear-gradient(160deg,#5A4334,#3B2C23);color:#fff;padding:18px 20px 40px;border-radius:24px;position:relative}",
+    ".nfi-hero .tp{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}",
+    ".nfi-hero .tp button{border:0;background:rgba(255,255,255,.12);color:#fff;font:inherit;font-size:13.5px;padding:7px 12px;border-radius:999px;cursor:pointer}",
+    ".nfi-hero .av{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;margin-bottom:12px}",
+    ".nfi-hero h2{font-size:24px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em}",
+    ".nfi-hero p{margin:0 0 10px;opacity:.78;font-size:14px}",
+    ".nfi-hero .nfi-open{background:rgba(255,255,255,.14);color:#fff}.nfi-hero .nfi-open.on{background:#DDEFD9;color:#2F6A3A}",
+    ".nfi-acts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:-26px 10px 0;position:relative}",
+    ".nfi-acts a{background:#fff;border-radius:16px;box-shadow:0 6px 18px rgba(36,28,23,.10);padding:12px 4px 10px;text-align:center;font-size:12px;color:#7A6D64;display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;cursor:pointer}",
+    ".nfi-acts a .nfi-ic{width:21px;height:21px;color:#5A4334}",
+    ".nfi-acts a.wa .nfi-ic{color:#3F7A4A}",
+    ".nfi-acts a.off{opacity:.4;pointer-events:none}",
+    ".nfi-retiro{display:flex;align-items:center;gap:12px;margin:16px 0 0;padding:14px 16px;border-radius:18px;background:#F7F2EC;cursor:pointer;border:1px solid #EFE4D8}",
+    ".nfi-retiro b{font-size:15px;font-weight:600;display:block}.nfi-retiro small{font-size:12.5px;color:#7A6D64}",
+    ".nfi-retiro .go{margin-left:auto;background:#241C17;color:#fff;border-radius:999px;padding:8px 14px;font-size:13px}",
+    ".nfi-retiro .nfi-ic{width:22px;height:22px;color:#5A4334}",
+    ".nfi-lbl{margin:22px 4px 8px;font-size:12px;letter-spacing:.08em;color:#7A6D64;font-weight:500;text-transform:uppercase;display:flex;align-items:center}",
+    ".nfi-lbl span{flex:1}",
+    ".nfi-sec{border:1px solid #EFEBE7;border-radius:18px;padding:2px 16px;background:#fff}",
+    ".nfi-f{display:flex;gap:13px;align-items:flex-start;padding:12px 0;border-bottom:1px solid #F2EEEA;font-size:14.5px;cursor:pointer}",
+    ".nfi-f:last-child{border-bottom:0}",
+    ".nfi-f .nfi-ic{color:#ABA097;margin-top:1px}",
+    ".nfi-f .bd{flex:1;min-width:0;word-break:break-word;line-height:1.4}",
+    ".nfi-f small{display:block;color:#ABA097;font-size:11.5px;margin-bottom:1px}",
+    ".nfi-f .vacio{color:#C9BFB6}",
+    ".nfi-f .cp{border:1px solid #EFEBE7;background:#fff;border-radius:8px;font:inherit;font-size:12px;padding:4px 9px;color:#5A4334;cursor:pointer;flex:none}",
+    ".nfi-tags{display:flex;flex-wrap:wrap;gap:7px}",
+    ".nfi-tag{border:1px solid #EFEBE7;background:#fff;border-radius:999px;font:inherit;font-size:13.5px;padding:7px 13px;color:#241C17;cursor:pointer;text-align:left}",
+    ".nfi-tag small{color:#7A6D64;font-size:11.5px;margin-left:4px}",
+    ".nfi-tag.add{border-style:dashed;color:#7A6D64}",
+    ".nfi-sh-t{font-size:17px!important;color:#241C17!important;font-weight:600!important;margin:4px 0 12px!important}",
+    ".nfi-sh-row{display:flex;gap:10px;margin:0 0 12px}.nfi-sh-row label{flex:1;font-size:12.5px;color:#7A6D64}.nfi-sh-row .npl-in{width:100%;margin-top:4px}",
+    ".nfi-pre{white-space:pre-wrap;background:#F7F5F3;border-radius:14px;padding:12px 14px;font:13.5px/1.5 Outfit,system-ui,sans-serif;margin:0 0 12px;color:#241C17}",
+    ".nfi-sh-btns{display:flex;gap:8px}.nfi-sh-btns .npl-btn{flex:1;padding:12px;font-size:15px}",
+    "@media (min-width:700px){.nfi-acts{margin:-26px 24px 0}}"
+  ].join("");
+  var st = document.createElement("style"); st.id = "nfi-css"; st.textContent = CSS; document.head.appendChild(st);
+
+  /* ---------- pantallas ---------- */
   function vLista(){
     var fs = fichas(), q = V.q.toLowerCase();
     if (q) fs = fs.filter(function(f){ return JSON.stringify(f).toLowerCase().indexOf(q) >= 0; });
-    var h = '<div class="nfi-top"><input class="npl-in" id="nfiQ" placeholder="Buscar proveedor o producto…" value="' + esc(V.q) + '"><button class="npl-btn dark" data-a="nuevo">+ Proveedor</button></div>';
+    var h = '<div class="nfi-top"><label class="nfi-q">' + ic("search") + '<input id="nfiQ" placeholder="Buscar proveedor o producto…" value="' + esc(V.q) + '"></label><button class="nfi-plus" data-a="nuevo" title="Nuevo proveedor">+</button></div>';
+    if (!LOADED) return h + '<div class="npl-empty">Cargando…</div>';
     if (!fs.length) h += '<div class="npl-empty">' + (q ? "No hay resultados." : "Todavía no hay fichas.") + '</div>';
     fs.forEach(function(f){
-      var sub = [f.contacto, f.ciudad, (f.productos || []).length ? (f.productos.length + " productos") : ""].filter(Boolean).join(" · ");
-      h += '<div class="nfi-card" data-a="abrir" data-id="' + f.id + '"><div class="nfi-ini">' + esc(String(f.nombre || "?").charAt(0).toUpperCase()) + '</div><div class="bd"><b>' + esc(f.nombre) + '</b><small>' + esc(sub) + '</small></div><span style="color:#C2B8AF">›</span></div>';
+      var c = col(f.nombre), tel = telLimpio(f.tel);
+      var sub = [f.contacto, (f.productos || []).slice(0,2).map(function(p){ return p.n; }).join(", ") || f.ciudad].filter(Boolean).join(" · ");
+      h += '<div class="nfi-it" data-a="abrir" data-id="' + f.id + '"><div class="nfi-av" style="background:' + c[0] + ';color:' + c[1] + '">' + esc(String(f.nombre || "?").charAt(0).toUpperCase()) + '</div>' +
+        '<div class="bd"><b>' + esc(f.nombre) + '</b><small>' + esc(sub) + '</small>' + badge(f) + '</div>' +
+        (tel ? '<a class="nfi-wa" href="https://wa.me/' + tel + '" target="_blank" rel="noopener" title="WhatsApp" data-a="ext">' + ic("wa") + '</a>' : "") + '</div>';
     });
     return h;
   }
   function vFicha(){
     var f = DB[V.id]; if (!f || f._b){ V.id = null; return vLista(); }
-    var tel = telLimpio(f.tel), al = aliasPago(f.nombre);
-    var h = '<button class="npl-back" data-a="volver">‹ Proveedores</button>' +
-      '<div class="npl-title"><span style="flex:1">' + esc(f.nombre) + '</span><button class="npl-ic" data-a="ren">✎</button></div>' +
-      '<div class="nfi-acts"><a href="#" class="dark" data-a="retiro">Pedir retiro</a>' +
-      (tel ? '<a class="wa" href="https://wa.me/' + tel + '" target="_blank" rel="noopener">WhatsApp' + (f.contacto ? " · " + esc(f.contacto) : "") + '</a><a href="tel:+' + tel + '">Llamar</a>' : "") +
-      (f.direccion ? '<a href="https://www.google.com/maps/search/' + encodeURIComponent(f.direccion) + '" target="_blank" rel="noopener">Ver en el mapa</a>' : "") +
-      (/^https?:/i.test(f.web || "") ? '<a href="' + esc(f.web) + '" target="_blank" rel="noopener">Web ↗</a>' : "") + '</div>';
-    h += '<div class="nfi-h"><span>Datos</span></div><div class="nfi-sec">';
-    CAMPOS.forEach(function(c){ var v = f[c[0]] || ""; h += '<div class="nfi-f" data-a="campo" data-k="' + c[0] + '"><span>' + c[1] + '</span><span class="v' + (v ? "" : " vacio") + '">' + (v ? esc(v) : "Agregar") + '</span><span class="ed">✎</span></div>'; });
-    (f.extras || []).forEach(function(x, i){ h += '<div class="nfi-f" data-a="extra" data-i="' + i + '"><span>' + esc(x.k) + '</span><span class="v">' + esc(x.v) + '</span><span class="ed">✎</span></div>'; });
-    h += '</div>';
-    if (al) h += '<div class="nfi-note">Alias de pago (de A pagar): <b>' + esc(al) + '</b></div>';
-    h += '<button class="npl-add" data-a="extra-new">+ Agregar otro dato</button>';
+    var tel = telLimpio(f.tel), al = aliasDe(f), c = col(f.nombre);
+    var sub = [f.contacto, f.ciudad].filter(Boolean).join(" · ");
+    var h = '<div class="nfi-hero"><div class="tp"><button data-a="volver">‹ Proveedores</button><button data-a="ren">Editar nombre</button></div>' +
+      '<div class="av" style="background:' + c[0] + ';color:' + c[1] + '">' + esc(String(f.nombre || "?").charAt(0).toUpperCase()) + '</div>' +
+      '<h2>' + esc(f.nombre) + '</h2>' + (sub ? '<p>' + esc(sub) + '</p>' : "") + badge(f) + '</div>' +
+      '<div class="nfi-acts">' +
+      '<a class="wa' + (tel ? "" : " off") + '" href="' + (tel ? "https://wa.me/" + tel : "#") + '" target="_blank" rel="noopener" data-a="ext">' + ic("wa") + 'WhatsApp</a>' +
+      '<a class="' + (tel ? "" : "off") + '" href="' + (tel ? "tel:+" + tel : "#") + '" data-a="ext">' + ic("tel") + 'Llamar</a>' +
+      '<a class="' + (f.direccion ? "" : "off") + '" href="' + (f.direccion ? "https://www.google.com/maps/search/" + encodeURIComponent(f.direccion) : "#") + '" target="_blank" rel="noopener" data-a="ext">' + ic("map") + 'Mapa</a>' +
+      '<a class="' + (al ? "" : "off") + '" href="#" data-a="alias">' + ic("copy") + (al ? "Alias" : "Sin alias") + '</a></div>' +
+      '<div class="nfi-retiro" data-a="retiro">' + ic("truck") + '<div><b>Pedir retiro</b><small>' + esc(f.transporte ? "Arma el mensaje para " + f.transporte : "Arma el mensaje para el transporte") + '</small></div><span class="go">Armar</span></div>';
+    h += '<div class="nfi-lbl"><span>Datos</span></div><div class="nfi-sec">';
+    CAMPOS.forEach(function(k){
+      var v = f[k[0]] || "";
+      h += '<div class="nfi-f" data-a="campo" data-k="' + k[0] + '">' + ic(k[2]) + '<div class="bd"><small>' + k[1] + '</small>' + (v ? esc(v) : '<span class="vacio">Agregar</span>') + '</div></div>';
+    });
+    (f.extras || []).forEach(function(x, i){
+      var ico = /mail/i.test(x.k) ? "mail" : /alias|cuenta|cbu|mp/i.test(x.k) ? "card" : /tel/i.test(x.k) ? "tel" : "tag";
+      h += '<div class="nfi-f" data-a="extra" data-i="' + i + '">' + ic(ico) + '<div class="bd"><small>' + esc(x.k) + '</small>' + esc(x.v) + '</div><button class="cp" data-a="cp" data-i="' + i + '">Copiar</button></div>';
+    });
+    h += '<div class="nfi-f" data-a="extra-new">' + ic("tag") + '<div class="bd vacio">+ Agregar otro dato (CUIT, mail, mínimo de compra…)</div></div></div>';
     var ps = f.productos || [];
-    h += '<div class="nfi-h"><span>Productos que le compramos · ' + ps.length + '</span></div><div class="nfi-sec">';
-    if (!ps.length) h += '<div class="npl-empty">Sin productos cargados.</div>';
-    ps.forEach(function(p, i){ h += '<div class="nfi-pr"><span>' + esc(p.n) + (p.nota ? '<br><small style="color:#7A6D64">' + esc(p.nota) + '</small>' : "") + '</span><button class="npl-ic" data-a="prod-ed" data-i="' + i + '">✎</button><button class="npl-ic del" data-a="prod-del" data-i="' + i + '">🗑</button></div>'; });
-    h += '</div><div class="npl-quick" style="margin-top:0"><input class="npl-in" id="nfiProd" placeholder="+ Agregar producto…" enterkeyhint="done"><button class="npl-btn dark" data-a="prod-new">Agregar</button></div>';
-    h += '<div class="nfi-h"><span>Notas</span></div><textarea class="npl-ta" id="nfiNotas" placeholder="Lo que haya que recordar de este proveedor…">' + esc(f.notas || "") + '</textarea>' +
+    h += '<div class="nfi-lbl"><span>Productos que le compramos · ' + ps.length + '</span></div><div class="nfi-tags">' +
+      ps.map(function(p, i){ return '<button class="nfi-tag" data-a="prod" data-i="' + i + '">' + esc(p.n) + (p.nota ? '<small>' + esc(p.nota.length > 30 ? p.nota.slice(0, 30) + "…" : p.nota) + '</small>' : "") + '</button>'; }).join("") +
+      '<button class="nfi-tag add" data-a="prod-new">+ Producto</button></div>';
+    h += '<div class="nfi-lbl"><span>Notas</span></div><textarea class="npl-ta" id="nfiNotas" placeholder="Lo que haya que recordar de este proveedor…">' + esc(f.notas || "") + '</textarea>' +
       '<div class="npl-foot"><span>' + (f.mod ? "Último cambio: " + esc(f.modPor === "pau" ? "Pau" : f.modPor === "euge" ? "Euge" : (f.modPor || "")) : "") + '</span><button class="npl-btn" style="color:#B4533F" data-a="del">Eliminar ficha</button></div>';
     return h;
   }
   function pintar(){
     if (!ROOT || !ROOT.isConnected) return;
-    if (!LOADED){ ROOT.innerHTML = '<div class="npl-empty">Cargando fichas…</div>'; return; }
     ROOT.innerHTML = V.id ? vFicha() : vLista();
   }
 
+  /* ---------- acciones ---------- */
   function onClick(e){
     var el = e.target.closest("[data-a]"); if (!el || !ROOT.contains(el)) return;
     var a = el.dataset.a, f = V.id ? DB[V.id] : null, i = +el.dataset.i;
+    if (a === "ext"){ e.stopPropagation(); return; }
+    if (el.tagName === "A") e.preventDefault();
     switch (a){
       case "abrir": V.id = el.dataset.id; pintar(); window.scrollTo(0,0); break;
       case "volver": V.id = null; pintar(); window.scrollTo(0,0); break;
-      case "retiro": e.preventDefault(); retiro(f); break;
-      case "nuevo": { var n = pedir("Nombre del proveedor"); if (!n) return; var o = { id: uid("f"), nombre: n, productos: [], extras: [], notas: "" }; guardar(o).then(pintar); V.id = o.id; pintar(); break; }
+      case "retiro": retiro(f); break;
+      case "alias": { var al = aliasDe(f); if (al) copiar(al, "Alias copiado: " + al); break; }
+      case "cp": e.stopPropagation(); copiar(f.extras[i].v); break;
+      case "nuevo": { var n = pedir("Nombre del proveedor"); if (!n) return; var o = { id: uid("f"), nombre: n, productos: [], extras: [], notas: "" }; guardar(o).then(pintar); V.id = o.id; pintar(); window.scrollTo(0,0); break; }
       case "ren": { var n2 = pedir("Nombre del proveedor", f.nombre); if (!n2) return; f.nombre = n2; guardar(f).then(pintar); pintar(); break; }
       case "campo": { var k = el.dataset.k, lab = (CAMPOS.find(function(c){ return c[0] === k; }) || [k, k])[1]; var v = pedir(lab, f[k]); if (v == null) return; f[k] = v; guardar(f).then(pintar); pintar(); break; }
       case "extra": { var x = f.extras[i]; var v2 = pedir(x.k + " (dejalo vacío para sacarlo)", x.v); if (v2 == null) return; if (!v2){ if (!confirm("¿Sacar el dato “" + x.k + "”?")) return; f.extras.splice(i, 1); } else x.v = v2; guardar(f).then(pintar); pintar(); break; }
-      case "extra-new": { var k2 = pedir("Nombre del dato (ej: CUIT, Mail, Mínimo de compra)"); if (!k2) return; var v3 = pedir(k2); if (v3 == null) return; f.extras = (f.extras || []).concat([{ k: k2, v: v3 }]); guardar(f).then(pintar); pintar(); break; }
-      case "prod-new": { var inp = document.getElementById("nfiProd"), t = inp && inp.value.trim(); if (!t) return; f.productos = (f.productos || []).concat([{ n: t }]); guardar(f, true).then(pintar); pintar(); var n3 = document.getElementById("nfiProd"); if (n3) n3.focus(); break; }
-      case "prod-ed": { var p = f.productos[i]; var t2 = pedir("Producto", p.n); if (!t2) return; var nt = pedir("Nota (precio, medida, color… opcional)", p.nota || ""); p.n = t2; if (nt != null) p.nota = nt; guardar(f).then(pintar); pintar(); break; }
-      case "prod-del": { if (!confirm("¿Sacar “" + f.productos[i].n + "” de la lista?")) return; f.productos.splice(i, 1); guardar(f).then(pintar); pintar(); break; }
+      case "extra-new": { var k2 = pedir("Nombre del dato (ej: CUIT, Mail, Alias, Mínimo de compra)"); if (!k2) return; var v3 = pedir(k2); if (v3 == null) return; f.extras = (f.extras || []).concat([{ k: k2, v: v3 }]); guardar(f).then(pintar); pintar(); break; }
+      case "prod-new": { var t = pedir("Producto que le compramos"); if (!t) return; f.productos = (f.productos || []).concat([{ n: t }]); guardar(f).then(pintar); pintar(); break; }
+      case "prod": {
+        var p = f.productos[i];
+        hoja('<h5 class="nfi-sh-t">' + esc(p.n) + '</h5>' + (p.nota ? '<p style="margin:-6px 0 10px;color:#7A6D64;font-size:13.5px">' + esc(p.nota) + '</p>' : "") +
+          '<button class="it" data-x="ed"><i>✎</i>Editar nombre o nota</button><button class="it del" data-x="del"><i>🗑</i>Sacar de la lista</button>',
+          function(hj, cerrar){ hj.onclick = function(ev){ var b = ev.target.closest("button.it"); if (!b) return; cerrar();
+            if (b.dataset.x === "ed"){ var t2 = pedir("Producto", p.n); if (!t2) return; var nt = pedir("Nota (precio, medida, color… opcional)", p.nota || ""); p.n = t2; if (nt != null) p.nota = nt; guardar(f).then(pintar); pintar(); }
+            else { if (!confirm("¿Sacar “" + p.n + "” de la lista?")) return; f.productos.splice(i, 1); guardar(f).then(pintar); pintar(); } }; });
+        break;
+      }
       case "del": { if (!confirm("¿Eliminar la ficha de " + f.nombre + "?")) return; f._b = 1; V.id = null;
         sb().from("registros").update({ borrado: true, actualizado: new Date().toISOString(), por: soy() || "nervo" }).eq("tabla", TABLA).eq("id", f.id).then(function(){ toast("Eliminada"); pintar(); }); pintar(); break; }
     }
   }
-  function onKey(e){ if (e.key === "Enter" && e.target.id === "nfiProd" && !e.isComposing){ e.preventDefault(); onClick({ target: ROOT.querySelector('[data-a="prod-new"]') }); } }
   function onInput(e){ if (e.target.id === "nfiQ"){ V.q = e.target.value; var pos = e.target.selectionStart; pintar(); var q = document.getElementById("nfiQ"); if (q){ q.focus(); try { q.setSelectionRange(pos, pos); } catch(x){} } } }
   function onBlur(e){ if (e.target.id === "nfiNotas" && V.id){ var f = DB[V.id]; if (f && (f.notas || "") !== e.target.value){ f.notas = e.target.value; guardar(f); } } }
 
@@ -725,7 +826,7 @@
       document.body.classList.add("nfi-on");
       if (!ROOT || !ROOT.isConnected){
         ROOT = document.createElement("div"); ROOT.id = "nfiRoot"; list0.parentNode.insertBefore(ROOT, list0.nextSibling);
-        ROOT.addEventListener("click", onClick); ROOT.addEventListener("keydown", onKey); ROOT.addEventListener("input", onInput); ROOT.addEventListener("focusout", onBlur);
+        ROOT.addEventListener("click", onClick); ROOT.addEventListener("input", onInput); ROOT.addEventListener("focusout", onBlur);
         pintar();
       }
       if (!LOADED) leer();
@@ -735,5 +836,5 @@
   }
   window.__nvFichasAbrir = function(){ V.vista = "fichas"; V.id = null; try { localStorage.setItem(LSV, "fichas"); } catch(x){} if (N().setTab) N().setTab("provcat"); setTimeout(montar, 50); window.scrollTo(0,0); };
   setInterval(montar, 600); setTimeout(montar, 250);
-  setInterval(function(){ if (V.vista === "fichas" && ROOT && ROOT.isConnected && !document.hidden) leer(); }, 30000);
+  setInterval(function(){ if (V.vista === "fichas" && ROOT && ROOT.isConnected && !document.hidden){ if (!V.id) pintar(); leer(); } }, 60000);
 })();
