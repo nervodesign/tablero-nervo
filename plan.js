@@ -1333,7 +1333,7 @@
       var tp = (ST().tejedoras || []).find(function(t){ return t.id === b.tej; }); if (!tp) return Promise.resolve("No encontré a esa persona en Equipo 🙈");
       tp.pagos = arr(tp.pagos).concat([{ monto: b.monto, fecha: hoyISO(), nota: b.nota || "desde Luci", por: soy() }]);
       var cgs = arr(tp.cargos).reduce(function(a, c){ return a + (+c.monto || 0); }, 0), pgs = arr(tp.pagos).reduce(function(a, c){ return a + (+c.monto || 0); }, 0);
-      return guardarFila("tejedoras", tp).then(function(){ return "Listo ✓ Cargué " + plata(b.monto) + " a " + tp.nombre + ". " + (cgs - pgs > 0 ? "Todavía se le deben " + plata(cgs - pgs) + "." : "Quedó al día ✓"); });
+      return guardarFila("tejedoras", tp).then(function(){ return "Listo ✓ Cargué " + plata(b.monto) + " a " + tp.nombre + ". " + (cgs - pgs > 0 ? "Todavía se le deben " + plata(cgs - pgs) + "." : cgs - pgs < 0 ? "Ojo: quedó un saldo a favor de ustedes de " + plata(pgs - cgs) + " 💚 (le pagaron de más)." : "Quedó al día ✓"); });
     }
     if (acc.cmd === "pago"){
       var pv = provs().find(function(p){ return p.id === b.pv; }), d = pv && pedidosDe(pv).find(function(x){ return x.id === b.d; });
@@ -1369,7 +1369,7 @@
     if (t){
       var en = arr(t.encargos).filter(function(e){ return e.estado !== "listo"; });
       var cg = arr(t.cargos).reduce(function(a, c){ return a + (+c.monto || 0); }, 0), pg = arr(t.pagos).reduce(function(a, c){ return a + (+c.monto || 0); }, 0);
-      return luci("🧶 " + t.nombre + "\n" + (en.length ? en.map(function(e){ var r = arr(e.retiros).reduce(function(a, x){ return a + (+x.cant || 0); }, 0); return "• " + e.que + ": " + r + " de " + e.cant + " entregadas"; }).join("\n") : "No tiene encargos abiertos.") + "\n" + (cg - pg > 0 ? "Le deben " + plata(cg - pg) + "." : "Está al día con los pagos ✓"));
+      return luci("🧶 " + t.nombre + "\n" + (en.length ? en.map(function(e){ var r = arr(e.retiros).reduce(function(a, x){ return a + (+x.cant || 0); }, 0); return "• " + e.que + ": " + r + " de " + e.cant + " entregadas"; }).join("\n") : "No tiene encargos abiertos.") + "\n" + (cg - pg > 0 ? "Le deben " + plata(cg - pg) + "." : cg - pg < 0 ? "Tienen saldo a favor: " + plata(pg - cg) + " 💚" : "Está al día con los pagos ✓"));
     }
     var ss = stockPor(q);
     if (ss.length) return luci("🔎 " + q + "\n" + ss.map(function(s){ return "• " + s.producto + ": " + (+s.cantidad || 0) + ((s.tipo || "") === "armazon" ? " (armazón)" : ""); }).join("\n"));
@@ -1397,7 +1397,7 @@
       var tq = !pv && (prov === "pague" || prov === "pago") ? (qn.tj || tejPor(pp[0] || "")) : null;
       if (tq){
         var mt = plataN2(resto); if (!mt) return luci("¿De cuánto fue? Ej: /" + m[1] + " " + pp[0] + " $30.000");
-        var nt = resto.replace(/\$?\s*\d[\d.,]*\s*(mil|k)?/gi, " ").replace(/\b(a|al|de|pesos)\b/gi, " ").replace(/\s+/g, " ").trim();
+        var nt = resto.replace(/\$?\s*\d[\d.,]*\s*(mil|k)?/gi, " ").replace(/\b(a|al|de|pesos|porfa|por favor|carg[aá]lo|cargalo)\b/gi, " ").replace(/c[aá]rgalo/gi, " ").replace(/\s+/g, " ").trim();
         return luci("Voy a cargar un pago de " + plata(mt) + " a " + tq.nombre + " en Equipo" + (nt ? " (" + nt + ")" : "") + ".\n¿Lo cargo?", { tipo: "cmd", cmd: "pagotej", b: { tej: tq.id, monto: mt, nota: nt } });
       }
       if (!pv) return luci("¿De qué proveedor? No encontré «" + (pp[0] || "") + "» 🙈");
@@ -1419,6 +1419,7 @@
     var cmdT = t.charAt(0) === "/" ? t : (/^(pagu[eé]|pago|pagamos|se[ñn]a|lleg[oó]|retiro|entra|sale|ver|pedido|llev[eé]|ayuda|agreg\S*|carg\S*|anot\S*)(?=\s|$)/i.test(t) ? "/" + t : (tejPor(t.split(/\s+/)[0]) && /\d/.test(t) ? "/" + t : ""));
     lcEnviar(t, soy() || "euge").then(function(){
       if (cmdT){ t = cmdT; }
+      else { var qq = quien(t); if (qq.pv || qq.tj){ LC.tip = true; lcPintar(); setTimeout(function(){ LC.tip = false; ver(qq.w); }, 450); return; } if (/\?\s*$/.test(t)){ setTimeout(function(){ luci("Mmm, esa no la sé todavía 🙈 Probá /ayuda y te muestro lo que sé hacer."); }, 450); return; } }
       if (t.charAt(0) === "/") { LC.tip = true; lcPintar(); setTimeout(function(){ LC.tip = false; try { procesar(t); } catch(e){ luci("Uy, algo me salió mal 🙈 Probá de nuevo."); } }, 450); }
     });
   }
