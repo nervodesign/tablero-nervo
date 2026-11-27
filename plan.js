@@ -580,6 +580,7 @@
     ".nfi-card small{color:#7A6D64;font-size:12.5px;display:block;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
     ".nfi-acts{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}",
     ".nfi-acts a{display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:13.5px;padding:8px 13px;border-radius:999px;border:1px solid #EFEBE7;color:#2B211B;background:#fff}",
+    ".nfi-acts a.dark{background:#2B211B;border-color:#2B211B;color:#fff}",
     ".nfi-acts a.wa{background:#EBF1E6;border-color:#EBF1E6;color:#3F5E31}",
     ".nfi-sec{background:#fff;border:1px solid #EFEBE7;border-radius:16px;padding:4px 16px;margin-bottom:12px}",
     ".nfi-f{display:grid;grid-template-columns:120px 1fr auto;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid #F2EEEA;font-size:14.5px;cursor:pointer}",
@@ -603,6 +604,46 @@
     return m && m.alias ? m.alias : "";
   }
 
+  /* ---------- pedir retiro (texto para copiar) ---------- */
+  var DEST = ["Datos del destinatario:", "Nervo Design", "Dirección: La Pampa 1895, Córdoba Capital, CP 5000.", "Teléfono: 3512124025", "Email: nervodesigncba@gmail.com"];
+  function extraDe(f, re){ var x = (f.extras || []).find(function(e){ return re.test(e.k || ""); }); return x ? x.v : ""; }
+  function punto(s){ s = String(s || "").trim(); return s && !/[.!?]$/.test(s) ? s + "." : s; }
+  function diaTxt(v){ if (!v) return ""; var d = new Date(v + "T12:00:00"); return ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"][d.getDay()] + " " + d.getDate() + "/" + (d.getMonth() + 1); }
+  function textoRetiro(f, dia, bultos){
+    var cu = extraDe(f, /cuit/i), ml = extraDe(f, /^mail/i), L = [];
+    L.push("Solicito el retiro el día " + diaTxt(dia) + " en:", "");
+    L.push(f.nombre + (cu ? " / CUIT/CUIL: " + cu : ""));
+    if (f.direccion) L.push("Dirección: " + punto(f.direccion));
+    if (f.horario) L.push("Horario: " + punto(f.horario));
+    var ct = [f.contacto, f.tel].filter(Boolean).join(" · "); if (ct) L.push("Contacto: " + ct);
+    if (ml) L.push("Email: " + ml);
+    L.push("Cantidad de bultos: " + (bultos || ""), "");
+    return L.concat(DEST).join("\n");
+  }
+  function copiar(t){
+    function viejo(){ var ta = document.createElement("textarea"); ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch(e){} ta.remove(); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).catch(viejo); else viejo();
+    toast("Copiado ✓");
+  }
+  function retiro(f){
+    var d = new Date(); d.setDate(d.getDate() + 1); while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+    var hoy = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    var sh = document.createElement("div"); sh.className = "npl-shade"; sh.id = "nplShade";
+    var hj = document.createElement("div"); hj.className = "npl-sheet"; hj.id = "nplSheet";
+    hj.innerHTML = '<div class="hd"></div><h5 style="font-size:16px;color:#2B211B;font-weight:600">Pedir retiro · ' + esc(f.nombre) + '</h5>' +
+      '<div style="display:flex;gap:10px;margin:8px 0 12px"><label style="flex:1;font-size:12.5px;color:#7A6D64">Día del retiro<input type="date" id="nfiDia" class="npl-in" style="width:100%;margin-top:4px" value="' + hoy + '"></label>' +
+      '<label style="width:110px;font-size:12.5px;color:#7A6D64">Bultos<input type="number" min="1" inputmode="numeric" id="nfiBul" class="npl-in" style="width:100%;margin-top:4px" placeholder="—"></label></div>' +
+      '<pre id="nfiTxt" style="white-space:pre-wrap;background:#F7F5F3;border-radius:14px;padding:12px 14px;font:13.5px/1.5 Outfit,system-ui,sans-serif;margin:0 0 12px;color:#2B211B"></pre>' +
+      '<div style="display:flex;gap:8px"><button class="npl-btn dark" id="nfiCop" style="flex:1;padding:12px;font-size:15px">Copiar</button><button class="npl-btn" id="nfiWa" style="flex:1;padding:12px;font-size:15px">Mandar por WhatsApp</button></div>';
+    document.body.appendChild(sh); document.body.appendChild(hj);
+    function txt(){ return textoRetiro(f, document.getElementById("nfiDia").value, document.getElementById("nfiBul").value.trim()); }
+    function upd(){ document.getElementById("nfiTxt").textContent = txt(); }
+    function cerrar(){ sh.remove(); hj.remove(); }
+    sh.onclick = cerrar; hj.addEventListener("input", upd); upd();
+    document.getElementById("nfiCop").onclick = function(){ copiar(txt()); cerrar(); };
+    document.getElementById("nfiWa").onclick = function(){ window.open("https://wa.me/?text=" + encodeURIComponent(txt()), "_blank"); cerrar(); };
+  }
+
   function vLista(){
     var fs = fichas(), q = V.q.toLowerCase();
     if (q) fs = fs.filter(function(f){ return JSON.stringify(f).toLowerCase().indexOf(q) >= 0; });
@@ -619,7 +660,7 @@
     var tel = telLimpio(f.tel), al = aliasPago(f.nombre);
     var h = '<button class="npl-back" data-a="volver">‹ Proveedores</button>' +
       '<div class="npl-title"><span style="flex:1">' + esc(f.nombre) + '</span><button class="npl-ic" data-a="ren">✎</button></div>' +
-      '<div class="nfi-acts">' +
+      '<div class="nfi-acts"><a href="#" class="dark" data-a="retiro">Pedir retiro</a>' +
       (tel ? '<a class="wa" href="https://wa.me/' + tel + '" target="_blank" rel="noopener">WhatsApp' + (f.contacto ? " · " + esc(f.contacto) : "") + '</a><a href="tel:+' + tel + '">Llamar</a>' : "") +
       (f.direccion ? '<a href="https://www.google.com/maps/search/' + encodeURIComponent(f.direccion) + '" target="_blank" rel="noopener">Ver en el mapa</a>' : "") +
       (/^https?:/i.test(f.web || "") ? '<a href="' + esc(f.web) + '" target="_blank" rel="noopener">Web ↗</a>' : "") + '</div>';
@@ -650,6 +691,7 @@
     switch (a){
       case "abrir": V.id = el.dataset.id; pintar(); window.scrollTo(0,0); break;
       case "volver": V.id = null; pintar(); window.scrollTo(0,0); break;
+      case "retiro": e.preventDefault(); retiro(f); break;
       case "nuevo": { var n = pedir("Nombre del proveedor"); if (!n) return; var o = { id: uid("f"), nombre: n, productos: [], extras: [], notas: "" }; guardar(o).then(pintar); V.id = o.id; pintar(); break; }
       case "ren": { var n2 = pedir("Nombre del proveedor", f.nombre); if (!n2) return; f.nombre = n2; guardar(f).then(pintar); pintar(); break; }
       case "campo": { var k = el.dataset.k, lab = (CAMPOS.find(function(c){ return c[0] === k; }) || [k, k])[1]; var v = pedir(lab, f[k]); if (v == null) return; f[k] = v; guardar(f).then(pintar); pintar(); break; }
