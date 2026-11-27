@@ -872,7 +872,8 @@
   function guardarProv(pv){
     pv.cambiado = Date.now(); pv.por = soy();
     var L = window.__nvLocal;
-    var p = L && L.guardar ? L.guardar(["proveedores", pv]) : Promise.reject(new Error("sin conexión"));
+    var fila = {}; Object.keys(pv).forEach(function(k){ var v = pv[k]; fila[k] = (v && typeof v === "object") ? JSON.stringify(v) : v; });
+    var p = L && L.guardar ? L.guardar(["proveedores", fila]) : Promise.reject(new Error("sin conexión"));
     return Promise.resolve(p).then(function(){ toast("Guardado"); try { N().render && N().render(); } catch(e){} pintar(); }, function(e){ toast("No se pudo guardar: " + (e && e.message || e)); });
   }
   function pedidoNuevo(f){
