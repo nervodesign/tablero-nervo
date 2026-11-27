@@ -242,16 +242,42 @@
     ".npl-sheet button.it:last-child{border:none}.npl-sheet button.it.del{color:#B4533F}",
     ".npl-sheet button.it i{width:22px;text-align:center;font-style:normal;color:#7A6D64}",
     ".npl-toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#2B211B;color:#fff;padding:9px 16px;border-radius:999px;font:14px Outfit,sans-serif;z-index:9700}",
+    ".npl-card{border-radius:8px}.npl-btn{border-radius:8px}#nplSeg button{border-radius:8px}#nplSeg button.on{background:#5A4334}.npl-add{border-radius:8px}",
+    ".npl-ck.on{background:#7E9E6C;border-color:#7E9E6C}.npl-ck.pr{border-color:#C98AA0;background:linear-gradient(90deg,#C98AA0 50%,#fff 50%)}",
+    ".npl-sum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}",
+    ".npl-sum>div{background:#fff;border:1px solid #ECE7E2;border-radius:8px;padding:12px 14px}.npl-sum b{font-size:22px;font-weight:600;display:block;line-height:1.2}.npl-sum small{font-size:12px;color:#7A6D64}",
+    ".npl-topbar{display:flex;justify-content:flex-end;margin:0 0 10px}",
+    ".npl-week{background:#fff;border:1px solid #ECE7E2;border-radius:8px;padding:12px 14px;margin-bottom:16px}",
+    ".npl-wh{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}.npl-wh b{font-size:15px;font-weight:600}.npl-wh small{color:#7A6D64;font-size:12.5px}",
+    ".npl-wr{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #F3EFEB;font-size:14px}",
+    ".npl-wr .tx{flex:1;min-width:0;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+    ".npl-wr .f{font-size:12px;color:#7A6D64;white-space:nowrap}.npl-wr .f.late{color:#B4533F}",
+    ".npl-ptag{font-size:11px;padding:2px 7px;border-radius:4px;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;display:inline-block}",
+    ".npl-st{font-size:11px;padding:2px 7px;border-radius:4px;white-space:nowrap}.st-hacer{background:#F1EDE9;color:#7A6D64}.st-proceso{background:#F3E4EA;color:#8A4F65}.st-lista{background:#E2EBDB;color:#3F5E31}",
+    ".npl-cols{display:grid;grid-template-columns:1fr;gap:18px}",
+    ".npl-colh{display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:6px;margin-bottom:10px}.npl-colh b{flex:1;font-size:13.5px;font-weight:600}.npl-colh span{font-size:12.5px;font-weight:600}.npl-colh .npl-ic{color:inherit;opacity:.65}",
+    ".npl-line{position:relative;padding-left:28px}.npl-line:before{content:'';position:absolute;left:10px;top:10px;bottom:10px;width:2px;background:#ECE7E2}",
+    ".npl-node{position:relative;background:#fff;border:1px solid #ECE7E2;border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer}.npl-node:hover{border-color:#D9D1C9}",
+    ".npl-node .d{position:absolute;left:-27px;top:11px;width:20px;height:20px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #ECE7E2;font-size:9.5px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center}",
+    ".npl-node b{font-size:14px;font-weight:500;display:block;margin-bottom:7px}",
+    ".npl-node .m{display:flex;align-items:center;gap:8px;font-size:11.5px;color:#7A6D64}.npl-node .pg{flex:1;height:5px;border-radius:3px;background:#EEE9E4;overflow:hidden}.npl-node .pg i{display:block;height:100%}",
+    ".npl-node .ord{display:flex;gap:2px;margin-top:6px}",
+    "@media (min-width:900px){#nplRoot{max-width:1200px}.npl-cols{grid-template-columns:repeat(3,minmax(0,1fr))}}",
+    "@media (max-width:640px){.npl-sum{grid-template-columns:repeat(2,minmax(0,1fr))}.npl-wr .npl-ptag,.npl-wr .npl-st{display:none}}",
     "@media (max-width:640px){.npl-title{font-size:20px}.npl-kv{grid-template-columns:80px 1fr}}"
   ].join("");
   var st = document.createElement("style"); st.id = "npl-css"; st.textContent = CSS; document.head.appendChild(st);
 
   /* ---------- helpers de vista ---------- */
   function av(p){ p = p || ""; if (!PEOPLE[p]) return ""; return '<span class="npl-av av-' + p + '" title="' + PEOPLE[p] + '">' + (p === "dos" ? "P+E" : PEOPLE[p][0]) + '</span>'; }
+  var ESTN = { hacer: "Para hacer", proceso: "En proceso", lista: "Completa" };
+  function tEst(t){ return t.estado || (t.hecha ? "lista" : "hacer"); }
+  var ECOL = [["#E2EBDB","#3F5E31","#7E9E6C"],["#F3E4EA","#8A4F65","#C98AA0"],["#ECE4DB","#5A4334","#9C8371"],["#E4ECF5","#46618A","#7F9CC4"],["#ECE7F3","#6A4E86","#A48CC4"]];
+  function etCol(eid){ var i = etapas().findIndex(function(e){ return e.id === eid; }); return ECOL[(i < 0 ? 0 : i) % ECOL.length]; }
   function estado(p){
-    var ts = tareasDe(p.id), h = ts.filter(function(t){ return t.hecha; }).length;
+    var ts = tareasDe(p.id), h = ts.filter(function(t){ return tEst(t) === "lista"; }).length, pr = ts.filter(function(t){ return tEst(t) === "proceso"; }).length;
     if (ts.length && h === ts.length) return { c: "d-ok", t: "SOP listo", h: h, n: ts.length };
-    if (h || (p.sop && (p.sop.pasos || p.sop.quien))) return { c: "d-arm", t: "En armado", h: h, n: ts.length };
+    if (h || pr || (p.sop && (p.sop.pasos || p.sop.quien))) return { c: "d-arm", t: "En armado", h: h, n: ts.length };
     return { c: "d-no", t: "Sin empezar", h: h, n: ts.length };
   }
   function fechaTxt(f){ if (!f) return ""; var p = f.split("-"); return p.length === 3 ? (+p[2]) + "/" + (+p[1]) : f; }
@@ -267,33 +293,47 @@
   /* ---------- pantallas ---------- */
   function vGeneral(){
     var todas = list("tarea").filter(function(t){ var p = DB[t.paso]; return p && !p._b; });
-    var hechas = todas.filter(function(t){ return t.hecha; }).length;
+    var hechas = todas.filter(function(t){ return tEst(t) === "lista"; }).length, proc = todas.filter(function(t){ return tEst(t) === "proceso"; }).length;
     var pct = todas.length ? Math.round(hechas * 100 / todas.length) : 0;
-    var h = '<div class="npl-card npl-prog"><div class="npl-ring" style="background:conic-gradient(#5A4334 0 ' + pct + '%,#EFEBE7 0)"><i>' + pct + '%</i></div>' +
-      '<div><b>' + hechas + ' de ' + todas.length + ' tareas listas</b><small>Meta: 31 de diciembre</small></div>' +
-      '<div class="npl-tools"><button class="npl-btn' + (V.ordenar ? " on" : "") + '" data-a="ordenar">' + (V.ordenar ? "Listo" : "Ordenar") + '</button></div></div>';
-    var es = etapas();
-    es.forEach(function(e, i){
-      var ps = pasosDe(e.id);
-      h += '<div class="npl-eh"><b>' + esc(e.nombre) + '</b><small>' + ps.length + ' pasos</small>' +
-        (V.ordenar ? '<button class="npl-ic" data-a="e-up" data-id="' + e.id + '"' + (i ? "" : " disabled") + '>↑</button><button class="npl-ic" data-a="e-down" data-id="' + e.id + '">↓</button><button class="npl-ic del" data-a="e-del" data-id="' + e.id + '">🗑</button>' : "") +
-        '<button class="npl-ic" data-a="e-ren" data-id="' + e.id + '" title="Cambiar nombre">✎</button></div>';
-      ps.forEach(function(p, j){
-        var s = estado(p), pct2 = s.n ? Math.round(s.h * 100 / s.n) : 0;
-        h += '<div class="npl-card npl-paso" data-a="' + (V.ordenar ? "" : "abrir") + '" data-id="' + p.id + '"><div class="bd"><div class="n">' + esc(p.nombre) + '</div>' +
-          '<div class="m"><span class="npl-dot ' + s.c + '"></span>' + s.t + ' · ' + s.h + '/' + s.n + '</div><div class="npl-bar"><i style="width:' + pct2 + '%"></i></div></div>' +
-          (V.ordenar ? '<button class="npl-ic" data-a="p-up" data-id="' + p.id + '">↑</button><button class="npl-ic" data-a="p-down" data-id="' + p.id + '">↓</button><button class="npl-ic" data-a="p-mover" data-id="' + p.id + '" title="Mover de etapa">⇄</button><button class="npl-ic del" data-a="p-del" data-id="' + p.id + '">🗑</button>' : av(p.resp)) + '</div>';
-      });
-      h += '<button class="npl-add" data-a="p-new" data-id="' + e.id + '">+ Paso en ' + esc(e.nombre) + '</button>';
+    var sops = list("paso").filter(function(p){ return estado(p).c === "d-ok"; }).length;
+    var h0 = new Date(); h0.setHours(0,0,0,0); var fin = new Date(h0.getFullYear(), 11, 31), dias = Math.max(0, Math.round((fin - h0) / 864e5));
+    var h = '<div class="npl-sum"><div><b>' + pct + '%</b><small>' + hechas + ' de ' + todas.length + ' tareas listas</small></div><div><b>' + dias + ' días</b><small>para el 31/12</small></div><div><b>' + sops + '</b><small>SOPs terminados</small></div><div><b>' + proc + '</b><small>tareas en proceso</small></div></div>';
+    var lim = new Date(h0.getTime() + 7 * 864e5);
+    var sem = todas.filter(function(t){ var e = tEst(t); return e !== "lista" && ((t.fecha && new Date(t.fecha + "T00:00:00") <= lim) || e === "proceso"); })
+      .sort(function(a, b){ return String(a.fecha || "9999").localeCompare(String(b.fecha || "9999")); });
+    h += '<div class="npl-week"><div class="npl-wh"><b>Esta semana</b><small>' + (sem.length ? sem.length + (sem.length === 1 ? " tarea" : " tareas") : "") + '</small></div>';
+    if (!sem.length) h += '<div class="npl-empty" style="padding:6px 0 2px">No hay tareas para esta semana. Poneles fecha o pasalas a "En proceso" y aparecen acá.</div>';
+    sem.slice(0, 10).forEach(function(t){
+      var e = tEst(t), p = DB[t.paso] || {}, c = etCol(p.etapa), late = t.fecha && vencida(t.fecha);
+      h += '<div class="npl-wr"><button class="npl-ck' + (e === "proceso" ? " pr" : "") + '" data-a="t-ck" data-id="' + t.id + '"></button><span class="tx" data-a="t-abrir" data-id="' + t.id + '">' + esc(t.texto) + '</span>' +
+        '<span class="npl-ptag" style="background:' + c[0] + ';color:' + c[1] + '">' + esc(p.nombre || "") + '</span><span class="npl-st st-' + e + '">' + ESTN[e] + '</span>' + av(t.resp) +
+        '<span class="f' + (late ? " late" : "") + '">' + (t.fecha ? fechaTxt(t.fecha) : "") + '</span></div>';
     });
-    h += '<button class="npl-add" style="margin-top:22px" data-a="e-new">+ Nueva etapa</button>';
+    h += '</div><div class="npl-topbar"><button class="npl-btn' + (V.ordenar ? " on" : "") + '" data-a="ordenar">' + (V.ordenar ? "Listo" : "Ordenar etapas y pasos") + '</button></div><div class="npl-cols">';
+    var num = 0;
+    etapas().forEach(function(e, i){
+      var ps = pasosDe(e.id), c = etCol(e.id), ok = ps.filter(function(p){ return estado(p).c === "d-ok"; }).length;
+      h += '<div><div class="npl-colh" style="background:' + c[0] + ';color:' + c[1] + '"><b>' + esc(e.nombre) + '</b><span>' + ok + '/' + ps.length + '</span>' +
+        (V.ordenar ? '<button class="npl-ic" data-a="e-up" data-id="' + e.id + '">←</button><button class="npl-ic" data-a="e-down" data-id="' + e.id + '">→</button><button class="npl-ic del" data-a="e-del" data-id="' + e.id + '">🗑</button>' : "") +
+        '<button class="npl-ic" data-a="e-ren" data-id="' + e.id + '" title="Cambiar nombre">✎</button></div><div class="npl-line">';
+      ps.forEach(function(p){
+        num++; var s = estado(p), pc = s.n ? Math.round(s.h * 100 / s.n) : 0;
+        var dc = s.c === "d-no" ? "#D8D1CB" : c[2];
+        h += '<div class="npl-node" data-a="' + (V.ordenar ? "" : "abrir") + '" data-id="' + p.id + '"><span class="d" style="background:' + dc + '">' + (s.c === "d-ok" ? "✓" : num) + '</span><b>' + esc(p.nombre) + '</b>' +
+          '<div class="m"><div class="pg"><i style="width:' + pc + '%;background:' + c[2] + '"></i></div>' + s.h + '/' + s.n + av(p.resp) + '</div>' +
+          (V.ordenar ? '<div class="ord"><button class="npl-ic" data-a="p-up" data-id="' + p.id + '">↑</button><button class="npl-ic" data-a="p-down" data-id="' + p.id + '">↓</button><button class="npl-ic" data-a="p-mover" data-id="' + p.id + '" title="Mover de etapa">⇄</button><button class="npl-ic del" data-a="p-del" data-id="' + p.id + '">🗑</button></div>' : "") + '</div>';
+      });
+      h += '</div><button class="npl-add" data-a="p-new" data-id="' + e.id + '">+ Paso</button></div>';
+    });
+    h += '</div><button class="npl-add" style="margin-top:22px" data-a="e-new">+ Nueva etapa</button>';
     return h;
   }
 
   function vPaso(){
     var p = DB[V.paso]; if (!p || p._b){ V.paso = null; return vGeneral(); }
     var ts = tareasDe(p.id), s = estado(p);
-    var h = '<button class="npl-back" data-a="volver">‹ Plan</button>' +
+    var ec = etCol(p.etapa), et = DB[p.etapa] || {};
+    var h = '<button class="npl-back" data-a="volver">‹ Plan</button>' + (et.nombre ? '<div><span class="npl-ptag" style="background:' + ec[0] + ';color:' + ec[1] + '">' + esc(et.nombre) + '</span></div>' : "") +
       '<div class="npl-title"><span style="flex:1">' + esc(p.nombre) + '</span><button class="npl-ic" data-a="p-ren" data-id="' + p.id + '">✎</button></div>' +
       '<p class="npl-obj" data-a="p-obj" data-id="' + p.id + '" style="cursor:pointer">' + (p.obj ? esc(p.obj) : '<span style="color:#A79B92">+ Agregar objetivo</span>') + '</p>' +
       '<div class="npl-row"><span class="npl-dot ' + s.c + '"></span><span style="font-size:13px;color:#7A6D64">' + s.t + '</span><span style="flex:1"></span>' +
@@ -303,10 +343,11 @@
       if (!ts.length) h += '<div class="npl-empty">Todavía no hay tareas. Escribí la primera abajo.</div>';
       ts.forEach(function(t){
         var nc = (t.coms || []).length;
-        h += '<div class="npl-t' + (t.hecha ? " done" : "") + '"><button class="npl-ck' + (t.hecha ? " on" : "") + '" data-a="t-ck" data-id="' + t.id + '" aria-label="Lista"></button>' +
+        var te = tEst(t);
+        h += '<div class="npl-t' + (te === "lista" ? " done" : "") + '"><button class="npl-ck' + (te === "lista" ? " on" : te === "proceso" ? " pr" : "") + '" data-a="t-ck" data-id="' + t.id + '" aria-label="Estado"></button>' +
           '<div class="tx" data-a="t-abrir" data-id="' + t.id + '"><span>' + esc(t.texto) + '</span>' +
           (t.link === "fichas" ? '<div class="npl-tm"><a href="#" data-a="ir-fichas" style="color:#46618A;text-decoration:none;font-weight:500">Abrir fichas de proveedores →</a></div>' : "") +
-          ((t.resp || t.fecha || nc) ? '<div class="npl-tm">' + av(t.resp) + (t.fecha ? '<span class="' + (!t.hecha && vencida(t.fecha) ? "late" : "") + '">' + (t.hecha ? "" : "vence ") + fechaTxt(t.fecha) + '</span>' : "") + (nc ? '<span>💬 ' + nc + '</span>' : "") + '</div>' : "") +
+          ((t.resp || t.fecha || nc || te === "proceso") ? '<div class="npl-tm">' + (te === "proceso" ? '<span class="npl-st st-proceso">En proceso</span>' : "") + av(t.resp) + (t.fecha ? '<span class="' + (!t.hecha && vencida(t.fecha) ? "late" : "") + '">' + (t.hecha ? "" : "vence ") + fechaTxt(t.fecha) + '</span>' : "") + (nc ? '<span>💬 ' + nc + '</span>' : "") + '</div>' : "") +
           '</div><button class="npl-ic" data-a="t-menu" data-id="' + t.id + '">⋯</button></div>';
       });
       h += '<div class="npl-quick"><input class="npl-in" id="nplNew" placeholder="+ Escribí una tarea nueva…" enterkeyhint="done"><button class="npl-btn dark" data-a="t-new">Agregar</button></div>';
@@ -350,7 +391,7 @@
       (t.link === "fichas" ? '<div class="npl-note" style="margin:0 0 6px"><a href="#" data-a="ir-fichas" style="color:#46618A;font-weight:500">Abrir fichas de proveedores →</a></div>' : "") +
       '<div class="npl-fld"><span>Responsable</span><span>' + personaSel("npl-tresp", t.resp || "", 'data-id="' + t.id + '"') + '</span></div>' +
       '<div class="npl-fld"><span>Fecha</span><span><input type="date" class="npl-sel npl-tfecha" data-id="' + t.id + '" value="' + esc(t.fecha || "") + '"></span></div>' +
-      '<div class="npl-fld"><span>Estado</span><span><button class="npl-btn' + (t.hecha ? " on" : "") + '" data-a="t-ck" data-id="' + t.id + '">' + (t.hecha ? "✓ Lista" : "Pendiente · marcar lista") + '</button></span></div>' +
+      '<div class="npl-fld"><span>Estado</span><span style="display:flex;gap:6px;flex-wrap:wrap">' + ["hacer","proceso","lista"].map(function(k){ return '<button class="npl-btn' + (tEst(t) === k ? " on" : "") + '" data-a="t-est" data-v="' + k + '" data-id="' + t.id + '">' + ESTN[k] + '</button>'; }).join("") + '</span></div>' +
       '<div class="npl-h4">Comentarios</div>';
     var cs = t.coms || [];
     if (!cs.length) h += '<div class="npl-empty">Sin comentarios. Escribí @ para mencionar a Pau o a Euge.</div>';
@@ -464,7 +505,8 @@
       case "p-down": mover(pasosDe(o.etapa), id, 1); break;
       case "p-mover": hoja("Mover “" + o.nombre + "” a…", etapas().filter(function(x){ return x.id !== o.etapa; }).map(function(x){ return { ic: "→", t: x.nombre, fn: function(){ var ps = pasosDe(x.id); o.etapa = x.id; o.orden = (ps.length ? ps[ps.length - 1].orden : 0) + 1; guardar(o).then(pintar); pintar(); } }; })); break;
       case "p-del": if (confirm("¿Eliminar el paso “" + o.nombre + "” y sus tareas?")){ tareasDe(id).forEach(function(t){ borrar(t); }); borrar(o); } break;
-      case "t-ck": o.hecha = !o.hecha; o.hechaAt = o.hecha ? Date.now() : 0; o.hechaPor = o.hecha ? soy() : ""; guardar(o, true).then(pintar); pintar(); break;
+      case "t-ck": { var te0 = tEst(o); setEst(o, te0 === "hacer" ? "proceso" : te0 === "proceso" ? "lista" : "hacer"); break; }
+      case "t-est": setEst(o, el.dataset.v); break;
       case "t-abrir": V.tarea = id; pintar(); window.scrollTo(0,0); break;
       case "t-new": nuevaTarea(); break;
       case "t-ren": { var n6 = pedir("Cambiar texto de la tarea", o.texto); if (!n6) return; o.texto = n6; guardar(o).then(pintar); pintar(); break; }
@@ -502,6 +544,7 @@
       }
     }
   }
+  function setEst(o, e){ o.estado = e; o.hecha = e === "lista"; o.hechaAt = o.hecha ? Date.now() : 0; o.hechaPor = o.hecha ? soy() : ""; guardar(o, true).then(pintar); pintar(); }
   function onChange(e){
     var el = e.target, id = el.dataset.id, o = id && DB[id]; if (!o) return;
     if (el.classList.contains("npl-presp")){ o.resp = el.value; guardar(o).then(pintar); }
@@ -933,4 +976,176 @@
   window.__nvFichasAbrir = function(){ V.vista = "fichas"; V.id = null; try { localStorage.setItem(LSV, "fichas"); } catch(x){} if (N().setTab) N().setTab("provcat"); setTimeout(montar, 50); window.scrollTo(0,0); };
   setInterval(montar, 600); setTimeout(montar, 250);
   setInterval(function(){ if (V.vista === "fichas" && ROOT && ROOT.isConnected && !document.hidden){ if (!V.id) pintar(); leer(); } }, 60000);
+})();
+
+/* ================= Mayoristas → Web mayorista (pedidos, carritos y visitas de nervomayorista.com) ================= */
+(function(){
+  if (window.__nvMayWeb) return; window.__nvMayWeb = 1;
+  var LSV = "nvMayVista";
+  var PED = {}, WEB = {}, LOADED = false, BUSY = false, ROOT = null, SEG = null;
+  var V = { vista: "", sub: "ped", ver: {} };
+  try { V.vista = localStorage.getItem(LSV) || ""; } catch(e){}
+  var EST = { nuevo: ["Nuevo", "#F3E4EA", "#8A4F65"], contactado: ["Contactado", "#E4ECF5", "#46618A"], confirmado: ["Confirmado", "#E2EBDB", "#3F5E31"], enviado: ["Enviado", "#ECE4DB", "#5A4334"], cancelado: ["Cancelado", "#F1EDE9", "#7A6D64"] };
+
+  function N(){ return window.__nv || {}; }
+  function ST(){ return N().S || {}; }
+  function soy(){ return (ST().soy || "").toLowerCase(); }
+  function sb(){ return window.__sb; }
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function toast(m){ var t = document.createElement("div"); t.className = "npl-toast"; t.textContent = m; document.body.appendChild(t); setTimeout(function(){ t.remove(); }, 2000); }
+  function plata(n){ return "$ " + Math.round(Number(n) || 0).toLocaleString("es-AR"); }
+  function hace(ts){ if (!ts) return ""; var m = Math.round((Date.now() - ts) / 60000); if (m < 1) return "recién"; if (m < 60) return "hace " + m + " min"; var h = Math.round(m / 60); if (h < 24) return "hace " + h + " h"; var d = Math.round(h / 24); return d === 1 ? "ayer" : "hace " + d + " días"; }
+  function fecha(ts){ var d = new Date(ts); return d.getDate() + "/" + (d.getMonth() + 1) + " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
+  function waNum(t){ var d = String(t || "").replace(/\D/g, ""); if (!d) return ""; if (d.indexOf("54") === 0) d = d.slice(2); if (d.charAt(0) === "0") d = d.slice(1); if (d.charAt(0) !== "9") d = "9" + d; d = d.replace(/^9(\d{2,4})15/, "9$1"); return "54" + d; }
+  function dominio(r){ try { return r ? new URL(r).hostname.replace(/^www\./, "") : ""; } catch(e){ return ""; } }
+
+  function leer(){
+    if (!sb() || BUSY) return Promise.resolve(); BUSY = true;
+    return Promise.all([
+      sb().from("registros").select("id,data,borrado").eq("tabla", "may_pedidos").limit(2000),
+      sb().from("registros").select("id,data,borrado").eq("tabla", "may_web").order("actualizado", { ascending: false }).limit(1000)
+    ]).then(function(rs){
+      BUSY = false;
+      var p = {}, w = {};
+      (rs[0].data || []).forEach(function(x){ if (!x.borrado){ var o = x.data || {}; o.id = x.id; p[x.id] = o; } });
+      (rs[1].data || []).forEach(function(x){ if (!x.borrado){ var o = x.data || {}; o.id = x.id; w[x.id] = o; } });
+      PED = p; WEB = w; LOADED = true; pintar();
+    }, function(){ BUSY = false; });
+  }
+  function guardar(tabla, o){
+    return sb().from("registros").upsert({ tabla: tabla, id: o.id, data: o, borrado: false, actualizado: new Date().toISOString(), por: soy() || "nervo" }, { onConflict: "tabla,id" })
+      .then(function(r){ if (r.error) toast("No se pudo guardar: " + r.error.message); else toast("Guardado"); });
+  }
+
+  var CSS = [
+    "body.nmw-on #list{display:none!important}",
+    "#nmwSeg{display:flex;gap:6px;margin:4px 0 14px;font-family:Outfit,system-ui,sans-serif}",
+    "#nmwSeg button{border:0;font:inherit;font-size:14px;padding:8px 15px;border-radius:8px;background:#F4F1EE;color:#7A6D64;cursor:pointer}",
+    "#nmwSeg button.on{background:#5A4334;color:#fff}",
+    "#nmwRoot{font-family:Outfit,system-ui,sans-serif;color:#241C17;max-width:1100px;padding-bottom:120px}",
+    "#nmwRoot *{box-sizing:border-box}",
+    ".nmw-sum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}",
+    ".nmw-sum div{background:#fff;border:1px solid #ECE7E2;border-radius:8px;padding:12px 14px;cursor:pointer}",
+    ".nmw-sum div.on{border-color:#5A4334;box-shadow:inset 0 0 0 1px #5A4334}",
+    ".nmw-sum b{font-size:22px;font-weight:600;display:block}.nmw-sum small{font-size:12px;color:#7A6D64}",
+    ".nmw-card{background:#fff;border:1px solid #ECE7E2;border-radius:8px;padding:14px;margin-bottom:10px}",
+    ".nmw-h{display:flex;align-items:flex-start;gap:10px}",
+    ".nmw-h .bd{flex:1;min-width:0}.nmw-h b{font-size:15.5px;font-weight:600;display:block}.nmw-h small{font-size:12.5px;color:#7A6D64;display:block;margin-top:2px;word-break:break-word}",
+    ".nmw-h .tot{font-size:16px;font-weight:600;white-space:nowrap;text-align:right}.nmw-h .tot small{font-weight:400}",
+    ".nmw-items{margin:10px 0 0;padding:10px 0 0;border-top:1px solid #F3EFEB;font-size:13.5px;line-height:1.55;color:#3B2C23}",
+    ".nmw-items div{display:flex;gap:8px}.nmw-items span:first-child{flex:1}.nmw-items span:last-child{color:#7A6D64;white-space:nowrap}",
+    ".nmw-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}",
+    ".nmw-acts a,.nmw-acts button{display:inline-flex;align-items:center;gap:6px;border:1px solid #ECE7E2;background:#fff;border-radius:8px;font:inherit;font-size:13px;padding:7px 12px;color:#241C17;text-decoration:none;cursor:pointer}",
+    ".nmw-acts a.wa{background:#2F6A3A;border-color:#2F6A3A;color:#fff}",
+    ".nmw-acts select{border:1px solid #ECE7E2;border-radius:8px;font:inherit;font-size:13px;padding:7px 10px;background:#fff}",
+    ".nmw-chip{display:inline-block;font-size:11px;padding:2px 8px;border-radius:4px;white-space:nowrap;margin-left:6px;vertical-align:middle}",
+    ".nmw-note{font-size:13px;color:#7A6D64;margin:8px 0 0}",
+    ".nmw-row{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 4px;border-top:1px solid #F3EFEB;font-size:13.5px}",
+    ".nmw-row:first-child{border-top:0}.nmw-row small{color:#7A6D64;font-size:12px}.nmw-row .r{text-align:right}",
+    ".nmw-empty{color:#ABA097;font-size:14px;padding:14px 4px;line-height:1.5}",
+    ".nmw-info{font-size:12.5px;color:#7A6D64;margin:-4px 0 12px;line-height:1.5}",
+    "@media (max-width:640px){.nmw-sum{grid-template-columns:repeat(2,minmax(0,1fr))}}"
+  ].join("");
+  var st = document.createElement("style"); st.id = "nmw-css"; st.textContent = CSS; document.head.appendChild(st);
+
+  function itemsHtml(its){
+    return '<div class="nmw-items">' + (its || []).map(function(it){ return '<div><span>' + esc(it.n) + (it.v && it.v !== "—" ? " · " + esc(it.v) : "") + '</span><span>× ' + (it.q || 0) + (it.p ? " · " + plata(it.p * (it.q || 0)) : "") + '</span></div>'; }).join("") + '</div>';
+  }
+  function abandonados(){
+    var lim = Date.now() - 30 * 60000;
+    return Object.keys(WEB).map(function(k){ return WEB[k]; }).filter(function(w){ return !w.oculto && (w.carrito || []).length && (w.carritoAt || 0) < lim; })
+      .sort(function(a, b){ return (b.carritoAt || 0) - (a.carritoAt || 0); });
+  }
+  function vista(){
+    var peds = Object.keys(PED).map(function(k){ return PED[k]; }).sort(function(a, b){ return (b.fecha || 0) - (a.fecha || 0); });
+    var webs = Object.keys(WEB).map(function(k){ return WEB[k]; }).sort(function(a, b){ return (b.ultima || 0) - (a.ultima || 0); });
+    var ab = abandonados();
+    var sem = Date.now() - 7 * 864e5, vis7 = webs.filter(function(w){ return (w.ultima || 0) > sem; }).length;
+    var mes = new Date(); mes = new Date(mes.getFullYear(), mes.getMonth(), 1).getTime();
+    var pm = peds.filter(function(p){ return (p.fecha || 0) >= mes && p.estado !== "cancelado"; });
+    var nuevos = peds.filter(function(p){ return (p.estado || "nuevo") === "nuevo"; }).length;
+    var h = '<div class="nmw-sum">' +
+      '<div data-a="sub" data-v="ped" class="' + (V.sub === "ped" ? "on" : "") + '"><b>' + pm.length + '</b><small>pedidos este mes · ' + plata(pm.reduce(function(a, p){ return a + (Number(p.total) || 0); }, 0)) + '</small></div>' +
+      '<div data-a="sub" data-v="ped" class=""><b>' + nuevos + '</b><small>pedidos sin responder</small></div>' +
+      '<div data-a="sub" data-v="car" class="' + (V.sub === "car" ? "on" : "") + '"><b>' + ab.length + '</b><small>carritos abandonados</small></div>' +
+      '<div data-a="sub" data-v="vis" class="' + (V.sub === "vis" ? "on" : "") + '"><b>' + vis7 + '</b><small>visitantes en 7 días</small></div></div>';
+    if (!LOADED) return h + '<div class="nmw-empty">Cargando…</div>';
+    if (V.sub === "ped"){
+      if (!peds.length) h += '<div class="nmw-empty">Todavía no entró ningún pedido desde nervomayorista.com. Cuando un mayorista mande el carrito, aparece acá y les avisa en el chat #may.</div>';
+      peds.forEach(function(p){
+        var e = EST[p.estado || "nuevo"] || EST.nuevo, wa = waNum(p.tel);
+        h += '<div class="nmw-card"><div class="nmw-h"><div class="bd"><b>' + esc(p.nombre || "Sin nombre") + '<span class="nmw-chip" style="background:' + e[1] + ';color:' + e[2] + '">' + e[0] + '</span>' + (p.wa ? '<span class="nmw-chip" style="background:#E2EBDB;color:#3F5E31">también por WhatsApp</span>' : "") + '</b>' +
+          '<small>' + fecha(p.fecha) + " · " + [p.tel, p.mail].filter(Boolean).map(esc).join(" · ") + '</small></div><div class="tot">' + plata(p.total) + '<br><small>estimado</small></div></div>' +
+          itemsHtml(p.items) + (p.nota ? '<div class="nmw-note">📝 ' + esc(p.nota) + '</div>' : "") +
+          '<div class="nmw-acts">' + (wa ? '<a class="wa" href="https://wa.me/' + wa + '" target="_blank" rel="noopener">Escribirle por WhatsApp</a>' : "") +
+          (p.mail ? '<a href="mailto:' + esc(p.mail) + '">Mail</a>' : "") +
+          '<select data-a="est" data-id="' + p.id + '">' + Object.keys(EST).map(function(k){ return '<option value="' + k + '"' + ((p.estado || "nuevo") === k ? " selected" : "") + '>' + EST[k][0] + '</option>'; }).join("") + '</select>' +
+          '<button data-a="nota" data-id="' + p.id + '">✎ Nota</button></div></div>';
+      });
+    } else if (V.sub === "car"){
+      h += '<div class="nmw-info">Gente que armó un carrito y no lo mandó (hace más de 30 minutos). Si dejó el nombre o el teléfono en el formulario, aparece acá para escribirle.</div>';
+      if (!ab.length) h += '<div class="nmw-empty">No hay carritos abandonados por ahora.</div>';
+      ab.forEach(function(w){
+        var tot = (w.carrito || []).reduce(function(a, it){ return a + (it.p || 0) * (it.q || 0); }, 0), wa = waNum(w.tel);
+        h += '<div class="nmw-card"><div class="nmw-h"><div class="bd"><b>' + esc(w.nombre || "Visitante sin datos") + '</b><small>' + hace(w.carritoAt) + (w.disp ? " · desde el " + esc(w.disp) : "") + (w.visitas > 1 ? " · entró " + w.visitas + " veces" : "") + ([w.tel, w.mail].filter(Boolean).length ? " · " + [w.tel, w.mail].filter(Boolean).map(esc).join(" · ") : "") + '</small></div>' +
+          '<div class="tot">' + plata(w.total || tot) + '</div></div>' + itemsHtml(w.carrito) +
+          '<div class="nmw-acts">' + (wa ? '<a class="wa" href="https://wa.me/' + wa + '?text=' + encodeURIComponent("Hola " + (String(w.nombre || "").split(" ")[0] || "") + "! Soy de Nervo Design. Vimos que armaste un carrito en el catálogo mayorista, ¿te ayudamos a terminar el pedido?") + '" target="_blank" rel="noopener">Escribirle por WhatsApp</a>' : "") +
+          (w.mail ? '<a href="mailto:' + esc(w.mail) + '">Mail</a>' : "") + '<button data-a="ocultar" data-id="' + w.id + '">Ya lo vimos · sacar</button></div></div>';
+      });
+    } else {
+      h += '<div class="nmw-info">Cada fila es una persona (un celu o una compu) que entró al catálogo. Si no dejó sus datos no sabemos quién es, pero sí si armó carrito o mandó pedido.</div><div class="nmw-card" style="padding:4px 12px">';
+      if (!webs.length) h += '<div class="nmw-empty">Todavía no hay visitas registradas.</div>';
+      webs.slice(0, 80).forEach(function(w){
+        var est = (w.pedidos || []).length ? ["Mandó pedido", "#E2EBDB", "#3F5E31"] : (w.carrito || []).length ? ["Armó carrito", "#F3E4EA", "#8A4F65"] : ["Miró", "#F1EDE9", "#7A6D64"];
+        var de = dominio(w.ref);
+        h += '<div class="nmw-row"><span><b style="font-weight:500">' + esc(w.nombre || "Visitante") + '</b><span class="nmw-chip" style="background:' + est[1] + ';color:' + est[2] + '">' + est[0] + '</span></span><small class="r">' + hace(w.ultima) + '</small>' +
+          '<small>' + (w.visitas || 1) + (w.visitas > 1 ? " visitas" : " visita") + (w.disp ? " · " + esc(w.disp) : "") + (de ? " · vino de " + esc(de) : "") + (w.utm ? " · " + esc(w.utm) : "") + '</small><small class="r">' + (w.primera ? "desde " + new Date(w.primera).toLocaleDateString("es-AR") : "") + '</small></div>';
+      });
+      h += '</div>';
+    }
+    return h;
+  }
+  function pintar(){ if (ROOT && ROOT.isConnected) ROOT.innerHTML = vista(); }
+
+  function onClick(e){
+    var el = e.target.closest("[data-a]"); if (!el || !ROOT.contains(el)) return;
+    var a = el.dataset.a, id = el.dataset.id;
+    if (a === "sub"){ V.sub = el.dataset.v; pintar(); }
+    if (a === "nota"){ var p = PED[id]; var n = window.prompt("Nota del pedido", p.nota || ""); if (n == null) return; p.nota = n.trim(); guardar("may_pedidos", p).then(pintar); }
+    if (a === "ocultar"){ var w = WEB[id]; if (!confirm("¿Sacar este carrito de la lista? (no se borra, solo deja de aparecer)")) return; w.oculto = true; guardar("may_web", w).then(pintar); pintar(); }
+  }
+  function onChange(e){
+    var el = e.target; if (el.dataset.a !== "est") return; var p = PED[el.dataset.id]; if (!p) return;
+    p.estado = el.value; p.estadoPor = soy(); p.estadoAt = Date.now(); guardar("may_pedidos", p).then(pintar);
+  }
+
+  function montar(){
+    var s = ST(), list0 = document.getElementById("list");
+    if (s.tab !== "mayoristas" || !list0){
+      document.body.classList.remove("nmw-on");
+      if (SEG && SEG.parentNode) SEG.remove(); if (ROOT && ROOT.parentNode) ROOT.remove(); return;
+    }
+    if (!SEG || !SEG.isConnected){
+      SEG = document.createElement("div"); SEG.id = "nmwSeg";
+      SEG.innerHTML = '<button data-v="">Clientes y mails</button><button data-v="web">Web mayorista</button>';
+      SEG.addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; V.vista = b.dataset.v; try { localStorage.setItem(LSV, V.vista); } catch(x){} montar(); window.scrollTo(0,0); });
+      list0.parentNode.insertBefore(SEG, list0);
+    }
+    var nb = Object.keys(PED).filter(function(k){ return (PED[k].estado || "nuevo") === "nuevo"; }).length;
+    SEG.children[1].textContent = "Web mayorista" + (nb ? " · " + nb + " nuevo" + (nb > 1 ? "s" : "") : "");
+    [].forEach.call(SEG.children, function(b){ b.classList.toggle("on", (b.dataset.v || "") === (V.vista || "")); });
+    if (V.vista === "web"){
+      document.body.classList.add("nmw-on");
+      if (!ROOT || !ROOT.isConnected){
+        ROOT = document.createElement("div"); ROOT.id = "nmwRoot"; list0.parentNode.insertBefore(ROOT, list0.nextSibling);
+        ROOT.addEventListener("click", onClick); ROOT.addEventListener("change", onChange);
+        pintar(); leer();
+      }
+    } else {
+      document.body.classList.remove("nmw-on"); if (ROOT && ROOT.parentNode) ROOT.remove();
+    }
+  }
+  setInterval(montar, 700); setTimeout(montar, 300);
+  setInterval(function(){ if (!document.hidden && (V.vista === "web" || ST().tab === "mayoristas")) leer(); }, 60000);
+  setTimeout(leer, 4000);
 })();
