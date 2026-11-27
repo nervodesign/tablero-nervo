@@ -1333,7 +1333,7 @@
       var tp = (ST().tejedoras || []).find(function(t){ return t.id === b.tej; }); if (!tp) return Promise.resolve("No encontré a esa persona en Equipo 🙈");
       tp.pagos = arr(tp.pagos).concat([{ monto: b.monto, fecha: hoyISO(), nota: b.nota || "desde Luci", por: soy() }]);
       var cgs = arr(tp.cargos).reduce(function(a, c){ return a + (+c.monto || 0); }, 0), pgs = arr(tp.pagos).reduce(function(a, c){ return a + (+c.monto || 0); }, 0);
-      return guardarFila("tejedoras", tp).then(function(){ return "Listo ✓ Cargué " + plata(b.monto) + " a " + tp.nombre + ". " + (cgs - pgs > 0 ? "Todavía se le deben " + plata(cgs - pgs) + "." : cgs - pgs < 0 ? "Ojo: quedó un saldo a favor de ustedes de " + plata(pgs - cgs) + " 💚 (le pagaron de más)." : "Quedó al día ✓"); });
+      return guardarFila("tejedoras", tp).then(function(){ return "Listo ✓ Cargué " + plata(b.monto) + " a " + tp.nombre + ". " + (cgs - pgs > 0 ? "Te faltó pagar " + plata(cgs - pgs) + "." : cgs - pgs < 0 ? "Tenés un saldo a favor de " + plata(pgs - cgs) + " 💚" : "Quedó al día ✓"); });
     }
     if (acc.cmd === "pago"){
       var pv = provs().find(function(p){ return p.id === b.pv; }), d = pv && pedidosDe(pv).find(function(x){ return x.id === b.d; });
@@ -1342,7 +1342,7 @@
       var sal = Math.max(0, (+d.total || 0) - pagado(d)), tt = tipoDe(pv.proveedor, d), e2 = etapaDe(pv, d);
       if (b.sena && tt === "encargo" && e2 === "cotizado") aplicarEtapa(d, "sena");
       else if ((+d.total || 0) && !sal) aplicarEtapa(d, tt === "encargo" ? (["cotizado","sena"].indexOf(e2) >= 0 ? "listo" : e2) : (e2 === "pedido" ? "pagado" : e2));
-      return guardarProv(pv).then(function(){ return "Listo ✓ Cargué " + plata(b.monto) + " a " + pv.proveedor + ". " + ((+d.total || 0) ? (sal ? "Falta " + plata(sal) + "." : "¡Quedó todo pago! 🎉") : ""); });
+      return guardarProv(pv).then(function(){ return "Listo ✓ Cargué " + plata(b.monto) + " a " + pv.proveedor + ". " + ((+d.total || 0) ? (sal ? "Te faltó pagar " + plata(sal) + "." : pagado(d) > (+d.total || 0) ? "Tenés un saldo a favor de " + plata(pagado(d) - (+d.total || 0)) + " 💚" : "Quedó al día ✓") : ""); });
     }
     if (acc.cmd === "etapa"){
       var pv2 = provs().find(function(p){ return p.id === b.pv; }), d2 = pv2 && pedidosDe(pv2).find(function(x){ return x.id === b.d; });
@@ -1357,20 +1357,70 @@
     }
     return Promise.resolve("No sé hacer eso todavía 🙈");
   }
+  /* ---------- tejedoras: cuenta clara ---------- */
+  function tjHrs(h){ return (+h.horas || 0) * (+h.valor || 0) + (+h.cole || 0); }
+  function tjCuenta(t){
+    var hs = arr(t.horas);
+    var cg = arr(t.cargos).reduce(function(a, c){ return a + (+c.monto || 0); }, 0) + hs.reduce(function(a, h){ return a + tjHrs(h); }, 0);
+    var pg = arr(t.pagos).reduce(function(a, c){ return a + (+c.monto || 0); }, 0) + hs.reduce(function(a, h){ return a + Math.min(tjHrs(h), +h.pagado || 0); }, 0);
+    return Math.round(cg - pg);
+  }
+  function tjSaldo(d){ return d > 0 ? "Te falta pagarle " + plata(d) + "." : d < 0 ? "Te queda un saldo a favor de " + plata(-d) + " 💚" : "Estás al día ✓"; }
+  function tjLimpio(x){ return nrm(x).replace(/^\s+/, ""); }
+  function tjPrecio(t, que){
+    var q = tjLimpio(que), rows = [];
+    try { var pn = (ST().notas || {}).precios; rows = JSON.parse((pn && pn.texto) || "[]"); } catch(e){ rows = []; }
+    var r = (Array.isArray(rows) ? rows : []).filter(function(x){ return x && x.p !== "" && tjLimpio(x.n) === q; })[0];
+    if (r && +r.p) return +r.p;
+    var cs = arr(t.cargos).filter(function(c){ var m = String(c.concepto || "").match(/^(\d+)\s*×\s*(.*?)\s+retiradas$/); return m && tjLimpio(m[2]) === q && +m[1]; });
+    if (cs.length){ var c = cs[cs.length - 1], n = +String(c.concepto).match(/^(\d+)/)[1]; return (+c.monto || 0) / n; }
+    return 0;
+  }
+  function tjPendientes(t){
+    return arr(t.encargos).filter(function(e){ return e.estado !== "listo"; }).map(function(e){
+      var r = arr(e.retiros).reduce(function(a, x){ return a + (+x.cant || 0); }, 0), q = Math.max(0, (+e.cant || 0) - r), p = tjPrecio(t, e.que);
+      return { que: String(e.que || "").replace(/^[•·\s]+/, ""), q: q, p: p, nota: e.nota || "" };
+    }).filter(function(x){ return x.q > 0; });
+  }
+  function fichaTej(t){
+    var L = ["🧶 " + t.nombre], ult = "", items = [];
+    arr(t.encargos).forEach(function(e){ arr(e.retiros).forEach(function(r){ if ((r.fecha || "") > ult){ ult = r.fecha || ""; items = []; } if ((r.fecha || "") === ult) items.push((+r.cant || 0) + " × " + String(e.que || "").replace(/^[•·\s]+/, "")); }); });
+    if (items.length){
+      var mt = arr(t.cargos).filter(function(c){ return (c.fecha || "") === ult; }).reduce(function(a, c){ return a + (+c.monto || 0); }, 0);
+      L.push("Lo último que retiraste (" + fcorta(ult) + "): " + items.join(", ") + (mt ? " · " + plata(mt) : ""));
+    }
+    var ps = arr(t.pagos), up = ps.reduce(function(a, p){ return (p.fecha || "") > a ? (p.fecha || "") : a; }, "");
+    if (ps.length){ var tp = ps.filter(function(p){ return (p.fecha || "") === up; }).reduce(function(a, p){ return a + (+p.monto || 0); }, 0); L.push("Pagaste " + plata(tp) + (up ? " (" + fcorta(up) + ")" : "")); }
+    L.push(tjSaldo(tjCuenta(t)));
+    var pe = tjPendientes(t);
+    if (pe.length){ var n = pe.reduce(function(a, x){ return a + x.q; }, 0), m = pe.reduce(function(a, x){ return a + x.q * x.p; }, 0); L.push("📌 Falta retirar " + n + (n === 1 ? " pieza" : " piezas") + (m ? " · " + plata(m) : "") + ". Preguntame «¿qué tengo que retirar de " + t.nombre + "?» y te detallo."); }
+    return L.join("\n");
+  }
+  function retirarTej(t){
+    var pe = tjPendientes(t);
+    if (!pe.length) return "🧶 " + t.nombre + "\nNo tenés nada para retirar ✓\n" + tjSaldo(tjCuenta(t));
+    var m = pe.reduce(function(a, x){ return a + x.q * x.p; }, 0), sp = pe.some(function(x){ return !x.p; }), d = tjCuenta(t);
+    var L = ["🧶 Para retirar de " + t.nombre + ":"].concat(pe.map(function(x){ return "• " + x.q + " × " + x.que + (x.nota ? " (" + x.nota.toLowerCase() + ")" : "") + (x.p ? " — " + plata(x.q * x.p) : " — sin precio"); }));
+    if (m) L.push("Total: " + plata(m) + (sp ? " (sin contar lo que no tiene precio)" : ""));
+    if (m && d < 0) L.push("Tenés " + plata(-d) + " a favor, así que al retirar pagarías " + plata(Math.max(0, m + d)) + ".");
+    else if (m && d > 0) L.push("Ojo: además le debés " + plata(d) + " de antes → total " + plata(m + d) + ".");
+    return L.join("\n");
+  }
+  function retirarTodas(){
+    var ts = (ST().tejedoras || []).filter(function(t){ return !t.borrado && tjPendientes(t).length; });
+    if (!ts.length) return "No hay nada pendiente para retirar ✓";
+    return ts.map(retirarTej).join("\n\n");
+  }
   function ver(q){
     var pv = provPor(q);
     if (pv){
       var ds = pedidosDe(pv).filter(function(d){ return etapaDe(pv, d) !== "deposito"; });
       var debe = pedidosDe(pv).reduce(function(a, d){ return a + Math.max(0, (+d.total || 0) - pagado(d)); }, 0);
-      return luci("📦 " + pv.proveedor + "\n" + (debe ? "Le deben " + plata(debe) + "." : "No le deben nada ✓") + "\n" +
+      return luci("📦 " + pv.proveedor + "\n" + (debe ? "Te falta pagarle " + plata(debe) + "." : "Estás al día ✓") + "\n" +
         (ds.length ? ds.map(function(d){ return "• " + resumen(d) + " — " + ETQ[etapaDe(pv, d)] + (d.vence ? " · vence " + fcorta(d.vence) : ""); }).join("\n") : "No hay pedidos abiertos."));
     }
     var t = tejPor(q);
-    if (t){
-      var en = arr(t.encargos).filter(function(e){ return e.estado !== "listo"; });
-      var cg = arr(t.cargos).reduce(function(a, c){ return a + (+c.monto || 0); }, 0), pg = arr(t.pagos).reduce(function(a, c){ return a + (+c.monto || 0); }, 0);
-      return luci("🧶 " + t.nombre + "\n" + (en.length ? en.map(function(e){ var r = arr(e.retiros).reduce(function(a, x){ return a + (+x.cant || 0); }, 0); return "• " + e.que + ": " + r + " de " + e.cant + " entregadas"; }).join("\n") : "No tiene encargos abiertos.") + "\n" + (cg - pg > 0 ? "Le deben " + plata(cg - pg) + "." : cg - pg < 0 ? "Tienen saldo a favor: " + plata(pg - cg) + " 💚" : "Está al día con los pagos ✓"));
-    }
+    if (t) return luci(fichaTej(t));
     var ss = stockPor(q);
     if (ss.length) return luci("🔎 " + q + "\n" + ss.map(function(s){ return "• " + s.producto + ": " + (+s.cantidad || 0) + ((s.tipo || "") === "armazon" ? " (armazón)" : ""); }).join("\n"));
     return luci("No encontré nada con «" + q + "» 🙈");
@@ -1419,7 +1469,7 @@
     var cmdT = t.charAt(0) === "/" ? t : (/^(pagu[eé]|pago|pagamos|se[ñn]a|lleg[oó]|retiro|entra|sale|ver|pedido|llev[eé]|ayuda|agreg\S*|carg\S*|anot\S*)(?=\s|$)/i.test(t) ? "/" + t : (tejPor(t.split(/\s+/)[0]) && /\d/.test(t) ? "/" + t : ""));
     lcEnviar(t, soy() || "euge").then(function(){
       if (cmdT){ t = cmdT; }
-      else { var qq = quien(t); if (qq.pv || qq.tj){ LC.tip = true; lcPintar(); setTimeout(function(){ LC.tip = false; ver(qq.w); }, 450); return; } if (/\?\s*$/.test(t)){ setTimeout(function(){ luci("Mmm, esa no la sé todavía 🙈 Probá /ayuda y te muestro lo que sé hacer."); }, 450); return; } }
+      else { var qq = quien(t); if (/retir/i.test(t) && !qq.pv){ LC.tip = true; lcPintar(); setTimeout(function(){ LC.tip = false; luci(qq.tj ? retirarTej(qq.tj) : retirarTodas()); }, 450); return; } if (qq.pv || qq.tj){ LC.tip = true; lcPintar(); setTimeout(function(){ LC.tip = false; ver(qq.w); }, 450); return; } if (/\?\s*$/.test(t)){ setTimeout(function(){ luci("Mmm, esa no la sé todavía 🙈 Probá /ayuda y te muestro lo que sé hacer."); }, 450); return; } }
       if (t.charAt(0) === "/") { LC.tip = true; lcPintar(); setTimeout(function(){ LC.tip = false; try { procesar(t); } catch(e){ luci("Uy, algo me salió mal 🙈 Probá de nuevo."); } }, 450); }
     });
   }
@@ -1568,7 +1618,7 @@
   setInterval(function(){ if (!document.hidden && (LC.open || !LC.sig)) lcLeer(); }, 5000);
   setInterval(function(){ if (!document.hidden && !LC.open) lcLeer(); }, 60000);
   window.__nvLuciChat = lcAbrir;
-  window.__nvLuciCmd = function(t){ procesar(t); return LC.msgs; }; window.__nvLuciAcc = lcAccion;
+  window.__nvLuciCmd = function(t){ procesar(t); return LC.msgs; }; window.__nvLuciAcc = lcAccion; window.__nvLuciVer = { ficha: fichaTej, retirar: retirarTej, todas: retirarTodas, quien: quien };
   function pintar(){
     if (!ROOT || !ROOT.isConnected) return;
     ROOT.innerHTML = V.vista === "luci" ? vLuci() : V.id ? vFicha() : vLista();
