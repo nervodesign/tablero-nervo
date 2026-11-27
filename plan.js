@@ -665,61 +665,74 @@
   /* ---------- estilos ---------- */
   var CSS = [
     "body.nfi-on #list{display:none!important}",
-    "#nfiSeg{display:flex;gap:6px;margin:4px 0 12px;font-family:Outfit,system-ui,sans-serif}",
+    "#nfiSeg{display:flex;gap:6px;margin:4px 0 14px;font-family:Outfit,system-ui,sans-serif}",
     "#nfiSeg button{border:0;font:inherit;font-size:14px;padding:8px 15px;border-radius:999px;background:#F4F1EE;color:#7A6D64;cursor:pointer}",
     "#nfiSeg button.on{background:#2B211B;color:#fff}",
-    "#nfiRoot{font-family:Outfit,system-ui,sans-serif;color:#241C17;max-width:640px;padding-bottom:120px}",
+    "#nfiRoot{font-family:Outfit,system-ui,sans-serif;color:#241C17;max-width:980px;padding-bottom:120px}",
     "#nfiRoot *{box-sizing:border-box}",
     ".nfi-ic{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}",
-    ".nfi-top{display:flex;gap:10px;align-items:center;margin-bottom:6px}",
-    ".nfi-q{flex:1;display:flex;align-items:center;gap:8px;background:#F7F5F3;border-radius:14px;padding:0 12px;color:#ABA097}",
+    ".nfi-top{display:flex;gap:10px;align-items:center;margin-bottom:14px;max-width:640px}",
+    ".nfi-q{flex:1;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #EFEBE7;border-radius:14px;padding:0 12px;color:#ABA097}",
     ".nfi-q input{flex:1;border:0;background:transparent;font:inherit;font-size:15px;padding:12px 0;color:#241C17;outline:none;min-width:0}",
-    ".nfi-plus{width:44px;height:44px;border-radius:14px;background:#241C17;color:#fff;border:0;font-size:22px;cursor:pointer;flex:none}",
-    ".nfi-it{display:flex;gap:13px;padding:14px 4px;border-bottom:1px solid #EFEBE7;align-items:center;cursor:pointer}",
-    ".nfi-it:hover{background:#FCFBFA}",
-    ".nfi-av{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:18px;flex:none}",
+    ".nfi-plus{width:46px;height:46px;border-radius:14px;background:#241C17;color:#fff;border:0;font-size:22px;cursor:pointer;flex:none}",
+    ".nfi-list{display:grid;grid-template-columns:1fr;gap:10px}",
+    ".nfi-it{display:flex;gap:13px;padding:14px;border:1px solid #EFEBE7;border-radius:20px;background:#fff;align-items:center;cursor:pointer;transition:transform .15s,box-shadow .15s}",
+    ".nfi-it:hover{box-shadow:0 8px 22px rgba(36,28,23,.07);transform:translateY(-1px)}",
+    ".nfi-av{width:50px;height:50px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:19px;flex:none}",
     ".nfi-it .bd{flex:1;min-width:0}",
-    ".nfi-it b{font-weight:500;font-size:16px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+    ".nfi-it b{font-weight:600;font-size:16px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
     ".nfi-it small{display:block;color:#7A6D64;font-size:13px;margin:2px 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
     ".nfi-open{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:3px 9px;border-radius:20px;background:#F3EFEB;color:#7A6D64}",
+    ".nfi-open{white-space:nowrap}",
     ".nfi-open i{width:6px;height:6px;border-radius:50%;background:currentColor}",
-    ".nfi-open.on{background:#E9F3EA;color:#3F7A4A}",
-    ".nfi-wa{width:40px;height:40px;border-radius:50%;background:#E9F3EA;color:#3F7A4A;display:flex;align-items:center;justify-content:center;flex:none;text-decoration:none}",
-    ".nfi-hero{background:linear-gradient(160deg,#5A4334,#3B2C23);color:#fff;padding:18px 20px 40px;border-radius:24px;position:relative}",
-    ".nfi-hero .tp{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}",
-    ".nfi-hero .tp button{border:0;background:rgba(255,255,255,.12);color:#fff;font:inherit;font-size:13.5px;padding:7px 12px;border-radius:999px;cursor:pointer}",
-    ".nfi-hero .av{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;margin-bottom:12px}",
-    ".nfi-hero h2{font-size:24px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em}",
-    ".nfi-hero p{margin:0 0 10px;opacity:.78;font-size:14px}",
-    ".nfi-hero .nfi-open{background:rgba(255,255,255,.14);color:#fff}.nfi-hero .nfi-open.on{background:#DDEFD9;color:#2F6A3A}",
-    ".nfi-acts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:-26px 10px 0;position:relative}",
-    ".nfi-acts a{background:#fff;border-radius:16px;box-shadow:0 6px 18px rgba(36,28,23,.10);padding:12px 4px 10px;text-align:center;font-size:12px;color:#7A6D64;display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;cursor:pointer}",
-    ".nfi-acts a .nfi-ic{width:21px;height:21px;color:#5A4334}",
-    ".nfi-acts a.wa .nfi-ic{color:#3F7A4A}",
-    ".nfi-acts a.off{opacity:.4;pointer-events:none}",
-    ".nfi-retiro{display:flex;align-items:center;gap:12px;margin:16px 0 0;padding:14px 16px;border-radius:18px;background:#F7F2EC;cursor:pointer;border:1px solid #EFE4D8}",
-    ".nfi-retiro b{font-size:15px;font-weight:600;display:block}.nfi-retiro small{font-size:12.5px;color:#7A6D64}",
-    ".nfi-retiro .go{margin-left:auto;background:#241C17;color:#fff;border-radius:999px;padding:8px 14px;font-size:13px}",
-    ".nfi-retiro .nfi-ic{width:22px;height:22px;color:#5A4334}",
-    ".nfi-lbl{margin:22px 4px 8px;font-size:12px;letter-spacing:.08em;color:#7A6D64;font-weight:500;text-transform:uppercase;display:flex;align-items:center}",
-    ".nfi-lbl span{flex:1}",
-    ".nfi-sec{border:1px solid #EFEBE7;border-radius:18px;padding:2px 16px;background:#fff}",
-    ".nfi-f{display:flex;gap:13px;align-items:flex-start;padding:12px 0;border-bottom:1px solid #F2EEEA;font-size:14.5px;cursor:pointer}",
+    ".nfi-open.on{background:#E3F0DF;color:#3F7A4A}",
+    ".nfi-wa{width:42px;height:42px;border-radius:50%;background:#E3F0DF;color:#3F7A4A;display:flex;align-items:center;justify-content:center;flex:none;text-decoration:none}",
+    ".nfi-back{border:0;background:transparent;font:inherit;font-size:14px;color:#7A6D64;padding:2px 0 10px;cursor:pointer}",
+    ".nfi-ficha{background:#fff;border-radius:28px;box-shadow:0 14px 40px rgba(36,28,23,.08);border:1px solid #F0EBE6;overflow:hidden}",
+    ".nfi-hero{padding:22px 22px 18px}",
+    ".nfi-hr{display:flex;gap:16px;align-items:center}",
+    ".nfi-hr .av{width:68px;height:68px;border-radius:22px;background:rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;font-size:27px;font-weight:700;flex:none}",
+    ".nfi-hr .nm{flex:1;min-width:0}",
+    ".nfi-name{font-size:25px;font-weight:700;letter-spacing:-.02em;line-height:1.1;margin:0 0 3px}",
+    ".nfi-hr p{margin:0 0 8px;font-size:14px;opacity:.8}",
+    ".nfi-hr .nfi-open{background:rgba(255,255,255,.7);color:inherit}.nfi-hr .nfi-open.on{background:#fff;color:#3F7A4A}",
+    ".nfi-edit{align-self:flex-start;border:0;background:rgba(255,255,255,.6);color:inherit;font:inherit;font-size:13px;padding:7px 12px;border-radius:999px;cursor:pointer}",
+    ".nfi-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}",
+    ".nfi-act{display:inline-flex;align-items:center;gap:8px;background:#fff;border-radius:999px;padding:9px 15px 9px 12px;font-size:14px;font-weight:500;text-decoration:none;color:#241C17;box-shadow:0 2px 8px rgba(36,28,23,.06);cursor:pointer}",
+    ".nfi-act.wa{background:#2F6A3A;color:#fff}",
+    ".nfi-act.off{background:transparent;box-shadow:none;border:1.5px dashed rgba(36,28,23,.18);color:rgba(36,28,23,.4);pointer-events:none}",
+    ".nfi-body{display:grid;grid-template-columns:1fr;gap:18px;padding:18px}",
+    ".nfi-col{min-width:0;display:flex;flex-direction:column;gap:16px}",
+    ".nfi-lbl{margin:0 2px 8px;font-size:12px;letter-spacing:.08em;font-weight:600;text-transform:uppercase}",
+    ".nfi-sec{border:1px solid #EFEBE7;border-radius:20px;padding:4px 14px;background:#fff}",
+    ".nfi-f{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #F4F0EC;font-size:14.5px;cursor:pointer}",
     ".nfi-f:last-child{border-bottom:0}",
-    ".nfi-f .nfi-ic{color:#ABA097;margin-top:1px}",
-    ".nfi-f .bd{flex:1;min-width:0;word-break:break-word;line-height:1.4}",
+    ".nfi-f .ib{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex:none}",
+    ".nfi-f .ib .nfi-ic{width:17px;height:17px}",
+    ".nfi-f .bd{flex:1;min-width:0;word-break:break-word;line-height:1.35}",
     ".nfi-f small{display:block;color:#ABA097;font-size:11.5px;margin-bottom:1px}",
     ".nfi-f .vacio{color:#C9BFB6}",
-    ".nfi-f .cp{border:1px solid #EFEBE7;background:#fff;border-radius:8px;font:inherit;font-size:12px;padding:4px 9px;color:#5A4334;cursor:pointer;flex:none}",
+    ".nfi-f .cp{border:1px solid #EFEBE7;background:#fff;border-radius:9px;font:inherit;font-size:12px;padding:5px 10px;color:#5A4334;cursor:pointer;flex:none}",
+    ".nfi-retiro{display:flex;align-items:center;gap:12px;padding:16px;border-radius:20px;background:#F5DDD3;color:#7A3F2D;cursor:pointer}",
+    ".nfi-retiro .ib{width:42px;height:42px;border-radius:14px;background:rgba(255,255,255,.65);display:flex;align-items:center;justify-content:center;flex:none}",
+    ".nfi-retiro b{font-size:15.5px;font-weight:600;display:block}.nfi-retiro small{font-size:12.5px;opacity:.85}",
+    ".nfi-retiro .go{margin-left:auto;background:#8A4A36;color:#fff;border-radius:999px;padding:9px 15px;font-size:13.5px;font-weight:500;flex:none}",
+    ".nfi-box{border-radius:20px;padding:14px}",
+    ".nfi-prod{background:#EEF3E9;color:#3F5E31}",
     ".nfi-tags{display:flex;flex-wrap:wrap;gap:7px}",
-    ".nfi-tag{border:1px solid #EFEBE7;background:#fff;border-radius:999px;font:inherit;font-size:13.5px;padding:7px 13px;color:#241C17;cursor:pointer;text-align:left}",
+    ".nfi-tag{border:0;background:#fff;border-radius:999px;font:inherit;font-size:13.5px;padding:8px 13px;color:#241C17;cursor:pointer;text-align:left;box-shadow:0 1px 3px rgba(0,0,0,.04)}",
     ".nfi-tag small{color:#7A6D64;font-size:11.5px;margin-left:4px}",
-    ".nfi-tag.add{border-style:dashed;color:#7A6D64}",
+    ".nfi-tag.add{background:transparent;border:1.5px dashed #A9BE9B;color:#3F5E31;box-shadow:none}",
+    ".nfi-notas{background:#FBF3E2;color:#7A5A1E}",
+    ".nfi-notas textarea{width:100%;border:0;background:rgba(255,255,255,.65);border-radius:14px;padding:11px 12px;font:inherit;font-size:14.5px;line-height:1.5;min-height:96px;resize:vertical;color:#241C17;outline:none}",
+    ".nfi-foot{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:#ABA097;gap:10px;padding:0 4px}",
+    ".nfi-foot button{border:0;background:transparent;font:inherit;font-size:13px;color:#B4533F;cursor:pointer;padding:6px 0}",
     ".nfi-sh-t{font-size:17px!important;color:#241C17!important;font-weight:600!important;margin:4px 0 12px!important}",
     ".nfi-sh-row{display:flex;gap:10px;margin:0 0 12px}.nfi-sh-row label{flex:1;font-size:12.5px;color:#7A6D64}.nfi-sh-row .npl-in{width:100%;margin-top:4px}",
     ".nfi-pre{white-space:pre-wrap;background:#F7F5F3;border-radius:14px;padding:12px 14px;font:13.5px/1.5 Outfit,system-ui,sans-serif;margin:0 0 12px;color:#241C17}",
     ".nfi-sh-btns{display:flex;gap:8px}.nfi-sh-btns .npl-btn{flex:1;padding:12px;font-size:15px}",
-    "@media (min-width:700px){.nfi-acts{margin:-26px 24px 0}}"
+    "@media (min-width:760px){.nfi-list{grid-template-columns:repeat(2,minmax(0,1fr))}.nfi-body{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);padding:22px;gap:22px}.nfi-hero{padding:26px 26px 22px}}",
+    "@media (min-width:1300px){#nfiRoot{max-width:1060px}}"
   ].join("");
   var st = document.createElement("style"); st.id = "nfi-css"; st.textContent = CSS; document.head.appendChild(st);
 
@@ -730,6 +743,7 @@
     var h = '<div class="nfi-top"><label class="nfi-q">' + ic("search") + '<input id="nfiQ" placeholder="Buscar proveedor o producto…" value="' + esc(V.q) + '"></label><button class="nfi-plus" data-a="nuevo" title="Nuevo proveedor">+</button></div>';
     if (!LOADED) return h + '<div class="npl-empty">Cargando…</div>';
     if (!fs.length) h += '<div class="npl-empty">' + (q ? "No hay resultados." : "Todavía no hay fichas.") + '</div>';
+    h += '<div class="nfi-list">';
     fs.forEach(function(f){
       var c = col(f.nombre), tel = telLimpio(f.tel);
       var sub = [f.contacto, (f.productos || []).slice(0,2).map(function(p){ return p.n; }).join(", ") || f.ciudad].filter(Boolean).join(" · ");
@@ -737,37 +751,42 @@
         '<div class="bd"><b>' + esc(f.nombre) + '</b><small>' + esc(sub) + '</small>' + badge(f) + '</div>' +
         (tel ? '<a class="nfi-wa" href="https://wa.me/' + tel + '" target="_blank" rel="noopener" title="WhatsApp" data-a="ext">' + ic("wa") + '</a>' : "") + '</div>';
     });
+    h += '</div>';
     return h;
   }
+  var TINT = { user:["#E3EDDC","#3F5E31"], tel:["#E3EDDC","#3F5E31"], map:["#F8E3DA","#8A4A36"], pin:["#F8E3DA","#8A4A36"], clock:["#F7ECD3","#7A5A1E"], truck:["#F7ECD3","#7A5A1E"], globe:["#E4ECF5","#46618A"], card:["#E4ECF5","#46618A"], mail:["#EEE7F4","#6A4E86"], tag:["#F3EFEB","#7A6D64"] };
+  function ib(n){ var t = TINT[n] || TINT.tag; return '<span class="ib" style="background:' + t[0] + ';color:' + t[1] + '">' + ic(n) + '</span>'; }
   function vFicha(){
     var f = DB[V.id]; if (!f || f._b){ V.id = null; return vLista(); }
     var tel = telLimpio(f.tel), al = aliasDe(f), c = col(f.nombre);
     var sub = [f.contacto, f.ciudad].filter(Boolean).join(" · ");
-    var h = '<div class="nfi-hero"><div class="tp"><button data-a="volver">‹ Proveedores</button><button data-a="ren">Editar nombre</button></div>' +
-      '<div class="av" style="background:' + c[0] + ';color:' + c[1] + '">' + esc(String(f.nombre || "?").charAt(0).toUpperCase()) + '</div>' +
-      '<h2>' + esc(f.nombre) + '</h2>' + (sub ? '<p>' + esc(sub) + '</p>' : "") + badge(f) + '</div>' +
+    var h = '<button class="nfi-back" data-a="volver">‹ Todos los proveedores</button><div class="nfi-ficha">' +
+      '<div class="nfi-hero" style="background:' + c[0] + ';color:' + c[1] + '"><div class="nfi-hr">' +
+      '<div class="av">' + esc(String(f.nombre || "?").charAt(0).toUpperCase()) + '</div>' +
+      '<div class="nm"><div class="nfi-name">' + esc(f.nombre) + '</div>' + (sub ? '<p>' + esc(sub) + '</p>' : "") + badge(f) + '</div>' +
+      '<button class="nfi-edit" data-a="ren" title="Cambiar nombre">✎</button></div>' +
       '<div class="nfi-acts">' +
-      '<a class="wa' + (tel ? "" : " off") + '" href="' + (tel ? "https://wa.me/" + tel : "#") + '" target="_blank" rel="noopener" data-a="ext">' + ic("wa") + 'WhatsApp</a>' +
-      '<a class="' + (tel ? "" : "off") + '" href="' + (tel ? "tel:+" + tel : "#") + '" data-a="ext">' + ic("tel") + 'Llamar</a>' +
-      '<a class="' + (f.direccion ? "" : "off") + '" href="' + (f.direccion ? "https://www.google.com/maps/search/" + encodeURIComponent(f.direccion) : "#") + '" target="_blank" rel="noopener" data-a="ext">' + ic("map") + 'Mapa</a>' +
-      '<a class="' + (al ? "" : "off") + '" href="#" data-a="alias">' + ic("copy") + (al ? "Alias" : "Sin alias") + '</a></div>' +
-      '<div class="nfi-retiro" data-a="retiro">' + ic("truck") + '<div><b>Pedir retiro</b><small>' + esc(f.transporte ? "Arma el mensaje para " + f.transporte : "Arma el mensaje para el transporte") + '</small></div><span class="go">Armar</span></div>';
-    h += '<div class="nfi-lbl"><span>Datos</span></div><div class="nfi-sec">';
+      '<a class="nfi-act wa' + (tel ? "" : " off") + '" href="' + (tel ? "https://wa.me/" + tel : "#") + '" target="_blank" rel="noopener" data-a="ext">' + ic("wa") + 'WhatsApp</a>' +
+      '<a class="nfi-act' + (tel ? "" : " off") + '" href="' + (tel ? "tel:+" + tel : "#") + '" data-a="ext">' + ic("tel") + 'Llamar</a>' +
+      '<a class="nfi-act' + (f.direccion ? "" : " off") + '" href="' + (f.direccion ? "https://www.google.com/maps/search/" + encodeURIComponent(f.direccion) : "#") + '" target="_blank" rel="noopener" data-a="ext">' + ic("map") + 'Mapa</a>' +
+      '<a class="nfi-act' + (al ? "" : " off") + '" href="#" data-a="alias">' + ic("copy") + (al ? "Copiar alias" : "Sin alias") + '</a></div></div>';
+    h += '<div class="nfi-body"><div class="nfi-col"><div><div class="nfi-lbl" style="color:#7A6D64">Datos</div><div class="nfi-sec">';
     CAMPOS.forEach(function(k){
       var v = f[k[0]] || "";
-      h += '<div class="nfi-f" data-a="campo" data-k="' + k[0] + '">' + ic(k[2]) + '<div class="bd"><small>' + k[1] + '</small>' + (v ? esc(v) : '<span class="vacio">Agregar</span>') + '</div></div>';
+      h += '<div class="nfi-f" data-a="campo" data-k="' + k[0] + '">' + ib(k[2]) + '<div class="bd"><small>' + k[1] + '</small>' + (v ? esc(v) : '<span class="vacio">Agregar</span>') + '</div></div>';
     });
     (f.extras || []).forEach(function(x, i){
-      var ico = /mail/i.test(x.k) ? "mail" : /alias|cuenta|cbu|mp/i.test(x.k) ? "card" : /tel/i.test(x.k) ? "tel" : "tag";
-      h += '<div class="nfi-f" data-a="extra" data-i="' + i + '">' + ic(ico) + '<div class="bd"><small>' + esc(x.k) + '</small>' + esc(x.v) + '</div><button class="cp" data-a="cp" data-i="' + i + '">Copiar</button></div>';
+      var n = /mail/i.test(x.k) ? "mail" : /alias|cuenta|cbu|mp/i.test(x.k) ? "card" : /tel/i.test(x.k) ? "tel" : "tag";
+      h += '<div class="nfi-f" data-a="extra" data-i="' + i + '">' + ib(n) + '<div class="bd"><small>' + esc(x.k) + '</small>' + esc(x.v) + '</div><button class="cp" data-a="cp" data-i="' + i + '">Copiar</button></div>';
     });
-    h += '<div class="nfi-f" data-a="extra-new">' + ic("tag") + '<div class="bd vacio">+ Agregar otro dato (CUIT, mail, mínimo de compra…)</div></div></div>';
+    h += '<div class="nfi-f" data-a="extra-new">' + ib("tag") + '<div class="bd vacio">+ Agregar otro dato (CUIT, mail, mínimo…)</div></div></div></div></div>';
+    h += '<div class="nfi-col"><div class="nfi-retiro" data-a="retiro"><span class="ib">' + ic("truck") + '</span><div><b>Pedir retiro</b><small>' + esc(f.transporte ? "Mensaje listo para " + f.transporte : "Mensaje listo para el transporte") + '</small></div><span class="go">Armar</span></div>';
     var ps = f.productos || [];
-    h += '<div class="nfi-lbl"><span>Productos que le compramos · ' + ps.length + '</span></div><div class="nfi-tags">' +
-      ps.map(function(p, i){ return '<button class="nfi-tag" data-a="prod" data-i="' + i + '">' + esc(p.n) + (p.nota ? '<small>' + esc(p.nota.length > 30 ? p.nota.slice(0, 30) + "…" : p.nota) + '</small>' : "") + '</button>'; }).join("") +
-      '<button class="nfi-tag add" data-a="prod-new">+ Producto</button></div>';
-    h += '<div class="nfi-lbl"><span>Notas</span></div><textarea class="npl-ta" id="nfiNotas" placeholder="Lo que haya que recordar de este proveedor…">' + esc(f.notas || "") + '</textarea>' +
-      '<div class="npl-foot"><span>' + (f.mod ? "Último cambio: " + esc(f.modPor === "pau" ? "Pau" : f.modPor === "euge" ? "Euge" : (f.modPor || "")) : "") + '</span><button class="npl-btn" style="color:#B4533F" data-a="del">Eliminar ficha</button></div>';
+    h += '<div class="nfi-box nfi-prod"><div class="nfi-lbl">Productos que le compramos · ' + ps.length + '</div><div class="nfi-tags">' +
+      ps.map(function(p, i){ return '<button class="nfi-tag" data-a="prod" data-i="' + i + '">' + esc(p.n) + (p.nota ? '<small>' + esc(p.nota.length > 28 ? p.nota.slice(0, 28) + "…" : p.nota) + '</small>' : "") + '</button>'; }).join("") +
+      '<button class="nfi-tag add" data-a="prod-new">+ Producto</button></div></div>';
+    h += '<div class="nfi-box nfi-notas"><div class="nfi-lbl">Notas</div><textarea id="nfiNotas" placeholder="Lo que haya que recordar de este proveedor…">' + esc(f.notas || "") + '</textarea></div>' +
+      '<div class="nfi-foot"><span>' + (f.mod ? "Último cambio: " + esc(f.modPor === "pau" ? "Pau" : f.modPor === "euge" ? "Euge" : (f.modPor || "")) : "") + '</span><button data-a="del">Eliminar ficha</button></div></div></div></div>';
     return h;
   }
   function pintar(){
