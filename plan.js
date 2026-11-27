@@ -1213,14 +1213,15 @@
         var compra = /compr[eéoó]|compra/i.test(low), publi = /publicidad|facebook|meta|instagram|\bfb\b|\bads?\b/i.test(low);
         if (!compra && !publi) return;
         var id = "usdm-" + mv.id, monto = compra ? -usd : usd;
-        var fila = { id: id, at: "", por: mv.autor || "", fecha: String(mv.creado || "").slice(0, 10) || hoyISO(), monto: String(monto), notas: "desde #movimientos · " + t.slice(0, 120), creado: String(Date.now()), inicial: "", cambiado: String(Date.now()), concepto: compra ? "COMPRA " + usd + " USD PARA RECUPERAR PUBLICIDAD" : "USD PUBLICIDAD" };
-        sb().from("registros").select("id").eq("tabla", "fin_usd").eq("id", id).then(function(x){
-          if (x.error || (x.data && x.data.length)) return;
-          sb().from("registros").upsert({ tabla: "fin_usd", id: id, data: fila, borrado: false, actualizado: new Date().toISOString(), por: "luci" }, { onConflict: "tabla,id", ignoreDuplicates: true }).then(function(w){
-            if (w.error) return;
-            var sinPesos = compra && !(Number(mv.monto) > 0) && !/\$\s*[\d.]{4,}/.test(t);
-            luciDecir("luci-usd-" + mv.id, (compra ? "Anoté la compra de " + usd + " USD en Dólares publicidad · Euge: se restan de lo que Nervo te debe 💵" : "Anoté " + usd + " USD de publicidad en Dólares publicidad · Euge: se suman a lo que Nervo te debe 💵") +
-              (sinPesos ? "\n¿Cuántos pesos salieron? Escribilo en #movimientos así lo descuento también en pesos (ej: compré 100 usd $180.000)." : ""), compra ? "Compra de " + usd + " USD anotada" : usd + " USD de publicidad anotados");
+        sb().from("registros").select("id").eq("tabla", "fin_usd").eq("id", id).then(function(x0){
+          if (x0.error || (x0.data && x0.data.length)) return;
+          sb().from("registros").select("id").eq("tabla", "usd_pend").eq("id", id).then(function(x){
+            if (x.error || (x.data && x.data.length)) return;
+            usdPendNuevo({ id: id, fecha: String(mv.creado || "").slice(0, 10) || hoyISO(), concepto: compra ? "COMPRA " + usd + " USD PARA RECUPERAR PUBLICIDAD" : "PAGO " + usd + " USD PUBLICIDAD", monto: monto, notas: "", origen: "desde #movimientos · " + (mv.autor || "") + ": " + t.slice(0, 100), por: mv.autor || "" }).then(function(ok){
+              if (!ok) return;
+              var sinPesos = compra && !(Number(mv.monto) > 0) && !/\$\s*[\d.]{4,}/.test(t);
+              luciDecir("luci-usd-" + mv.id, (compra ? "Vi la compra de " + usd + " USD" : "Vi " + usd + " USD de publicidad") + " en #movimientos 💵\nLa dejé para aprobar en Movimientos → 🇺🇸 Movimientos USD." + (sinPesos ? "\n¿Cuántos pesos salieron? Escribilo en #movimientos (ej: compré 100 usd $180.000)." : ""), compra ? "Compra de " + usd + " USD para aprobar" : usd + " USD de publicidad para aprobar");
+            });
           });
         });
       });
@@ -1330,10 +1331,9 @@
       return guardarFila("tejedoras", tj).then(function(){ return stk(b.n); }).then(function(){ return "Listo ✓ Sumé " + b.n + " al stock (" + s.cantidad + " en total)" + (e ? " y lo marqué en el encargo de " + tj.nombre : "") + "."; });
     }
     if (acc.cmd === "usdfb"){
-      var its = arr(b.items), now0 = Date.now();
-      return Promise.all(its.map(function(x, i){ var id = "usd" + (now0 + i), d = { id: id, at: "", por: soy() || "euge", fecha: x.fecha, monto: String(+x.usd), notas: "Facebook · desde captura (Luci)" + (/proceso/i.test(x.estado || "") ? " · figuraba en proceso" : ""), creado: String(now0 + i), inicial: "", cambiado: String(now0 + i), concepto: "PAGO " + (+x.usd) + " USD PUBLICIDAD" };
-        return sb().from("registros").upsert({ tabla: "fin_usd", id: id, data: d, borrado: false, actualizado: new Date().toISOString(), por: soy() || "luci" }, { onConflict: "tabla,id" }); }))
-        .then(function(){ return "Listo ✓ Cargué " + its.length + (its.length === 1 ? " pago" : " pagos") + " de Facebook en Dólares publicidad 💵"; });
+      var its = arr(b.items);
+      return Promise.all(its.map(function(x){ return usdPendNuevo({ fecha: x.fecha, concepto: "PAGO " + (+x.usd) + " USD PUBLICIDAD", monto: +x.usd, notas: /proceso/i.test(x.estado || "") ? "figuraba en proceso" : "", origen: "Facebook · desde captura (Luci)" }); }))
+        .then(function(){ return "Listo ✓ Dejé " + its.length + (its.length === 1 ? " pago" : " pagos") + " para aprobar en Movimientos → 🇺🇸 Movimientos USD 💵"; });
     }
     if (acc.cmd === "pagotej"){
       var tp = (ST().tejedoras || []).find(function(t){ return t.id === b.tej; }); if (!tp) return Promise.resolve("No encontré a esa persona en Equipo 🙈");
@@ -1999,7 +1999,7 @@
           });
           var lin = function(x){ return "• " + fcorta(x.fecha) + " · " + String((+x.usd).toFixed(2)).replace(".", ",") + " USD" + (/proceso/i.test(x.estado || "") ? " (en proceso)" : ""); };
           if (!falta.length){ luci("Revisé la captura: los " + L.length + " pagos de Facebook ya están cargados en Dólares publicidad ✓"); return; }
-          luci("Revisé la captura 👀\n" + (ya.length ? "Ya estaban cargados " + ya.length + ".\n" : "") + "Faltan cargar:\n" + falta.map(lin).join("\n") + "\n¿Los cargo como pago tuyo de publicidad (plata a recuperar)?", { tipo: "cmd", cmd: "usdfb", b: { items: falta } });
+          luci("Revisé la captura 👀\n" + (ya.length ? "Ya estaban cargados " + ya.length + ".\n" : "") + "Faltan cargar:\n" + falta.map(lin).join("\n") + "\n¿Los dejo para aprobar en 🇺🇸 Movimientos USD (pago tuyo de publicidad, plata a recuperar)?", { tipo: "cmd", cmd: "usdfb", b: { items: falta } });
         });
       }).withFailureHandler(function(e){ LC.tip = false; lcPintar(); var s = String(e && e.message || e); luci(/429|quota/i.test(s) ? "Hoy ya usé todas mis consultas de IA 🙈 Mañana vuelvo a poder." : "No pude leer la foto 🙈 Probá de nuevo."); })
         .luciIA(q, fb ? "{}" : luContexto(), [], { mime: "image/jpeg", data: b64 });
@@ -2053,6 +2053,86 @@
     try { new MutationObserver(function(){ arreglar(); }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["style"] }); } catch(e){}
     setInterval(arreglar, 700);
   })();
+  /* ---------- Movimientos USD: todo lo de dólares pasa primero por aprobación ---------- */
+  var UP = { L: [], at: 0, abierto: false, vista: "pend" };
+  function usdPendLeer(){ if (!sb()) return Promise.resolve(); return sb().from("registros").select("data,borrado").eq("tabla", "usd_pend").limit(1000).then(function(r){ if (r.error) return; UP.L = (r.data || []).filter(function(x){ return !x.borrado && x.data; }).map(function(x){ return x.data; }).sort(function(a, b){ return String(b.fecha).localeCompare(String(a.fecha)) || (+b.creado || 0) - (+a.creado || 0); }); UP.at = Date.now(); usdPintar(); }, function(){}); }
+  function usdPendNuevo(o){
+    var now = Date.now(), id = o.id || ("up" + now + Math.random().toString(36).slice(2, 5));
+    var d = { id: id, fecha: o.fecha || hoyISO(), concepto: o.concepto || "", monto: +o.monto || 0, notas: o.notas || "", origen: o.origen || "", por: o.por || soy() || "", creado: now, estado: "pendiente" };
+    return sb().from("registros").upsert({ tabla: "usd_pend", id: id, data: d, borrado: false, actualizado: new Date().toISOString(), por: soy() || "luci" }, { onConflict: "tabla,id", ignoreDuplicates: true }).then(function(r){ if (!r.error){ UP.at = 0; } return !r.error; });
+  }
+  function usdGuardar(d){ return sb().from("registros").upsert({ tabla: "usd_pend", id: d.id, data: d, borrado: false, actualizado: new Date().toISOString(), por: soy() || "luci" }, { onConflict: "tabla,id" }); }
+  function usdAprobar(d){
+    var now = Date.now(), id = "usd" + now, m = +d.monto || 0;
+    var f = { id: id, at: "", por: d.por || soy() || "euge", fecha: d.fecha || hoyISO(), monto: String(m), notas: d.notas || "", creado: String(now), inicial: "", cambiado: String(now), concepto: String(d.concepto || (m < 0 ? "COMPRA " + (-m) + " USD PARA RECUPERAR PUBLICIDAD" : "PAGO " + m + " USD PUBLICIDAD")).toUpperCase() };
+    return sb().from("registros").upsert({ tabla: "fin_usd", id: id, data: f, borrado: false, actualizado: new Date().toISOString(), por: soy() || "luci" }, { onConflict: "tabla,id" }).then(function(r){
+      if (r.error){ toast("No se pudo aprobar"); return; }
+      d.estado = "aprobado"; d.aprobado_por = soy(); d.aprobado_at = now; d.fin_id = id; return usdGuardar(d).then(function(){ toast("Aprobado ✓ pasó a Dólares publicidad"); usdPintar(); });
+    });
+  }
+  function usdMonto(n){ n = +n || 0; return (n < 0 ? "−" : "+") + " US$ " + Math.abs(n).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function usdPintar(){
+    var S = document.getElementById("nvUsdBlq"); if (!S) return;
+    var pend = UP.L.filter(function(d){ return d.estado === "pendiente"; }), L = UP.vista === "pend" ? pend : UP.vista === "apr" ? UP.L.filter(function(d){ return d.estado === "aprobado"; }) : UP.L.filter(function(d){ return d.estado === "descartado"; });
+    S.classList.toggle("cerr", !UP.abierto);
+    S.querySelector(".nvmov-blqh em").textContent = pend.length ? pend.length + " para revisar" : "al día";
+    S.querySelector(".nvmov-blqh em").className = pend.length ? "pen" : "ok";
+    var B = S.querySelector(".nvusd-b"); if (!UP.abierto){ B.innerHTML = ""; return; }
+    var ae = document.activeElement; if (ae && B.contains(ae) && /INPUT/.test(ae.tagName)) return;
+    B.innerHTML = '<div class="nvusd-tabs">' + [["pend", "Pendientes " + pend.length], ["apr", "Aprobados"], ["des", "Descartados"]].map(function(t){ return '<button data-uv="' + t[0] + '"' + (UP.vista === t[0] ? ' class="on"' : "") + '>' + t[1] + '</button>'; }).join("") + '</div>' +
+      '<div class="nvusd-tb"><div class="nvusd-tr nvusd-th"><span></span><span>Concepto</span><span>Fecha</span><span>Pagado (+) / Recuperado (−) USD</span><span>Notas</span><span></span></div>' +
+      (L.length ? L.map(function(d){
+        var ed = d.estado === "pendiente";
+        return '<div class="nvusd-tr" data-id="' + esc(d.id) + '"><span class="c0">' + (ed ? '<button class="ok" data-ua="ok">✓ Aprobar</button>' : '<i class="est">' + (d.estado === "aprobado" ? "✓ Aprobado" : "Descartado") + '</i>') + '</span>' +
+          '<span class="c1"><input data-uf="concepto" value="' + esc(d.concepto) + '" placeholder="Concepto"' + (ed ? "" : " disabled") + '></span>' +
+          '<span class="c2"><input type="date" data-uf="fecha" value="' + esc(d.fecha) + '"' + (ed ? "" : " disabled") + '></span>' +
+          '<span class="c3"><input data-uf="monto" inputmode="decimal" class="' + ((+d.monto || 0) < 0 ? "neg" : "pos") + '" value="' + String(+d.monto || 0).replace(".", ",") + '"' + (ed ? "" : " disabled") + '></span>' +
+          '<span class="c4"><input data-uf="notas" value="' + esc(d.notas) + '" placeholder="Notas"' + (ed ? "" : " disabled") + '></span>' +
+          '<span class="c5">' + (ed ? '<button class="x" data-ua="no" title="Descartar">✕</button>' : "") + '</span>' +
+          (d.origen ? '<small class="or">' + esc(d.origen) + '</small>' : "") + '</div>';
+      }).join("") : '<p class="vac">' + (UP.vista === "pend" ? "No hay movimientos en dólares para revisar ✓" : "Nada por acá.") + '</p>') + '</div>';
+  }
+  function usdMontar(){
+    var P = document.querySelector("section.nvmovp"); if (!P){ return; }
+    var S = document.getElementById("nvUsdBlq");
+    if (!S || !P.contains(S)){
+      S = document.createElement("section"); S.id = "nvUsdBlq"; S.className = "nvmov-blq cerr";
+      S.innerHTML = '<button class="nvmov-blqh" type="button"><i class="nvmov-chev">›</i><b>🇺🇸 Movimientos USD</b><em class="ok">al día</em><small>Pagos de publicidad con dólares de Euge (+) y compras para recuperar (−) · al aprobar pasan a Dólares publicidad · Euge</small></button><div class="nvusd-b"></div>';
+      P.appendChild(S);
+      S.querySelector(".nvmov-blqh").onclick = function(){ UP.abierto = !UP.abierto; usdPintar(); };
+      S.addEventListener("click", function(e){
+        var v = e.target.closest("[data-uv]"); if (v){ UP.vista = v.dataset.uv; usdPintar(); return; }
+        var a = e.target.closest("[data-ua]"); if (!a) return; var row = a.closest("[data-id]"), d = UP.L.filter(function(x){ return x.id === row.dataset.id; })[0]; if (!d) return;
+        if (a.dataset.ua === "ok"){ if (!(+d.monto)) { toast("Falta el monto en USD"); return; } a.disabled = true; usdAprobar(d); }
+        if (a.dataset.ua === "no"){ d.estado = "descartado"; usdGuardar(d).then(usdPintar); }
+      });
+      S.addEventListener("change", function(e){
+        var f = e.target.dataset && e.target.dataset.uf; if (!f) return; var row = e.target.closest("[data-id]"), d = UP.L.filter(function(x){ return x.id === row.dataset.id; })[0]; if (!d) return;
+        var v = e.target.value; if (f === "monto"){ v = Number(String(v).replace(/\s/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", ".")) || 0; e.target.className = v < 0 ? "neg" : "pos"; }
+        d[f] = v; usdGuardar(d);
+      });
+      usdPintar();
+    }
+    if (Date.now() - UP.at > 20000) usdPendLeer();
+  }
+  setInterval(function(){ try { usdMontar(); } catch(e){} }, 800);
+  (function(){ var s = document.createElement("style"); s.textContent = [
+    "#nvUsdBlq .nvmov-blqh em.ok{background:#E2EBDB;color:#3F5E31;font-style:normal}",
+    "#nvUsdBlq.cerr .nvusd-b{display:none}",
+    "#nvUsdBlq .nvusd-b{padding:6px 14px 14px}",
+    ".nvusd-tabs{display:flex;gap:6px;margin:4px 0 10px}.nvusd-tabs button{border:1px solid #EAE2DC;background:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;color:#5A4334}.nvusd-tabs button.on{background:#F3E4EA;border-color:#EAD6DE;color:#8A4F65;font-weight:600}",
+    ".nvusd-tb{border:1px solid #EFE7E1;border-radius:12px;overflow:hidden;background:#fff}",
+    ".nvusd-tr{display:grid;grid-template-columns:108px minmax(160px,2fr) 140px 170px minmax(120px,1.4fr) 40px;gap:8px;align-items:center;padding:8px 10px;border-top:1px solid #F3EDE8;position:relative}",
+    ".nvusd-th{border-top:0;background:#FAF7F4;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#9A8A82}",
+    ".nvusd-tr input{width:100%;box-sizing:border-box;border:1px solid transparent;border-radius:8px;padding:7px 8px;font:inherit;font-size:14px;background:transparent;color:#2A211C}.nvusd-tr input:not([disabled]):hover,.nvusd-tr input:focus{border-color:#EAE2DC;background:#fff;outline:none}",
+    ".nvusd-tr input.pos{color:#9A4A68;font-weight:600;text-align:right}.nvusd-tr input.neg{color:#3F7A55;font-weight:600;text-align:right}",
+    ".nvusd-tr .ok{border:1px solid #CFE6D7;background:#E8F3EC;color:#3F7A55;border-radius:9px;padding:6px 10px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}",
+    ".nvusd-tr .x{border:0;background:none;color:#B5A79F;font-size:15px;cursor:pointer}.nvusd-tr .est{font-style:normal;font-size:12px;color:#8A7A72}",
+    ".nvusd-tr .or{grid-column:2/-1;font-size:11.5px;color:#A0938B;margin-top:-4px;padding-left:8px}",
+    ".nvusd-b .vac{color:#8A7A72;font-size:14px;padding:12px}",
+    "@media (max-width:760px){.nvusd-th{display:none}.nvusd-tr{grid-template-columns:minmax(0,1fr) minmax(0,1fr);padding:12px}.nvusd-tr .c0{order:0}.nvusd-tr .c5{order:1;text-align:right}.nvusd-tr .c1{order:2;grid-column:1/-1}.nvusd-tr .c2{order:3}.nvusd-tr .c3{order:4}.nvusd-tr .c4{order:5;grid-column:1/-1}.nvusd-tr .or{order:6;grid-column:1/-1;padding:0}.nvusd-tr input{border-color:#EAE2DC;background:#fff;font-size:16px}.nvusd-tr input.pos,.nvusd-tr input.neg{text-align:left}}"
+  ].join("\n"); document.head.appendChild(s); })();
+  window.__nvUsd = { leer: usdPendLeer, nuevo: usdPendNuevo };
   function pintar(){
     if (!ROOT || !ROOT.isConnected) return;
     ROOT.innerHTML = V.vista === "luci" ? vLuci() : V.id ? vFicha() : vLista();
