@@ -766,7 +766,8 @@
     ".nfi-ped .hd{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}.nfi-ped .hd .nfi-lbl{margin:0;flex:1}",
     ".nfi-ped .debe{font-size:13px;font-weight:600;color:#8A4F65;background:#F3E4EA;padding:3px 9px;border-radius:6px}.nfi-ped .debe.ok{color:#3F5E31;background:#E2EBDB}",
     ".nfi-pd{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 0;border-top:1px solid #F2EEEA;cursor:pointer}",
-    ".nfi-pd b{font-size:14px;font-weight:500;color:#241C17;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+    ".nfi-pd b{font-size:14px;font-weight:500;color:#241C17;line-height:1.4}",
+    ".nfi-det{white-space:pre-wrap;background:#F7F5F3;border-radius:8px;padding:12px 14px;font-size:14.5px;line-height:1.55;margin:0 0 12px;max-height:45vh;overflow:auto;color:#241C17}",
     ".nfi-pd .mt{font-size:14px;font-weight:600;color:#241C17;text-align:right}",
     ".nfi-pd small{font-size:12px;color:#7A6D64}.nfi-pd small.r{text-align:right}",
     ".nfi-est{display:inline-block;font-size:11px;padding:1px 7px;border-radius:4px;margin-right:6px}",
@@ -862,7 +863,7 @@
     var h = '<div class="nfi-box nfi-ped"><div class="hd"><div class="nfi-lbl">Pedidos y pagos</div>' + (ds.length ? '<span class="debe' + (debe ? "" : " ok") + '">' + (debe ? "Debemos " + plata(debe) : "Todo pago ✓") + '</span>' : "") + '</div>';
     if (!ds.length) h += '<div class="npl-empty" style="padding:4px 0">Todavía no hay pedidos cargados.</div>';
     ds.slice(0, V.todos ? 99 : 4).forEach(function(d){
-      var pg = pagado(d), sal = Math.max(0, (Number(d.total) || 0) - pg), det = String(d.detalle || d.nota || "Pedido").split("\n")[0].replace(/^[-•\s]+/, "");
+      var pg = pagado(d), sal = Math.max(0, (Number(d.total) || 0) - pg), lns = String(d.detalle || d.nota || "Pedido").split("\n").map(function(l){ return l.replace(/^[-•*\s]+/, "").trim(); }).filter(Boolean), det = lns.slice(0, 2).join(" · ") + (lns.length > 2 ? " · +" + (lns.length - 2) + " más" : "");
       h += '<div class="nfi-pd" data-a="ped" data-pid="' + d.id + '"><b><span class="nfi-est e-' + esc(d.estado || "espera") + '">' + (EST[d.estado] || "En espera") + '</span>' + esc(det) + '</b><span class="mt">' + (Number(d.total) ? plata(d.total) : "A confirmar") + '</span>' +
         '<small>' + (d.fecha ? "Pedido " + fcorta(d.fecha) : "") + (d.vence ? " · vence " + fcorta(d.vence) : "") + '</small><small class="r">' + (Number(d.total) ? (sal ? "Falta " + plata(sal) : "Pagado ✓") : (pg ? "Pagado " + plata(pg) : "")) + '</small></div>';
     });
@@ -904,7 +905,7 @@
     var pv = provDe(f); if (!pv) return; var d = (pv.pedidos || []).find(function(x){ return x.id === pid; }); if (!d) return;
     var pg = pagado(d), sal = Math.max(0, (Number(d.total) || 0) - pg);
     var pagos = (d.pagos || []).map(function(p){ return fcorta(p.fecha) + " · " + plata(p.monto) + (p.por ? " (" + (p.por === "pau" ? "Pau" : p.por === "euge" ? "Euge" : p.por) + ")" : ""); }).join("<br>");
-    hoja('<h5 class="nfi-sh-t">' + esc(String(d.detalle || "Pedido").split("\n")[0]) + '</h5>' +
+    hoja('<h5 class="nfi-sh-t">Pedido' + (d.fecha ? " del " + fcorta(d.fecha) : "") + ' <span class="nfi-est e-' + esc(d.estado || "espera") + '">' + (EST[d.estado] || "En espera") + '</span></h5>' + '<div class="nfi-det">' + esc(d.detalle || d.nota || "Sin detalle") + '</div>' +
       '<p style="margin:-6px 0 12px;color:#7A6D64;font-size:13.5px;line-height:1.5">Total ' + (Number(d.total) ? plata(d.total) : "a confirmar") + ' · pagado ' + plata(pg) + (Number(d.total) ? " · falta " + plata(sal) : "") + (pagos ? "<br>" + pagos : "") + '</p>' +
       '<button class="it" data-x="pago"><i>$</i>Registrar un pago</button>' +
       '<button class="it" data-x="est"><i>↻</i>Estado: ' + (EST[d.estado] || "En espera") + ' (tocá para cambiar)</button>' +
