@@ -1247,7 +1247,8 @@
 
   /* ---- búsquedas ---- */
   function provPor(q){ q = nrm(q).split(" ")[0]; if (!q) return null; return provs().find(function(p){ return nrm(p.proveedor).split(" ")[0].indexOf(q) === 0 || nrm(p.proveedor).indexOf(q) === 0; }) || null; }
-  function tejPor(q){ q = nrm(q); return (ST().tejedoras || []).find(function(t){ return !t.borrado && nrm(t.nombre).split(" ")[0] === q.split(" ")[0]; }) || null; }
+  function tejPor(q){ q = nrm(q).split(" ")[0]; if (!q) return null; var ts = (ST().tejedoras || []).filter(function(t){ return !t.borrado && nrm(t.nombre).split(" ")[0] === q; });
+    ts.sort(function(a, b){ function n(t){ return arr(t.encargos).length + arr(t.cargos).length + arr(t.pagos).length; } return n(b) - n(a) || (+b.cambiado || 0) - (+a.cambiado || 0); }); return ts[0] || null; }
   function stockPor(q, tipo){
     var w = nrm(q).split(" ").filter(function(x){ return x && x.length > 1 || /\d/.test(x); });
     if (!w.length) return [];
@@ -1288,6 +1289,7 @@
     "• /gabriel 6 carmina 40 → Gabriel entregó armazones\n" +
     "• /llevé iris 4 toscana 50 → le llevamos armazones\n" +
     "• /iris 2 toscana 65 · /laura 3 toscana 50 → entregaron lámparas\n" +
+    "• /pagué laura $30.000 → pago a una tejedora (o a Damián)\n" +
     "Antes de cambiar algo te muestro qué voy a hacer y vos confirmás 😊";
   function elegir(cmd, base, ops){
     if (!ops.length){ luci("No encontré ese producto en el stock 🙈 Probá con otras palabras (ej: toscana 65 negro)."); return; }
@@ -1321,6 +1323,12 @@
       tj.encargos = en;
       if (b.precio){ tj.cargos = arr(tj.cargos).concat([{ monto: b.precio * b.n, fecha: hoyISO(), concepto: b.n + " × " + b.que + " retiradas", por: soy() }]); }
       return guardarFila("tejedoras", tj).then(function(){ return stk(b.n); }).then(function(){ return "Listo ✓ Sumé " + b.n + " al stock (" + s.cantidad + " en total)" + (e ? " y lo marqué en el encargo de " + tj.nombre : "") + "."; });
+    }
+    if (acc.cmd === "pagotej"){
+      var tp = (ST().tejedoras || []).find(function(t){ return t.id === b.tej; }); if (!tp) return Promise.resolve("No encontré a esa persona en Equipo 🙈");
+      tp.pagos = arr(tp.pagos).concat([{ monto: b.monto, fecha: hoyISO(), nota: b.nota || "desde Luci", por: soy() }]);
+      var cgs = arr(tp.cargos).reduce(function(a, c){ return a + (+c.monto || 0); }, 0), pgs = arr(tp.pagos).reduce(function(a, c){ return a + (+c.monto || 0); }, 0);
+      return guardarFila("tejedoras", tp).then(function(){ return "Listo ✓ Cargué " + plata(b.monto) + " a " + tp.nombre + ". " + (cgs - pgs > 0 ? "Todavía se le deben " + plata(cgs - pgs) + "." : "Quedó al día ✓"); });
     }
     if (acc.cmd === "pago"){
       var pv = provs().find(function(p){ return p.id === b.pv; }), d = pv && pedidosDe(pv).find(function(x){ return x.id === b.d; });
@@ -1379,6 +1387,11 @@
     var prov = c === "pedido" || c === "sena" || c === "pague" || c === "pago" || c === "retiro" || c === "llego" ? c : "";
     if (prov){
       var pp = r.split(/\s+/), pv = provPor(pp[0] || ""), resto = pp.slice(1).join(" ");
+      var tq = !pv && (prov === "pague" || prov === "pago") ? tejPor(pp[0] || "") : null;
+      if (tq){
+        var mt = plataN(resto); if (!mt) return luci("¿De cuánto fue? Ej: /" + m[1] + " " + pp[0] + " $30.000");
+        return luci("Voy a cargar un pago de " + plata(mt) + " a " + tq.nombre + " en Equipo" + (resto.replace(/\$\s*[\d.,]+/, "").trim() ? " (" + resto.replace(/\$\s*[\d.,]+/, "").trim() + ")" : "") + ".\n¿Lo cargo?", { tipo: "cmd", cmd: "pagotej", b: { tej: tq.id, monto: mt, nota: resto.replace(/\$\s*[\d.,]+/, "").trim() } });
+      }
       if (!pv) return luci("¿De qué proveedor? No encontré «" + (pp[0] || "") + "» 🙈");
       if (prov === "pedido") return luci("Voy a anotar un pedido nuevo a " + pv.proveedor + ":\n" + (resto || "(sin detalle)") + (plataN(resto) ? "\nTotal " + plata(plataN(resto)) : "") + "\n¿Lo cargo?", { tipo: "cmd", cmd: "pedido", b: { pv: pv.id, det: resto.replace(/\$\s*[\d.,]+/, "").trim() || "Pedido", total: plataN(resto) } });
       var d = pedAbierto(pv); if (!d) return luci(pv.proveedor + " no tiene pedidos abiertos. Si es nuevo, usá /pedido " + pp[0] + " …");
@@ -1415,7 +1428,17 @@
         if (!(+mv.monto > 0) || mv.signo === "ingreso") return;
         var txt = (mv.contraparte || "") + " " + (mv.texto || ""), pv = null;
         provs().some(function(p){ var k = nrm(p.proveedor).split(" ")[0]; if (k.length > 3 && nrm(txt).split(" ").indexOf(k) >= 0){ pv = p; return true; } return false; });
-        if (!pv) return; var d = pedAbierto(pv); if (!d) return;
+        if (!pv){
+          var tm = null; (ST().tejedoras || []).some(function(t){ var k = nrm(t.nombre).split(" ")[0]; if (k.length > 2 && nrm(txt).split(" ").indexOf(k) >= 0){ tm = tejPor(k); return true; } return false; });
+          if (!tm) return; var idt = "luci-mv-" + mv.id;
+          sb().from("registros").select("id").eq("tabla", "chat").eq("id", idt).then(function(x){
+            if (x.error || (x.data && x.data.length)) return;
+            var now = Date.now(), data = { id: idt, adj: [], por: "luci", reac: {}, canal: "luci", texto: "Vi en #movimientos un pago de " + plata(mv.monto) + " a " + tm.nombre + " 🧶\n¿Lo cargo en su cuenta de Equipo?", creado: now, borrado: false, cambiado: now, acc: { tipo: "cmd", cmd: "pagotej", b: { tej: tm.id, monto: +mv.monto, nota: "desde #movimientos" } } };
+            sb().from("registros").upsert({ tabla: "chat", id: idt, data: data, borrado: false, actualizado: new Date().toISOString(), por: "luci" }, { onConflict: "tabla,id", ignoreDuplicates: true }).then(function(w){ if (!w.error){ luciPush("Pago a " + tm.nombre + " para aprobar", idt); lcLeer(); } });
+          });
+          return;
+        }
+        var d = pedAbierto(pv); if (!d) return;
         var id = "luci-mv-" + mv.id;
         sb().from("registros").select("id").eq("tabla", "chat").eq("id", id).then(function(x){
           if (x.error || (x.data && x.data.length)) return;
