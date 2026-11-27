@@ -1103,7 +1103,7 @@
   /* Luci avisa en el chat una vez por día (etiqueta a las dos) */
   var LUCHAT = false;
   function luciChat(){
-    var hh = new Date(); if (LUCHAT || !sb() || !provs().length || !LOADED || hh.getHours() * 60 + hh.getMinutes() < 510 || hh.getDay() === 0 || hh.getDay() === 6) return;
+    var hh = new Date(); if (LUCHAT || !sb() || !provs().length || !(LOADED || ST().loaded) || hh.getHours() * 60 + hh.getMinutes() < 510 || hh.getDay() === 0 || hh.getDay() === 6) return;
     var id = "luci-" + hoyISO(); LUCHAT = true;
     var txt = textoChat(); if (!txt) return;
     luciDecir(id, txt, "¡Buen día, chicas! Les dejé el resumen de hoy 🌷");
@@ -1186,7 +1186,7 @@
   /* avisos urgentes en el momento (vence hoy / venció, algo listo para retirar) — una vez por día cada uno */
   var LUURG = 0;
   function luciUrgentes(){
-    if (!provs().length || !LOADED || Date.now() - LUURG < 25 * 60e3) return; LUURG = Date.now();
+    if (!provs().length || !(LOADED || ST().loaded) || Date.now() - LUURG < 25 * 60e3) return; LUURG = Date.now();
     var hh = new Date(); if (hh.getHours() < 8 || hh.getHours() >= 21) return;
     alertas().filter(function(a){ return a.p <= 2; }).slice(0, 3).forEach(function(a){
       var t = String(a.t).replace(/<[^>]+>/g, "");
@@ -1727,7 +1727,7 @@
   }
   var LU6 = 0;
   function luci18(forzar){
-    if (!sb() || !LOADED || (!forzar && Date.now() - LU6 < 10 * 60e3)) return Promise.resolve(); LU6 = Date.now();
+    if (!sb() || !(LOADED || ST().loaded) || (!forzar && Date.now() - LU6 < 10 * 60e3)) return Promise.resolve(); LU6 = Date.now();
     var d = new Date(), dw = d.getDay();
     if (!forzar && (dw === 0 || dw === 6 || d.getHours() < 18 || d.getHours() >= 22)) return Promise.resolve();
     try { luciPagosHoy(); } catch(e){}
@@ -1753,7 +1753,7 @@
   /* pedidos de clientes con más de 12 días sin entregar → aviso diario */
   var LU12 = 0;
   function luci12(forzar){
-    if (!sb() || !LOADED || !ST().bzData || (!forzar && Date.now() - LU12 < 15 * 60e3)) return []; LU12 = Date.now();
+    if (!sb() || !(LOADED || ST().loaded) || !ST().bzData || (!forzar && Date.now() - LU12 < 15 * 60e3)) return []; LU12 = Date.now();
     var d = new Date(); if (!forzar && (d.getDay() === 0 || d.getHours() < 9 || d.getHours() >= 21)) return [];
     var B = ST().bzData, hoy = hoyISO(), lim = hoyMenos(12), viejo = hoyMenos(60), out = [];
     [].concat(B.min || [], B.may || []).forEach(function(x){
