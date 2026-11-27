@@ -1215,6 +1215,304 @@
   }
   setInterval(function(){ try { luciUsd(); } catch(e){} }, 30000);
   window.__nvLuci = { alertas: function(){ return alertas(); }, texto: function(){ return textoChat(); }, usd: function(){ LUUSD = 0; luciUsd(); }, push: luciPush };
+  /* ================= Canal "Luci" en el chat: comandos, aprobaciones y respuestas ================= */
+  LUCI_CANAL = "luci";
+  var LC = { open: false, msgs: [], busy: false, last: 0, pane: null, visto: 0 };
+  try { LC.visto = +localStorage.getItem("nvLuciVisto") || 0; } catch(e){}
+  function nrm(s){ return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim(); }
+  function guardarFila(tabla, o){
+    o.cambiado = Date.now(); o.por = soy();
+    var fila = {}; Object.keys(o).forEach(function(k){ var v = o[k]; fila[k] = (v && typeof v === "object") ? JSON.stringify(v) : v; });
+    var L = window.__nvLocal;
+    return Promise.resolve(L && L.guardar ? L.guardar([tabla, fila]) : Promise.reject(new Error("sin conexión"))).then(function(){ try { N().render && N().render(); } catch(e){} });
+  }
+  function arr(x){ if (typeof x === "string"){ try { x = JSON.parse(x); } catch(e){ x = []; } } return Array.isArray(x) ? x : []; }
+  function plataN(t){ var m = String(t).match(/\$\s*([\d.,]+)/) || String(t).match(/\b(\d{1,3}(?:\.\d{3})+|\d{4,})\b/); return m ? numAR(m[1]) : 0; }
+  function cantDe(t){ var m = String(t).match(/(?:^|\s)(\d{1,3})(?:\s*[x×]|\s+(?=[a-záéíóú]))/i); return m ? +m[1] : 0; }
+  function sinCant(t){ return String(t).replace(/(?:^|\s)\d{1,3}\s*[x×]?\s+(?=[a-záéíóú])/i, " ").trim(); }
+
+  /* ---- búsquedas ---- */
+  function provPor(q){ q = nrm(q).split(" ")[0]; if (!q) return null; return provs().find(function(p){ return nrm(p.proveedor).split(" ")[0].indexOf(q) === 0 || nrm(p.proveedor).indexOf(q) === 0; }) || null; }
+  function tejPor(q){ q = nrm(q); return (ST().tejedoras || []).find(function(t){ return !t.borrado && nrm(t.nombre).split(" ")[0] === q.split(" ")[0]; }) || null; }
+  function stockPor(q, tipo){
+    var w = nrm(q).split(" ").filter(function(x){ return x && x.length > 1 || /\d/.test(x); });
+    if (!w.length) return [];
+    return (ST().stock || []).filter(function(s){ if (s.borrado) return false; if (tipo && (s.tipo || "terminado") !== tipo) return false; var n = nrm(s.producto); return w.every(function(x){ return n.indexOf(x) >= 0; }); }).slice(0, 12);
+  }
+  function pedAbierto(pv){ var ds = pedidosDe(pv).filter(function(d){ return !d.borrado && etapaDe(pv, d) !== "deposito"; }); ds.sort(function(a, b){ return String(b.fecha || "").localeCompare(String(a.fecha || "")); }); return ds[0] || null; }
+
+  /* ---- mensajes ---- */
+  function lcEnviar(texto, por, acc){
+    var now = Date.now(), id = (por === "luci" ? "lu" : "lc") + now + Math.random().toString(36).slice(2, 5);
+    var data = { id: id, adj: [], por: por, reac: {}, canal: "luci", texto: texto, creado: now, borrado: false, cambiado: now };
+    if (acc) data.acc = acc;
+    LC.msgs.push(data); lcPintar();
+    return sb().from("registros").upsert({ tabla: "chat", id: id, data: data, borrado: false, actualizado: new Date().toISOString(), por: por }, { onConflict: "tabla,id" }).then(function(r){ if (r.error) toast("No se pudo enviar"); return data; });
+  }
+  function lcMarcar(m, est){ m.est = est; m.cambiado = Date.now(); lcPintar(); return sb().from("registros").upsert({ tabla: "chat", id: m.id, data: m, borrado: false, actualizado: new Date().toISOString(), por: soy() || "luci" }, { onConflict: "tabla,id" }).then(function(){}); }
+  function luci(t, acc){ return lcEnviar(t, "luci", acc); }
+  function lcLeer(){
+    if (!sb() || LC.busy) return; LC.busy = true;
+    sb().from("registros").select("data").eq("tabla", "chat").order("actualizado", { ascending: false }).limit(400).then(function(r){
+      LC.busy = false; if (r.error) return;
+      var ms = (r.data || []).map(function(x){ return x.data; }).filter(function(d){ return d && d.canal === "luci" && !d.borrado; });
+      ms.sort(function(a, b){ return (a.creado || 0) - (b.creado || 0); });
+      var sig = ms.map(function(m){ return m.id + (m.est || "") + (m.cambiado || ""); }).join("|");
+      if (sig !== LC.sig){ LC.sig = sig; LC.msgs = ms.slice(-120); lcPintar(); }
+      lcBadge();
+    }, function(){ LC.busy = false; });
+  }
+
+  /* ---- comandos ---- */
+  var AYUDA = "Esto es lo que entiendo 👇\n" +
+    "• /ver aurora · /ver iris · /ver toscana 65 → te cuento todo\n" +
+    "• /pedido aurora 8 arezzo, 6 poli → pedido nuevo\n" +
+    "• /seña licari $200.000 · /pagué aurora $608.000 → cargo el pago\n" +
+    "• /retiro licari → ya se pidió el retiro\n" +
+    "• /llegó aurora → llegó al depósito\n" +
+    "• /entra 5 toscana 65 · /sale 2 toscana 65 → stock\n" +
+    "• /gabriel 6 carmina 40 → Gabriel entregó armazones\n" +
+    "• /llevé iris 4 toscana 50 → le llevamos armazones\n" +
+    "• /iris 2 toscana 65 · /laura 3 toscana 50 → entregaron lámparas\n" +
+    "Antes de cambiar algo te muestro qué voy a hacer y vos confirmás 😊";
+  function elegir(cmd, base, ops){
+    if (!ops.length){ luci("No encontré ese producto en el stock 🙈 Probá con otras palabras (ej: toscana 65 negro)."); return; }
+    if (ops.length === 1){ base.sid = ops[0].id; luciPropone(cmd, base); return; }
+    luci("Encontré varios, ¿cuál es?", { tipo: "elegir", cmd: cmd, base: base, ops: ops.map(function(s){ return [s.id, s.producto]; }) });
+  }
+  function stockId(id){ return (ST().stock || []).find(function(s){ return s.id === id; }); }
+  function luciPropone(cmd, b){
+    var s = b.sid ? stockId(b.sid) : null, n = b.n, txt = "";
+    if (cmd === "entra") txt = "Voy a sumar " + n + " a «" + s.producto + "» (hay " + (+s.cantidad || 0) + " → quedan " + ((+s.cantidad || 0) + n) + ").";
+    if (cmd === "sale") txt = "Voy a restar " + n + " de «" + s.producto + "» (hay " + (+s.cantidad || 0) + " → quedan " + Math.max(0, (+s.cantidad || 0) - n) + ").";
+    if (cmd === "gabriel") txt = "Gabriel entregó " + n + " armazones de «" + s.producto + "»: los sumo (hay " + (+s.cantidad || 0) + " → " + ((+s.cantidad || 0) + n) + ").";
+    if (cmd === "lleve") txt = "Le llevamos a " + b.tej + " " + n + " armazones «" + s.producto + "»: los resto de armazones y le anoto el encargo.";
+    if (cmd === "tej") txt = b.tej + " entregó " + n + " «" + s.producto + "»: lo sumo al stock (hay " + (+s.cantidad || 0) + " → " + ((+s.cantidad || 0) + n) + ")" + (b.precio ? " y le cargo " + plata(b.precio * n) + " a su cuenta." : ". No encontré su precio por pieza, el pago cargalo en Equipo.");
+    luci(txt + "\n¿Lo cargo?", { tipo: "cmd", cmd: cmd, b: b });
+  }
+  function ejecutar(acc){
+    var b = acc.b || {}, s = b.sid ? stockId(b.sid) : null;
+    function stk(delta){ s.cantidad = Math.max(0, (+s.cantidad || 0) + delta); return guardarFila("stock", s); }
+    if (acc.cmd === "entra" || acc.cmd === "gabriel") return stk(b.n).then(function(){ return "Listo ✓ «" + s.producto + "» ahora tiene " + s.cantidad + "."; });
+    if (acc.cmd === "sale") return stk(-b.n).then(function(){ return "Listo ✓ «" + s.producto + "» ahora tiene " + s.cantidad + "."; });
+    if (acc.cmd === "lleve"){
+      var t = tejPor(b.tej); if (!t) return Promise.resolve("No encontré a " + b.tej + " en Equipo 🙈");
+      var enc = arr(t.encargos); enc.push({ id: uid("enc"), que: b.que, cant: b.n, fecha: hoyISO(), estado: "curso", nota: "", retiros: [], cambiado: Date.now() }); t.encargos = enc;
+      return guardarFila("tejedoras", t).then(function(){ return stk(-b.n); }).then(function(){ return "Listo ✓ Le anoté a " + t.nombre + " " + b.n + " " + b.que + " y quedan " + s.cantidad + " armazones."; });
+    }
+    if (acc.cmd === "tej"){
+      var tj = tejPor(b.tej); if (!tj) return Promise.resolve("No encontré a " + b.tej + " en Equipo 🙈");
+      var en = arr(tj.encargos), q = nrm(b.que).split(" "), e = en.filter(function(x){ return x.estado !== "listo" && q.every(function(w){ return nrm(x.que).indexOf(w) >= 0 || /^\d+$/.test(w) && nrm(x.que).indexOf(w) >= 0; }); })[0];
+      if (e){ e.retiros = arr(e.retiros).concat([{ cant: b.n, fecha: hoyISO() }]); var tot = e.retiros.reduce(function(a, r){ return a + (+r.cant || 0); }, 0); if (tot >= (+e.cant || 0)) e.estado = "listo"; e.cambiado = Date.now(); }
+      tj.encargos = en;
+      if (b.precio){ tj.cargos = arr(tj.cargos).concat([{ monto: b.precio * b.n, fecha: hoyISO(), concepto: b.n + " × " + b.que + " retiradas", por: soy() }]); }
+      return guardarFila("tejedoras", tj).then(function(){ return stk(b.n); }).then(function(){ return "Listo ✓ Sumé " + b.n + " al stock (" + s.cantidad + " en total)" + (e ? " y lo marqué en el encargo de " + tj.nombre : "") + "."; });
+    }
+    if (acc.cmd === "pago"){
+      var pv = provs().find(function(p){ return p.id === b.pv; }), d = pv && pedidosDe(pv).find(function(x){ return x.id === b.d; });
+      if (!d) return Promise.resolve("No encontré ese pedido 🙈");
+      d.pagos = (d.pagos || []).concat([{ monto: b.monto, fecha: hoyISO(), nota: b.nota || "desde Luci", por: soy() }]);
+      var sal = Math.max(0, (+d.total || 0) - pagado(d)), tt = tipoDe(pv.proveedor, d), e2 = etapaDe(pv, d);
+      if (b.sena && tt === "encargo" && e2 === "cotizado") aplicarEtapa(d, "sena");
+      else if ((+d.total || 0) && !sal) aplicarEtapa(d, tt === "encargo" ? (["cotizado","sena"].indexOf(e2) >= 0 ? "listo" : e2) : (e2 === "pedido" ? "pagado" : e2));
+      return guardarProv(pv).then(function(){ return "Listo ✓ Cargué " + plata(b.monto) + " a " + pv.proveedor + ". " + ((+d.total || 0) ? (sal ? "Falta " + plata(sal) + "." : "¡Quedó todo pago! 🎉") : ""); });
+    }
+    if (acc.cmd === "etapa"){
+      var pv2 = provs().find(function(p){ return p.id === b.pv; }), d2 = pv2 && pedidosDe(pv2).find(function(x){ return x.id === b.d; });
+      if (!d2) return Promise.resolve("No encontré ese pedido 🙈");
+      aplicarEtapa(d2, b.e); return guardarProv(pv2).then(function(){ return "Listo ✓ " + pv2.proveedor + " → " + ETQ[b.e] + "."; });
+    }
+    if (acc.cmd === "pedido"){
+      var pv3 = provs().find(function(p){ return p.id === b.pv; }); if (!pv3) return Promise.resolve("No encontré ese proveedor 🙈");
+      var nd = { id: uid("pd"), orden: "", total: b.total || 0, vence: "", nota: "", pagos: [], estado: "espera", detalle: b.det, fecha: hoyISO(), retiro: "", retiroOk: false };
+      aplicarEtapa(nd, FLU[tipoDe(pv3.proveedor)][0][0]); pv3.pedidos = pedidosDe(pv3).concat([nd]);
+      return guardarProv(pv3).then(function(){ return "Listo ✓ Anoté el pedido a " + pv3.proveedor + ". Te aviso cuando haya que pagar o retirar 😉"; });
+    }
+    return Promise.resolve("No sé hacer eso todavía 🙈");
+  }
+  function ver(q){
+    var pv = provPor(q);
+    if (pv){
+      var ds = pedidosDe(pv).filter(function(d){ return etapaDe(pv, d) !== "deposito"; });
+      var debe = pedidosDe(pv).reduce(function(a, d){ return a + Math.max(0, (+d.total || 0) - pagado(d)); }, 0);
+      return luci("📦 " + pv.proveedor + "\n" + (debe ? "Le deben " + plata(debe) + "." : "No le deben nada ✓") + "\n" +
+        (ds.length ? ds.map(function(d){ return "• " + resumen(d) + " — " + ETQ[etapaDe(pv, d)] + (d.vence ? " · vence " + fcorta(d.vence) : ""); }).join("\n") : "No hay pedidos abiertos."));
+    }
+    var t = tejPor(q);
+    if (t){
+      var en = arr(t.encargos).filter(function(e){ return e.estado !== "listo"; });
+      var cg = arr(t.cargos).reduce(function(a, c){ return a + (+c.monto || 0); }, 0), pg = arr(t.pagos).reduce(function(a, c){ return a + (+c.monto || 0); }, 0);
+      return luci("🧶 " + t.nombre + "\n" + (en.length ? en.map(function(e){ var r = arr(e.retiros).reduce(function(a, x){ return a + (+x.cant || 0); }, 0); return "• " + e.que + ": " + r + " de " + e.cant + " entregadas"; }).join("\n") : "No tiene encargos abiertos.") + "\n" + (cg - pg > 0 ? "Le deben " + plata(cg - pg) + "." : "Está al día con los pagos ✓"));
+    }
+    var ss = stockPor(q);
+    if (ss.length) return luci("🔎 " + q + "\n" + ss.map(function(s){ return "• " + s.producto + ": " + (+s.cantidad || 0) + ((s.tipo || "") === "armazon" ? " (armazón)" : ""); }).join("\n"));
+    return luci("No encontré nada con «" + q + "» 🙈");
+  }
+  function procesar(t){
+    var m = String(t).trim().match(/^\/(\S+)\s*([\s\S]*)$/); if (!m){ return; }
+    var c = nrm(m[1]), r = m[2].trim(), n = cantDe(r) || 1;
+    if (c === "ayuda" || c === "comandos") return luci(AYUDA);
+    if (c === "ver" || c === "info") return ver(r);
+    if (c === "entra" || c === "sale") return elegir(c, { n: n }, stockPor(sinCant(r)));
+    if (c === "gabriel" || c === "herrero") return elegir("gabriel", { n: n }, stockPor(sinCant(r), "armazon"));
+    if (c === "lleve" || c === "llevamos"){ var p = r.split(/\s+/), tj = p.shift(), rest = p.join(" "); return elegir("lleve", { n: cantDe(rest) || 1, tej: tj.charAt(0).toUpperCase() + tj.slice(1), que: sinCant(rest) }, stockPor(sinCant(rest), "armazon")); }
+    var tej = tejPor(c);
+    if (tej){
+      var que = sinCant(r), precio = 0, w = nrm(que).split(" ");
+      arr(tej.cargos).slice().reverse().some(function(cg){ var cc = nrm(cg.concepto), k = String(cg.concepto || "").match(/^(\d+)\s*[x×]/); if (w.every(function(x){ return cc.indexOf(x) >= 0; }) && k){ precio = Math.round((+cg.monto || 0) / (+k[1] || 1)); return true; } return false; });
+      return elegir("tej", { n: n, tej: tej.nombre, que: que, precio: precio }, stockPor(que, "terminado"));
+    }
+    var prov = c === "pedido" || c === "sena" || c === "pague" || c === "pago" || c === "retiro" || c === "llego" ? c : "";
+    if (prov){
+      var pp = r.split(/\s+/), pv = provPor(pp[0] || ""), resto = pp.slice(1).join(" ");
+      if (!pv) return luci("¿De qué proveedor? No encontré «" + (pp[0] || "") + "» 🙈");
+      if (prov === "pedido") return luci("Voy a anotar un pedido nuevo a " + pv.proveedor + ":\n" + (resto || "(sin detalle)") + (plataN(resto) ? "\nTotal " + plata(plataN(resto)) : "") + "\n¿Lo cargo?", { tipo: "cmd", cmd: "pedido", b: { pv: pv.id, det: resto.replace(/\$\s*[\d.,]+/, "").trim() || "Pedido", total: plataN(resto) } });
+      var d = pedAbierto(pv); if (!d) return luci(pv.proveedor + " no tiene pedidos abiertos. Si es nuevo, usá /pedido " + pp[0] + " …");
+      if (prov === "sena" || prov === "pague" || prov === "pago"){
+        var monto = plataN(resto); if (!monto) return luci("¿De cuánto fue? Ej: /" + m[1] + " " + pp[0] + " $200.000");
+        return luci("Voy a cargar un pago de " + plata(monto) + " a " + pv.proveedor + " (pedido " + fcorta(d.fecha) + ": " + resumen(d, 1) + ").\n¿Lo cargo?", { tipo: "cmd", cmd: "pago", b: { pv: pv.id, d: d.id, monto: monto, sena: prov === "sena" } });
+      }
+      var e = prov === "retiro" ? (tipoDe(pv.proveedor, d) === "encargo" ? "retiro" : "traslado") : "deposito";
+      return luci("Voy a pasar el pedido de " + pv.proveedor + " (" + resumen(d, 1) + ") a «" + ETQ[e] + "».\n¿Lo cargo?", { tipo: "cmd", cmd: "etapa", b: { pv: pv.id, d: d.id, e: e } });
+    }
+    return luci("Mmm, ese comando no lo conozco 🙈 Escribí /ayuda y te muestro los que sé.");
+  }
+  function lcMandar(t){
+    t = String(t || "").trim(); if (!t) return;
+    lcEnviar(t, soy() || "euge").then(function(){
+      if (t.charAt(0) === "/") { LC.tip = true; lcPintar(); setTimeout(function(){ LC.tip = false; try { procesar(t); } catch(e){ luci("Uy, algo me salió mal 🙈 Probá de nuevo."); } }, 450); }
+    });
+  }
+  function lcAccion(id, x, i){
+    var m = LC.msgs.find(function(z){ return z.id === id; }); if (!m || m.est) return;
+    if (x === "no"){ lcMarcar(m, "no"); luci("Dale, no toco nada 👍"); return; }
+    if (m.acc && m.acc.tipo === "elegir"){ var op = m.acc.ops[+i]; if (!op) return; lcMarcar(m, "ok"); var b = m.acc.base; b.sid = op[0]; luciPropone(m.acc.cmd, b); return; }
+    lcMarcar(m, "ok");
+    ejecutar(m.acc).then(function(t){ luci(t); }, function(e){ luci("No pude guardarlo 🙈 (" + (e && e.message || e) + ")"); });
+  }
+
+  /* ---- aprobaciones desde #movimientos ---- */
+  var LCMOV = 0;
+  function lcMovs(){
+    if (!sb() || !provs().length || Date.now() - LCMOV < 60e3) return; LCMOV = Date.now();
+    var desde = new Date(Date.now() - 2 * 864e5).toISOString();
+    sb().from("movimientos").select("id,texto,autor,monto,contraparte,signo,creado").gte("creado", desde).order("id", { ascending: false }).limit(60).then(function(r){
+      (r.data || []).forEach(function(mv){
+        if (!(+mv.monto > 0) || mv.signo === "ingreso") return;
+        var txt = (mv.contraparte || "") + " " + (mv.texto || ""), pv = null;
+        provs().some(function(p){ var k = nrm(p.proveedor).split(" ")[0]; if (k.length > 3 && nrm(txt).split(" ").indexOf(k) >= 0){ pv = p; return true; } return false; });
+        if (!pv) return; var d = pedAbierto(pv); if (!d) return;
+        var id = "luci-mv-" + mv.id;
+        sb().from("registros").select("id").eq("tabla", "chat").eq("id", id).then(function(x){
+          if (x.error || (x.data && x.data.length)) return;
+          var now = Date.now(), t = "Vi en #movimientos un pago de " + plata(mv.monto) + " a " + pv.proveedor + " 💳\n¿Lo cargo al pedido del " + fcorta(d.fecha) + " (" + resumen(d, 1) + ")?";
+          var data = { id: id, adj: [], por: "luci", reac: {}, canal: "luci", texto: t, creado: now, borrado: false, cambiado: now, acc: { tipo: "cmd", cmd: "pago", b: { pv: pv.id, d: d.id, monto: +mv.monto, nota: "desde #movimientos" } } };
+          sb().from("registros").upsert({ tabla: "chat", id: id, data: data, borrado: false, actualizado: new Date().toISOString(), por: "luci" }, { onConflict: "tabla,id", ignoreDuplicates: true }).then(function(w){ if (!w.error){ luciPush("Pago a " + pv.proveedor + " para aprobar", id); lcLeer(); } });
+        });
+      });
+    }, function(){});
+  }
+  setInterval(function(){ try { lcMovs(); } catch(e){} }, 30000);
+
+  /* ---- interfaz: botón en la lista de canales + panel ---- */
+  var LCSS = [
+    "#nluChb .chi{background:none!important;overflow:hidden;border-radius:50%}#nluChb .chi img{width:100%;height:100%;object-fit:cover;display:block}",
+    "#nluChb.on{background:#F3E4EA}",
+    "#nluBadge{background:#8A4F65;color:#fff;font-size:11px;border-radius:9px;padding:0 6px;margin-left:auto}",
+    "#nluPane{position:fixed;z-index:60;background:#fff;display:flex;flex-direction:column;font-family:Outfit,system-ui,sans-serif;color:#2A211C;border-left:1px solid #EFEBE7}",
+    "#nluPane *{box-sizing:border-box}",
+    "#nluPane .hd{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#F3E4EA;border-bottom:1px solid #EAD6DE}",
+    "#nluPane .hd .av{width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid #fff;flex:none}#nluPane .hd .av img{width:100%;height:100%;object-fit:cover;animation:nluResp 4s ease-in-out infinite;transform-origin:50% 90%}",
+    "#nluPane .hd b{font-size:16px;display:block}#nluPane .hd span{font-size:12px;color:#6E5560}",
+    "#nluPane .hd .x{margin-left:auto;border:1px solid #EAD6DE;background:#fff;border-radius:8px;padding:6px 10px;font:inherit;font-size:13px;cursor:pointer;color:#8A4F65}",
+    "#nluPane .ms{flex:1;overflow:auto;padding:14px 16px;background:#FFFCFA;display:flex;flex-direction:column;gap:9px}",
+    "#nluPane .m{display:flex;gap:8px;align-items:flex-end;max-width:88%}#nluPane .m.yo{align-self:flex-end;flex-direction:row-reverse}",
+    "#nluPane .m .a{width:26px;height:26px;border-radius:50%;overflow:hidden;flex:none;background:#F3E4EA;display:grid;place-items:center;font-size:11px;font-weight:600;color:#8A4F65}#nluPane .m .a img{width:100%;height:100%;object-fit:cover}",
+    "#nluPane .m .b{background:#fff;border:1px solid #EFEBE7;border-radius:12px 12px 12px 4px;padding:8px 12px;font-size:14px;line-height:1.45;white-space:pre-wrap;word-break:break-word}",
+    "#nluPane .m.yo .b{background:#5A4334;color:#fff;border-color:#5A4334;border-radius:12px 12px 4px 12px}",
+    "#nluPane .m.otra .b{background:#F7F3EF}",
+    "#nluPane .m small{display:block;font-size:10.5px;color:#ABA097;margin-top:3px}#nluPane .m.yo small{color:#E5D6CB}",
+    "#nluPane .bt{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}",
+    "#nluPane .bt button{padding:7px 12px;border-radius:7px;font:inherit;font-size:13px;font-weight:500;border:1px solid #E3DCD5;background:#fff;color:#2A211C;cursor:pointer}",
+    "#nluPane .bt button.dk{background:#5A4334;color:#fff;border-color:#5A4334}",
+    "#nluPane .est{font-size:12px;color:#7A6D64;margin-top:6px}",
+    "#nluPane .tip{font-size:12px;color:#ABA097;font-style:italic;padding-left:34px}",
+    "#nluPane .ch{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px 0;background:#fff;border-top:1px solid #F1ECE7}",
+    "#nluPane .ch button{font:inherit;font-size:12px;border:1px solid #EAD6DE;background:#FBF6F8;color:#8A4F65;border-radius:20px;padding:4px 10px;cursor:pointer}",
+    "#nluPane form{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:#fff}",
+    "#nluPane textarea{flex:1;border:1px solid #E3DCD5;border-radius:10px;padding:10px 12px;font:inherit;font-size:16px;resize:none;height:44px;outline:none}",
+    "#nluPane form button{border:0;border-radius:10px;background:#8A4F65;color:#fff;font:inherit;font-weight:600;padding:0 16px;cursor:pointer}",
+    ".nlu-chon .chmain{visibility:hidden}"
+  ].join("\n");
+  (function(){ var s = document.createElement("style"); s.textContent = LCSS; document.head.appendChild(s); })();
+  function hora(t){ var d = new Date(t || Date.now()); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
+  function lcPintar(){
+    var P = LC.pane; if (!P) return; var box = P.querySelector(".ms"), abajo = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+    var me = soy();
+    box.innerHTML = (LC.msgs.length ? "" : '<div class="m"><div class="a"><img src="' + LUCI_IMG + '"></div><div class="b">¡Hola! Soy Luci 🌷 Escribime /ayuda y te muestro lo que sé hacer.</div></div>') + LC.msgs.map(function(m){
+      var lu = m.por === "luci", yo = !lu && m.por === me, a = m.acc, bt = "";
+      if (a && !m.est){
+        if (a.tipo === "elegir") bt = '<div class="bt">' + a.ops.map(function(o, i){ return '<button data-lc="' + m.id + '" data-x="ok" data-i="' + i + '">' + esc(o[1]) + '</button>'; }).join("") + '<button data-lc="' + m.id + '" data-x="no">Ninguno</button></div>';
+        else bt = '<div class="bt"><button class="dk" data-lc="' + m.id + '" data-x="ok">Sí, cargalo</button><button data-lc="' + m.id + '" data-x="no">No</button></div>';
+      } else if (a && m.est) bt = '<div class="est">' + (m.est === "ok" ? "✓ Aprobado" : "✕ Cancelado") + '</div>';
+      return '<div class="m' + (yo ? " yo" : lu ? "" : " otra") + '">' + (yo ? "" : '<div class="a">' + (lu ? '<img src="' + LUCI_IMG + '">' : esc(String(m.por || "?").charAt(0).toUpperCase())) + '</div>') +
+        '<div class="b">' + esc(m.texto).replace(/@(Pau|Euge)/g, "<b>@$1</b>") + bt + '<small>' + (lu || yo ? "" : esc(m.por === "pau" ? "Pau" : m.por === "euge" ? "Euge" : m.por) + " · ") + hora(m.creado) + '</small></div></div>';
+    }).join("") + (LC.tip ? '<div class="tip">Luci está escribiendo…</div>' : "");
+    if (abajo || LC.primera){ box.scrollTop = box.scrollHeight; LC.primera = false; }
+  }
+  function lcBadge(){
+    var b = document.getElementById("nluBadge"); if (!b) return;
+    var n = LC.msgs.filter(function(m){ return m.por === "luci" && (m.creado || 0) > LC.visto; }).length;
+    b.textContent = n || ""; b.style.display = n && !LC.open ? "" : "none";
+  }
+  function lcPos(){
+    var P = LC.pane; if (!P) return;
+    var mn = document.querySelector(".chw .chmain"), movil = window.innerWidth < 760;
+    if (!mn || movil){ P.style.left = "0"; P.style.top = "0"; P.style.width = "100%"; P.style.height = "100%"; P.style.zIndex = "9500"; return; }
+    var r = mn.getBoundingClientRect(); P.style.left = r.left + "px"; P.style.top = r.top + "px"; P.style.width = r.width + "px"; P.style.height = r.height + "px"; P.style.zIndex = "60";
+  }
+  function lcAbrir(){
+    LC.open = true; LC.visto = Date.now(); try { localStorage.setItem("nvLuciVisto", String(LC.visto)); } catch(e){}
+    if (!LC.pane){
+      var P = document.createElement("div"); P.id = "nluPane";
+      P.innerHTML = '<div class="hd"><div class="av"><img src="' + LUCI_IMG + '"></div><div><b>Luci</b><span>● en línea · compras, pagos, stock y producción</span></div><button class="x" type="button">Cerrar</button></div><div class="ms"></div>' +
+        '<div class="ch"><button type="button" data-q="/ayuda">¿Qué sabés hacer?</button><button type="button" data-q="/ver ">/ver</button><button type="button" data-q="/pagué ">/pagué</button><button type="button" data-q="/iris ">/iris</button><button type="button" data-q="/entra ">/entra</button></div>' +
+        '<form><textarea placeholder="Escribile a Luci… (ej: /ver aurora)"></textarea><button type="submit">Enviar</button></form>';
+      document.body.appendChild(P); LC.pane = P;
+      P.querySelector(".x").onclick = lcCerrar;
+      var ta = P.querySelector("textarea");
+      P.querySelector("form").onsubmit = function(e){ e.preventDefault(); var t = ta.value; ta.value = ""; lcMandar(t); };
+      ta.onkeydown = function(e){ if (e.key === "Enter" && !e.shiftKey){ e.preventDefault(); P.querySelector("form").onsubmit(e); } };
+      P.querySelector(".ch").onclick = function(e){ var b = e.target.closest("[data-q]"); if (!b) return; if (b.dataset.q === "/ayuda"){ lcMandar("/ayuda"); return; } ta.value = b.dataset.q; ta.focus(); };
+      P.querySelector(".ms").onclick = function(e){ var b = e.target.closest("[data-lc]"); if (!b) return; lcAccion(b.dataset.lc, b.dataset.x, b.dataset.i); };
+    }
+    LC.pane.style.display = "flex"; LC.primera = true; lcPos(); lcPintar(); lcLeer(); lcBadge();
+    var w = document.querySelector(".chw"); if (w) w.classList.add("nlu-chon");
+    var cb = document.getElementById("nluChb"); if (cb) cb.classList.add("on");
+  }
+  function lcCerrar(){ LC.open = false; if (LC.pane) LC.pane.style.display = "none"; var w = document.querySelector(".chw"); if (w) w.classList.remove("nlu-chon"); var cb = document.getElementById("nluChb"); if (cb) cb.classList.remove("on"); }
+  function lcMontar(){
+    var mov = document.querySelector(".chw .chb.nvmovtop"), w = document.querySelector(".chw");
+    if (!mov || !w){ if (LC.open) lcCerrar(); return; }
+    if (!document.getElementById("nluChb")){
+      var b = mov.cloneNode(true); b.id = "nluChb"; b.classList.remove("nvmovtop"); b.classList.remove("on"); b.removeAttribute("data-nvg"); b.style.setProperty("--chc", "#C98AA0");
+      var ic = b.querySelector(".chi"); if (ic){ ic.removeAttribute("data-l"); ic.innerHTML = '<img src="' + LUCI_IMG + '">'; }
+      var t1 = b.querySelector(".chl1"); if (t1) t1.textContent = "Luci";
+      [].forEach.call(b.querySelectorAll(".chbt span"), function(s){ if (s !== t1 && !s.contains(t1) && s.children.length === 0 && s !== b.querySelector(".chr1")) s.textContent = ""; });
+      [].forEach.call(b.querySelectorAll("[class*=n], .chn, .chu"), function(s){ if (/^\d+$/.test(s.textContent.trim())) s.textContent = ""; });
+      var bd = document.createElement("span"); bd.id = "nluBadge"; (b.querySelector(".chr1") || b).appendChild(bd);
+      b.addEventListener("click", function(e){ e.preventDefault(); e.stopPropagation(); lcAbrir(); }, true);
+      mov.parentNode.insertBefore(b, mov.nextSibling); lcBadge();
+      w.addEventListener("click", function(e){ var o = e.target.closest(".chb"); if (o && o.id !== "nluChb" && LC.open) lcCerrar(); }, true);
+    }
+    if (LC.open){ w.classList.add("nlu-chon"); lcPos(); }
+  }
+  setInterval(function(){ try { lcMontar(); } catch(e){} }, 700);
+  window.addEventListener("resize", function(){ try { lcPos(); } catch(e){} });
+  setInterval(function(){ if (!document.hidden && (LC.open || !LC.sig)) lcLeer(); }, 5000);
+  setInterval(function(){ if (!document.hidden && !LC.open) lcLeer(); }, 60000);
+  window.__nvLuciChat = lcAbrir;
+  window.__nvLuciCmd = function(t){ procesar(t); return LC.msgs; }; window.__nvLuciAcc = lcAccion;
   function pintar(){
     if (!ROOT || !ROOT.isConnected) return;
     ROOT.innerHTML = V.vista === "luci" ? vLuci() : V.id ? vFicha() : vLista();
