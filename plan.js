@@ -1204,7 +1204,7 @@
   var LUUSD = 0;
   function luciUsd(){
     if (!sb() || Date.now() - LUUSD < 90e3) return; LUUSD = Date.now();
-    var desde = new Date(Date.now() - 3 * 864e5).toISOString();
+    var desde = new Date(Math.max(Date.now() - 3 * 864e5, Date.parse("2026-11-27T20:30:00Z"))).toISOString();
     sb().from("movimientos").select("id,msg_id,texto,autor,monto,creado").gte("creado", desde).order("id", { ascending: false }).limit(60).then(function(r){
       (r.data || []).forEach(function(mv){
         var t = String(mv.texto || ""), low = t.toLowerCase();
@@ -1230,6 +1230,7 @@
   window.__nvLuci = { alertas: function(){ return alertas(); }, texto: function(){ return textoChat(); }, usd: function(){ LUUSD = 0; luciUsd(); }, push: luciPush };
   /* ================= Canal "Luci" en el chat: comandos, aprobaciones y respuestas ================= */
   LUCI_CANAL = "luci";
+  var LUCI_INICIO = Date.parse("2026-11-27T20:30:00Z"); /* Luci solo mira lo que pasa desde que empezó a trabajar */
   var LC = { open: false, msgs: [], busy: false, last: 0, pane: null, visto: 0 };
   try { LC.visto = +localStorage.getItem("nvLuciVisto") || 0; } catch(e){}
   function nrm(s){ return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim(); }
@@ -1408,7 +1409,7 @@
   var LCMOV = 0;
   function lcMovs(){
     if (!sb() || !provs().length || Date.now() - LCMOV < 60e3) return; LCMOV = Date.now();
-    var desde = new Date(Date.now() - 2 * 864e5).toISOString();
+    var desde = new Date(Math.max(Date.now() - 2 * 864e5, LUCI_INICIO)).toISOString();
     sb().from("movimientos").select("id,texto,autor,monto,contraparte,signo,creado").gte("creado", desde).order("id", { ascending: false }).limit(60).then(function(r){
       (r.data || []).forEach(function(mv){
         if (!(+mv.monto > 0) || mv.signo === "ingreso") return;
