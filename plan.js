@@ -1510,6 +1510,7 @@
     lcEnviar(t, soy() || "euge").then(function(){
       if (cmdT){ t = cmdT; }
       else {
+        if (/^(ver\s+|los\s+)?seguimientos?\b/i.test(t)){ segAbrir(); return; }
         if (/^(luci[,:]?\s*)?(aprend[eé]|acordate|record[aá]|anot[aá] que|sab[eé] que)\b/i.test(t)){ luAprender(t); return; }
         var qq = quien(t), pal = t.split(/\s+/).length;
         if (/retir/i.test(t) && !qq.pv && (qq.tj || !/\b(aurora|licari|grass|bicentenario)\b/i.test(t))){ LC.tip = true; lcPintar(); setTimeout(function(){ LC.tip = false; luci(qq.tj ? retirarTej(qq.tj) : retirarTodas()); }, 450); return; }
@@ -1521,7 +1522,7 @@
     });
   }
   function lcAccion(id, x, i){
-    var m = LC.msgs.find(function(z){ return z.id === id; }); if (!m || m.est) return;
+    var m = LC.msgs.find(function(z){ return z.id === id; }); if (m && m.acc && m.acc.tipo === "seg"){ segAbrir(); return; } if (!m || m.est) return;
     if (m.acc && m.acc.tipo === "pedok"){
       lcMarcar(m, x === "no" ? "no" : "ok");
       if (x === "no"){ luci("Dale, mañana a las 18 te lo vuelvo a recordar 😉"); return; }
@@ -1611,6 +1612,7 @@
       var lu = m.por === "luci", yo = !lu && m.por === me, a = m.acc, bt = "";
       if (a && !m.est){
         if (a.tipo === "elegir") bt = '<div class="bt">' + a.ops.map(function(o, i){ return '<button data-lc="' + m.id + '" data-x="ok" data-i="' + i + '">' + esc(o[1]) + '</button>'; }).join("") + '<button data-lc="' + m.id + '" data-x="no">Ninguno</button></div>';
+        else if (a.tipo === "seg") bt = '<div class="bt"><button class="dk" data-lc="' + m.id + '" data-x="seg">📋 Ver seguimientos</button></div>';
         else if (a.tipo === "pedok") bt = '<div class="bt"><button class="dk" data-lc="' + m.id + '" data-x="ok">Ya está pedido ✓</button><button data-lc="' + m.id + '" data-x="no">Todavía no</button></div>';
         else bt = '<div class="bt"><button class="dk" data-lc="' + m.id + '" data-x="ok">Sí, cargalo</button><button data-lc="' + m.id + '" data-x="no">No</button></div>';
       } else if (a && m.est) bt = '<div class="est">' + (a.tipo === "pedok" ? (m.est === "ok" ? "✓ Pedido" : "Pendiente — te lo recuerdo mañana") : m.est === "ok" ? "✓ Aprobado" : "✕ Cancelado") + '</div>';
@@ -1768,6 +1770,86 @@
   }
   setInterval(function(){ try { luci12(); } catch(e){} }, 60000);
   window.__nvLuci12 = function(){ LU12 = 0; return luci12("ver"); };
+  /* ---------- Seguimientos del día para Pau (lista para mandar por WhatsApp) ---------- */
+  var SEGOK = {};
+  function segLeerOk(){ if (!sb()) return Promise.resolve(); return sb().from("registros").select("id").eq("tabla", "luci_seg").then(function(r){ if (!r.error){ SEGOK = {}; (r.data || []).forEach(function(x){ SEGOK[x.id] = 1; }); } }, function(){}); }
+  function segFila(x){ return x && x.id && x.guia && String(x.enviado || "").slice(0, 10) >= hoyMenos(3) && String(x.enviado || "").slice(0, 10) >= "2026-11-27"; }
+  function segLista(){ return (ST().seguimiento || []).filter(function(x){ return !x.borrado && segFila(x); }).sort(function(a, b){ return String(b.enviado).localeCompare(String(a.enviado)) || String(a.nombre).localeCompare(String(b.nombre)); }); }
+  function segMsg(x){
+    var emp = x.empresa || "Vía Cargo", g = String(x.guia || ""), se = (window.SEG_EMP || []).filter(function(e){ return e[0] === emp; })[0] || [];
+    var url = /v[ií]a\s*cargo/i.test(emp) ? "https://viacargo.com.ar/seguimiento-de-envio/" : String(se[1] || "").replace("{g}", g);
+    return "Hola, queremos avisarte que tu pedido fue despachado! ✨\n\n📦 Transporte: " + emp + "\n🔢 Código de seguimiento: " + g + (url ? "\n\nPodés verificar su estado desde acá 👉 " + url : "") + "\n\nMuchas gracias por elegirnos ! Cualquier cosa, estamos a tu disposición !";
+  }
+  function segTel(t){ t = String(t || "").replace(/\D/g, ""); if (!t) return ""; if (/^0/.test(t)) t = t.replace(/^0/, ""); if (t.length === 10) t = "549" + t; if (/^54(?!9)/.test(t) && t.length === 12) t = "549" + t.slice(2); return t; }
+  function segCopiar(txt){
+    try { if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(txt).then(function(){ toast("Copiado ✓"); }, function(){ segCopiar2(txt); }); } catch(e){}
+    segCopiar2(txt);
+  }
+  function segCopiar2(txt){ var ta = document.createElement("textarea"); ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); toast("Copiado ✓"); } catch(e){} ta.remove(); }
+  function segMarcar(id){ SEGOK[id] = 1; segPintar(); sb().from("registros").upsert({ tabla: "luci_seg", id: id, data: { id: id, por: soy(), fecha: hoyISO() }, borrado: false, actualizado: new Date().toISOString(), por: soy() || "luci" }, { onConflict: "tabla,id" }).then(function(){}); }
+  function segPintar(){
+    var B = document.getElementById("nluSeg"); if (!B) return;
+    var L = segLista(), pend = L.filter(function(x){ return !SEGOK[x.id]; }), dias = {};
+    L.forEach(function(x){ var f = String(x.enviado).slice(0, 10); (dias[f] = dias[f] || []).push(x); });
+    var h = '<div class="sh"><button class="x" data-sg="cerrar">✕</button><b>Seguimientos</b><small>' + (pend.length ? pend.length + " para mandar · tocá WhatsApp y se abre el chat con el mensaje listo" : "Todo mandado ✓ ¡Bien ahí!") + '</small></div><div class="sl">';
+    if (!L.length) h += '<p class="vac">No hay envíos con guía en los últimos días.</p>';
+    Object.keys(dias).sort().reverse().forEach(function(f){
+      h += '<div class="dia">' + (f === hoyISO() ? "Hoy" : fcorta(f)) + '</div>';
+      dias[f].forEach(function(x){
+        var ok = SEGOK[x.id], tel = segTel(x.tel);
+        h += '<div class="it' + (ok ? " ok" : "") + '"><b>' + esc(x.nombre || "Cliente") + (x.venta ? ' · ' + esc(x.venta) : "") + '</b><small>' + esc(x.empresa || "") + ' · ' + esc(x.guia) + (ok ? " · ya mandado ✓" : "") + '</small>' +
+          (ok ? "" : '<div class="r">' + (tel ? '<a class="wa" data-sg="wa" data-id="' + esc(x.id) + '" href="https://wa.me/' + tel + '?text=' + encodeURIComponent(segMsg(x)) + '" target="_blank" rel="noopener">WhatsApp</a>' : '<span class="no">Sin teléfono</span>') + '<button data-sg="cp" data-id="' + esc(x.id) + '">Copiar</button><button data-sg="ok" data-id="' + esc(x.id) + '">✓ Enviado</button></div>') + '</div>';
+      });
+    });
+    h += '</div>' + (pend.length > 1 ? '<button class="all" data-sg="todos">Copiar todos los mensajes juntos</button>' : "");
+    B.innerHTML = h;
+  }
+  function segAbrir(){
+    var P = LC.pane || document.body;
+    var B = document.getElementById("nluSeg");
+    if (!B){ B = document.createElement("div"); B.id = "nluSeg"; P.appendChild(B);
+      B.onclick = function(e){
+        var b = e.target.closest("[data-sg]"); if (!b) return; var a = b.dataset.sg, x = segLista().filter(function(z){ return z.id === b.dataset.id; })[0];
+        if (a === "cerrar"){ B.remove(); return; }
+        if (a === "cp" && x){ segCopiar(segMsg(x)); return; }
+        if (a === "ok" && x){ segMarcar(x.id); return; }
+        if (a === "wa" && x){ setTimeout(function(){ if (!SEGOK[x.id] && window.confirm("¿Ya le mandaste el seguimiento a " + (x.nombre || "este cliente") + "?")) segMarcar(x.id); }, 1500); return; }
+        if (a === "todos"){ segCopiar(segLista().filter(function(z){ return !SEGOK[z.id]; }).map(function(z){ return "👤 " + (z.nombre || "") + (z.tel ? " · " + z.tel : "") + "\n" + segMsg(z); }).join("\n\n————————\n\n")); }
+      };
+    }
+    segPintar(); segLeerOk().then(segPintar);
+  }
+  (function(){ var s = document.createElement("style"); s.textContent = [
+    "#nluSeg{position:absolute;inset:0;z-index:5;background:#FFFCFA;display:flex;flex-direction:column;font-family:Outfit,system-ui,sans-serif}",
+    "#nluSeg .sh{padding:14px 16px 10px;border-bottom:1px solid #EFE4E0;background:#fff;position:relative}#nluSeg .sh b{font-size:17px;font-weight:600}#nluSeg .sh small{display:block;color:#8A7A72;font-size:13px;margin-top:2px;padding-right:30px}",
+    "#nluSeg .x{position:absolute;right:12px;top:12px;width:32px;height:32px;border-radius:50%;border:1px solid #EFE4E0;background:#fff;font-size:15px;cursor:pointer;color:#5A4334}",
+    "#nluSeg .sl{flex:1;overflow:auto;padding:10px 14px 14px}#nluSeg .dia{font-size:12px;font-weight:600;color:#8A4F65;text-transform:uppercase;letter-spacing:.06em;margin:10px 2px 6px}",
+    "#nluSeg .it{border:1px solid #EFE4E0;border-radius:14px;padding:10px 12px;margin-bottom:8px;background:#fff}#nluSeg .it b{font-size:14.5px;font-weight:600}#nluSeg .it small{display:block;color:#8A7A72;font-size:12.5px;margin:2px 0 8px;word-break:break-all}",
+    "#nluSeg .it.ok{background:#F6F4F2}#nluSeg .it.ok b{color:#A0938B}#nluSeg .it.ok small{margin-bottom:0}",
+    "#nluSeg .r{display:flex;gap:6px}#nluSeg .r>*{flex:1;text-align:center;padding:9px 0;border-radius:10px;font:inherit;font-size:13.5px;border:1px solid #E6D8D3;background:#fff;color:#2A211C;text-decoration:none;cursor:pointer}",
+    "#nluSeg .r .wa{background:#E8F3EC;color:#3F7A55;border-color:#CFE6D7;font-weight:500}#nluSeg .r .no{color:#A0938B;font-size:12.5px}",
+    "#nluSeg .all{margin:0 14px 14px;padding:12px;border-radius:12px;border:0;background:#54433D;color:#fff;font:inherit;font-size:14.5px;cursor:pointer}#nluSeg .vac{color:#8A7A72;font-size:14px}"
+  ].join("\n"); document.head.appendChild(s); })();
+  /* aviso a Pau: a la tarde si hubo envíos hoy; a la mañana si quedó alguno sin mandar */
+  var LUSEG = 0;
+  function luciSeg(){
+    if (!sb() || !(LOADED || ST().loaded) || Date.now() - LUSEG < 10 * 60e3) return; LUSEG = Date.now();
+    var d = new Date(), h = d.getHours(), dw = d.getDay(); if (dw === 0 || dw === 6) return;
+    segLeerOk().then(function(){
+      var hoy = hoyISO(), L = segLista(), deHoy = L.filter(function(x){ return String(x.enviado).slice(0, 10) === hoy; }), viejos = L.filter(function(x){ return String(x.enviado).slice(0, 10) < hoy && !SEGOK[x.id]; });
+      if (h >= 17 && h < 22 && deHoy.filter(function(x){ return !SEGOK[x.id]; }).length){ var id = "luci-seg-" + hoy; luciDecirAcc(id, "@Pau hoy salieron " + deHoy.length + (deHoy.length === 1 ? " envío" : " envíos") + " 📦\nTe dejé los seguimientos listos para mandar.", "Seguimientos de hoy listos para mandar"); }
+      if (h >= 10 && h < 21 && viejos.length){ var id2 = "luci-segp-" + hoy; luciDecirAcc(id2, "@Pau quedaron " + viejos.length + (viejos.length === 1 ? " seguimiento" : " seguimientos") + " sin mandar de " + (viejos.length === 1 ? "un día anterior" : "días anteriores") + " 🙏\n¿Los mandamos hoy?", "Quedaron seguimientos sin mandar"); }
+    });
+  }
+  function luciDecirAcc(id, texto, aviso){
+    return sb().from("registros").select("id").eq("tabla", "chat").eq("id", id).then(function(r){
+      if (r.error || (r.data && r.data.length)) return;
+      var now = Date.now();
+      return sb().from("registros").upsert({ tabla: "chat", id: id, data: { id: id, adj: [], por: "luci", reac: {}, canal: "luci", texto: texto, creado: now, borrado: false, cambiado: now, acc: { tipo: "seg" } }, borrado: false, actualizado: new Date().toISOString(), por: "luci" }, { onConflict: "tabla,id", ignoreDuplicates: true }).then(function(w){ if (!w.error){ luciPush(aviso, id); lcLeer(); } });
+    });
+  }
+  setInterval(function(){ try { luciSeg(); } catch(e){} }, 60000);
+  window.__nvSeg = { abrir: segAbrir, lista: segLista, msg: segMsg };
   function pintar(){
     if (!ROOT || !ROOT.isConnected) return;
     ROOT.innerHTML = V.vista === "luci" ? vLuci() : V.id ? vFicha() : vLista();
