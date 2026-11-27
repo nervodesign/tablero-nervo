@@ -783,6 +783,7 @@
     ".nfi-sh-t{font-size:17px!important;color:#241C17!important;font-weight:600!important;margin:4px 0 12px!important}",
     ".nfi-sh-row{display:flex;gap:10px;margin:0 0 12px}.nfi-sh-row label{flex:1;font-size:12.5px;color:#7A6D64}.nfi-sh-row .npl-in{width:100%;margin-top:4px}",
     ".nfi-pre{white-space:pre-wrap;background:#F7F5F3;border-radius:14px;padding:12px 14px;font:13.5px/1.5 Outfit,system-ui,sans-serif;margin:0 0 12px;color:#241C17}",
+    ".nfi-fl{display:block;font-size:12.5px;color:#7A6D64;margin:0 0 12px}.nfi-fl .npl-ta{display:block;margin-top:4px;min-height:200px;font-size:15px}",
     ".nfi-sh-btns{display:flex;gap:8px}.nfi-sh-btns .npl-btn{flex:1;padding:12px;font-size:15px}",
     "@media (min-width:760px){.nfi-list{grid-template-columns:repeat(2,minmax(0,1fr))}.nfi-body{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);padding:22px;gap:22px}.nfi-hero{padding:26px 26px 22px}}",
     "@media (min-width:1300px){#nfiRoot{max-width:1060px}}"
@@ -876,14 +877,28 @@
     var p = L && L.guardar ? L.guardar(["proveedores", fila]) : Promise.reject(new Error("sin conexión"));
     return Promise.resolve(p).then(function(){ toast("Guardado"); try { N().render && N().render(); } catch(e){} pintar(); }, function(e){ toast("No se pudo guardar: " + (e && e.message || e)); });
   }
-  function pedidoNuevo(f){
-    var det = pedir("¿Qué le pedimos? (podés poner varias líneas después)"); if (!det) return;
-    var tot = pedir("Total a pagar (dejalo vacío si todavía no lo sabés)", ""); if (tot == null) return;
-    var pv = provDe(f);
-    if (!pv){ pv = { id: uid("pv"), proveedor: String(f.nombre || "").split(/\s+[·|-]\s+/)[0], alias: aliasDe(f), moneda: "ARS", nota: "", pedidos: [], creado: Date.now() }; (ST().proveedores = ST().proveedores || []).push(pv); f.pagarId = pv.id; guardar(f, true); }
-    pv.pedidos = pv.pedidos || [];
-    pv.pedidos.push({ id: uid("pd"), orden: "", total: Number(String(tot).replace(/[^\d]/g, "")) || 0, vence: "", nota: "", pagos: [], estado: "espera", detalle: det, fecha: hoyISO(), retiro: "", retiroOk: false });
-    guardarProv(pv);
+  function pedidoNuevo(f){ formPedido(f, null); }
+  function formPedido(f, d){
+    var nuevo = !d;
+    hoja('<h5 class="nfi-sh-t">' + (nuevo ? "Pedido nuevo · " + esc(f.nombre) : "Editar pedido") + '</h5>' +
+      '<label class="nfi-fl">Detalle del pedido<textarea id="pdDet" class="npl-ta" rows="10" placeholder="Ej:&#10;- 8 Aplique Pisa rafia&#10;- 2 Colgante Vat 40 cm">' + esc(d ? d.detalle || "" : "") + '</textarea></label>' +
+      '<div class="nfi-sh-row"><label>Total a pagar<input id="pdTot" class="npl-in" inputmode="numeric" placeholder="Vacío si no lo sabés" value="' + (d && d.total ? d.total : "") + '"></label>' +
+      '<label>Vence<input id="pdVen" type="date" class="npl-in" value="' + esc(d ? d.vence || "" : "") + '"></label></div>' +
+      '<div class="nfi-sh-btns"><button class="npl-btn" id="pdNo">Cancelar</button><button class="npl-btn dark" id="pdOk">Guardar</button></div>',
+      function(hj, cerrar){
+        if (nuevo) setTimeout(function(){ var t = hj.querySelector("#pdDet"); if (t) t.focus(); }, 60);
+        hj.querySelector("#pdNo").onclick = cerrar;
+        hj.querySelector("#pdOk").onclick = function(){
+          var det = hj.querySelector("#pdDet").value.trim(); if (!det){ hj.querySelector("#pdDet").focus(); return; }
+          var tot = Number(String(hj.querySelector("#pdTot").value).replace(/[^\d]/g, "")) || 0, ven = hj.querySelector("#pdVen").value;
+          var pv = provDe(f);
+          if (!pv){ pv = { id: uid("pv"), proveedor: String(f.nombre || "").split(/\s+[·|-]\s+/)[0], alias: aliasDe(f), moneda: "ARS", nota: "", pedidos: [], creado: Date.now() }; (ST().proveedores = ST().proveedores || []).push(pv); f.pagarId = pv.id; guardar(f, true); }
+          pv.pedidos = pv.pedidos || [];
+          if (nuevo) pv.pedidos.push({ id: uid("pd"), orden: "", total: tot, vence: ven, nota: "", pagos: [], estado: "espera", detalle: det, fecha: hoyISO(), retiro: "", retiroOk: false });
+          else { d.detalle = det; d.total = tot; d.vence = ven; }
+          cerrar(); guardarProv(pv);
+        };
+      });
   }
   function pedidoMenu(f, pid){
     var pv = provDe(f); if (!pv) return; var d = (pv.pedidos || []).find(function(x){ return x.id === pid; }); if (!d) return;
@@ -893,10 +908,9 @@
       '<p style="margin:-6px 0 12px;color:#7A6D64;font-size:13.5px;line-height:1.5">Total ' + (Number(d.total) ? plata(d.total) : "a confirmar") + ' · pagado ' + plata(pg) + (Number(d.total) ? " · falta " + plata(sal) : "") + (pagos ? "<br>" + pagos : "") + '</p>' +
       '<button class="it" data-x="pago"><i>$</i>Registrar un pago</button>' +
       '<button class="it" data-x="est"><i>↻</i>Estado: ' + (EST[d.estado] || "En espera") + ' (tocá para cambiar)</button>' +
-      '<button class="it" data-x="tot"><i>✎</i>Cambiar total</button>' +
-      '<button class="it" data-x="det"><i>✎</i>Editar detalle</button>' +
-      '<button class="it" data-x="ven"><i>📅</i>Fecha de vencimiento</button>',
+      '<button class="it" data-x="edit"><i>✎</i>Editar pedido (detalle, total y vencimiento)</button>',
       function(hj, cerrar){ hj.onclick = function(ev){ var b = ev.target.closest("button.it"); if (!b) return; cerrar(); var x = b.dataset.x;
+        if (x === "edit"){ formPedido(f, d); return; }
         if (x === "pago"){ var m = pedir("Monto del pago", sal ? String(sal) : ""); if (!m) return; var mm = Number(String(m).replace(/[^\d]/g, "")) || 0; if (!mm) return;
           var por = pedir("¿Quién pagó? (euge o pau)", soy() || ""); if (por == null) return; d.pagos = (d.pagos || []).concat([{ monto: mm, fecha: hoyISO(), nota: "", por: String(por).toLowerCase().trim() }]); }
         else if (x === "est"){ d.estado = d.estado === "espera" ? "curso" : d.estado === "curso" ? "entregado" : "espera"; }
