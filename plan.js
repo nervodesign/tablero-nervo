@@ -1464,12 +1464,44 @@
     }
     return luci("Mmm, ese comando no lo conozco 🙈 Escribí /ayuda y te muestro los que sé.");
   }
+  /* ---------- Luci con IA: arma un resumen del tablero y pregunta ---------- */
+  function luContexto(){
+    var S = ST(), o = {};
+    o.proveedores = provs().map(function(pv){ return { nombre: pv.proveedor, pedidos: pedidosDe(pv).filter(function(d){ return etapaDe(pv, d) !== "deposito" || (+d.total || 0) > pagado(d) || (d.fecha || "") >= hoyMenos(60); }).map(function(d){ return { fecha: d.fecha, detalle: String(d.detalle || "").slice(0, 300), total: +d.total || 0, pagado: pagado(d), etapa: ETQ[etapaDe(pv, d)] || "", vence: d.vence || "", pagos: arr(d.pagos).map(function(p){ return [p.fecha || "", +p.monto || 0]; }) }; }) }; });
+    o.equipo = (S.tejedoras || []).filter(function(t){ return !t.borrado; }).map(function(t){ var d = tjCuenta(t); return { nombre: t.nombre, tipo: t.tipo || "tejedora", saldo: d, saldo_txt: d > 0 ? "le deben " + d : d < 0 ? "saldo a favor de Nervo " + (-d) : "al dia", falta_retirar: tjPendientes(t).map(function(x){ return [x.q, x.que, x.q * x.p]; }), ultimos_retiros: arr(t.cargos).slice(-6).map(function(c){ return [c.fecha, c.concepto, +c.monto || 0]; }), ultimos_pagos: arr(t.pagos).slice(-6).map(function(p){ return [p.fecha, +p.monto || 0]; }) }; });
+    o.stock = (S.stock || []).filter(function(s){ return !s.borrado; }).map(function(s){ return [s.producto, (s.tipo || "terminado") === "armazon" ? "armazon" : "terminado", +s.cantidad || 0]; });
+    o.tareas_abiertas = (S.tareas || []).filter(function(t){ return !t.borrado && t.estado !== "hecha" && t.estado !== "lista" && !t.hecha; }).slice(0, 80).map(function(t){ return [t.titulo || t.texto || "", t.resp || "", t.fecha || "", t.prio || ""]; });
+    var B = S.bzData || {}; o.pedidos_clientes_abiertos = [].concat(B.min || [], B.may || []).filter(function(x){ return !/ENVIAD|ENTREGAD|CANCEL/.test(luEnvC(x)) && (x.fecha || "") >= hoyMenos(45); }).map(function(x){ return { venta: x.venta || "", cliente: x.cliente || "", estado: luEnvC(x), productos: arr(x.prods), cant: x.cant || "", fecha: x.fecha || "" }; });
+    var V = S.ven; if (V && V.ord){ var mes = hoyISO().slice(0, 7), om = V.ord.filter(function(x){ return String(x.f || "").slice(0, 7) === mes; }); o.ventas_mes = { cantidad: om.length, facturado: om.reduce(function(a, x){ return a + (+x.t || 0); }, 0), ultimas: om.slice(-15).map(function(x){ return [x.f, x.v, x.c, +x.t || 0]; }) }; o.productos_vendidos_mes = (V.items || []).filter(function(x){ return x.m === mes; }).map(function(x){ return [x.p, x.q]; }); }
+    try { o.rutina_hoy = textoChat(); } catch(e){}
+    return JSON.stringify(o);
+  }
+  function luEnvC(x){ var e = x.env || x.estado || ""; if (Array.isArray(e)) e = e.join(" "); return String(e).toUpperCase().trim(); }
+  function hoyMenos(n){ var d = new Date(Date.now() - n * 864e5); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  function luciPiensa(t, siFalla){
+    var run = window.google && google.script && google.script.run; if (!run){ siFalla(); return; }
+    LC.tip = true; lcPintar();
+    var hist = LC.msgs.slice(-8, -1).map(function(m){ return { yo: m.por !== "luci", t: m.texto }; }), fin = false;
+    function listo(){ if (fin) return false; fin = true; LC.tip = false; lcPintar(); return true; }
+    setTimeout(function(){ if (listo()) luci("Uy, me estoy tardando mucho 🙈 Probá de nuevo en un ratito."); }, 45000);
+    try {
+      run.withSuccessHandler(function(r){ if (!listo()) return; if (r && r.t) luci(r.t); else siFalla(); })
+        .withFailureHandler(function(e){ if (!listo()) return; var m = String(e && e.message || e); if (/no disponible/i.test(m)) siFalla(); else if (/429|quota/i.test(m)) luci("Hoy ya usé todas mis consultas de IA 🙈 Mañana vuelvo a poder. Mientras tanto probá /ayuda."); else luci("Uy, no pude pensar eso ahora 🙈 Probá de nuevo en un rato."); })
+        .luciIA(t, luContexto(), hist);
+    } catch(e){ listo(); siFalla(); }
+  }
   function lcMandar(t){
     t = String(t || "").trim(); if (!t) return;
     var cmdT = t.charAt(0) === "/" ? t : (/^(pagu[eé]|pago|pagamos|se[ñn]a|lleg[oó]|retiro|entra|sale|ver|pedido|llev[eé]|ayuda|agreg\S*|carg\S*|anot\S*)(?=\s|$)/i.test(t) ? "/" + t : (tejPor(t.split(/\s+/)[0]) && /\d/.test(t) ? "/" + t : ""));
     lcEnviar(t, soy() || "euge").then(function(){
       if (cmdT){ t = cmdT; }
-      else { var qq = quien(t); if (/retir/i.test(t) && !qq.pv){ LC.tip = true; lcPintar(); setTimeout(function(){ LC.tip = false; luci(qq.tj ? retirarTej(qq.tj) : retirarTodas()); }, 450); return; } if (qq.pv || qq.tj){ LC.tip = true; lcPintar(); setTimeout(function(){ LC.tip = false; ver(qq.w); }, 450); return; } if (/\?\s*$/.test(t)){ setTimeout(function(){ luci("Mmm, esa no la sé todavía 🙈 Probá /ayuda y te muestro lo que sé hacer."); }, 450); return; } }
+      else {
+        var qq = quien(t), pal = t.split(/\s+/).length;
+        if (/retir/i.test(t) && !qq.pv && (qq.tj || !/\b(aurora|licari|grass|bicentenario)\b/i.test(t))){ LC.tip = true; lcPintar(); setTimeout(function(){ LC.tip = false; luci(qq.tj ? retirarTej(qq.tj) : retirarTodas()); }, 450); return; }
+        if ((qq.pv || qq.tj) && (pal <= 2 || /saldo|favor|deb[oe]|debemos|deuda|al d[ií]a/i.test(t))){ LC.tip = true; lcPintar(); setTimeout(function(){ LC.tip = false; ver(qq.w); }, 450); return; }
+        luciPiensa(t, function(){ if (qq.pv || qq.tj) ver(qq.w); else luci("Mmm, esa no la sé todavía 🙈 Probá /ayuda y te muestro lo que sé hacer."); });
+        return;
+      }
       if (t.charAt(0) === "/") { LC.tip = true; lcPintar(); setTimeout(function(){ LC.tip = false; try { procesar(t); } catch(e){ luci("Uy, algo me salió mal 🙈 Probá de nuevo."); } }, 450); }
     });
   }
@@ -1625,7 +1657,7 @@
   setInterval(function(){ if (!document.hidden && (LC.open || !LC.sig)) lcLeer(); }, 5000);
   setInterval(function(){ if (!document.hidden && !LC.open) lcLeer(); }, 60000);
   window.__nvLuciChat = lcAbrir;
-  window.__nvLuciCmd = function(t){ procesar(t); return LC.msgs; }; window.__nvLuciAcc = lcAccion; window.__nvLuciVer = { ficha: fichaTej, retirar: retirarTej, todas: retirarTodas, quien: quien };
+  window.__nvLuciCmd = function(t){ procesar(t); return LC.msgs; }; window.__nvLuciAcc = lcAccion; window.__nvLuciVer = { ctx: luContexto, ficha: fichaTej, retirar: retirarTej, todas: retirarTodas, quien: quien };
   /* ---------- Luci 18:00: pedidos sin armazón / sin stock ---------- */
   var LU_EXT = { aurora: ["mantua", "ravenna", "arezzo"], licari: ["vat", "roma", "pisa"], "la afortunada": ["gaetta"], grass: ["puglia", "cinque", "taormina", "liguria", "lombardia", "arauco", "brescia"] };
   var LU_GEN = { aplique: 1, colgante: 1, velador: 1, de: 1, pie: 1, mesa: 1, luz: 1, tipo: 1, set: 1, x: 1 };
