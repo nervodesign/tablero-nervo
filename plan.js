@@ -2016,6 +2016,43 @@
   }
   setInterval(function(){ try { luFotoMontar(); } catch(e){} }, 800);
   (function(){ var s = document.createElement("style"); s.textContent = "#nluPane form .cam{background:#FBF6F8!important;color:#8A4F65!important;border:1px solid #EAD6DE!important;padding:0 12px!important;font-size:18px!important}"; document.head.appendChild(s); })();
+  /* ---------- Movimientos en el celu: cada movimiento como tarjeta (sin tabla ancha) ---------- */
+  (function(){
+    var P = "html:not(#a):not(#b):not(#c) body ";
+    var R = [
+      ".nvmov-tb{overflow-x:visible!important;min-width:0!important;max-width:100%!important}",
+      ".nvmov-blqb,.nvmov-dia{min-width:0!important;max-width:100%!important}",
+      ".nvmov-th{display:none!important}",
+      ".nvmov-tb>.nvmov-it{min-width:0!important;width:auto!important;max-width:100%!important}",
+      ".nvmov-tb>.nvmov-it>.nvmov-tr{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:10px!important;padding:12px 12px 6px!important;width:auto!important;min-width:0!important;max-width:100%!important;box-sizing:border-box;align-items:end}",
+      ".nvmov-tb>.nvmov-it>.nvmov-tr>.nvmov-c{width:auto!important;min-width:0!important;max-width:none!important;border:0!important;padding:0!important;height:auto!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-end;order:3}",
+      ".nvmov-tb>.nvmov-it>.nvmov-tr>.nvmov-c:nth-child(1){order:0;flex-direction:row!important;align-items:center!important}",
+      ".nvmov-tb>.nvmov-it>.nvmov-tr>.nvmov-c:nth-child(10){order:1;flex-direction:row!important;align-items:center!important;justify-content:flex-end!important}",
+      ".nvmov-tb>.nvmov-it>.nvmov-tr>.nvmov-c:nth-child(2){order:2;grid-column:1/-1}",
+      ".nvmov-tb>.nvmov-it>.nvmov-tr>.nvmov-c:nth-child(7){grid-column:1/-1}",
+      ".nvmov-tb>.nvmov-it>.nvmov-tr>.nvmov-c:nth-child(9){order:9;grid-column:1/-1}",
+      ".nvmov-tb>.nvmov-it>.nvmov-tr>.nvmov-c:nth-child(9):empty{display:none!important}",
+      ".nvmov-tb>.nvmov-it>.nvmov-tr>.nvmov-c:nth-child(n+2):nth-child(-n+8)::before{display:block;font-size:11px;font-weight:600;color:#9A8A82;text-transform:uppercase;letter-spacing:.06em;margin:0 0 4px 2px}",
+      ".nvmov-tb>.nvmov-it>.nvmov-tr>.nvmov-c:nth-child(2)::before{content:'Concepto'}",
+      ".nvmov-tb>.nvmov-it>.nvmov-tr>.nvmov-c:nth-child(3)::before{content:'Fecha'}",
+      ".nvmov-tb>.nvmov-it>.nvmov-tr>.nvmov-c:nth-child(4)::before{content:'Categoría'}",
+      ".nvmov-tb>.nvmov-it>.nvmov-tr>.nvmov-c:nth-child(5)::before{content:'Total'}",
+      ".nvmov-tb>.nvmov-it>.nvmov-tr>.nvmov-c:nth-child(6)::before{content:'Cuenta'}",
+      ".nvmov-tb>.nvmov-it>.nvmov-tr>.nvmov-c:nth-child(7)::before{content:'Notas'}",
+      ".nvmov-tb>.nvmov-it>.nvmov-tr>.nvmov-c:nth-child(8)::before{content:'Se carga a'}",
+      ".nvmov-tb>.nvmov-it>.nvmov-tr .nvmov-in{width:100%!important;min-width:0!important;box-sizing:border-box;font-size:16px!important;border:1px solid #EAE2DC!important;border-radius:10px!important;padding:8px 10px!important;background:#fff!important;height:auto!important;text-align:left!important}",
+      ".nvmov-tb>.nvmov-it>.nvmov-sub{width:auto!important;max-width:100%!important;min-width:0!important;box-sizing:border-box;padding:4px 12px 12px!important}",
+      ".nvmov-tb>.nvmov-it>.nvmov-sub *{white-space:normal!important;overflow-wrap:anywhere;text-overflow:clip!important;max-width:100%}"
+    ];
+    var s = document.createElement("style"); s.textContent = "@media (max-width:760px){" + R.map(function(r){ return r.replace(/(^|,)\s*\.nvmov/g, function(m, a){ return a + P + ".nvmov"; }); }).join("\n") + "}"; document.head.appendChild(s);
+    function arreglar(){
+      if (window.innerWidth >= 760) return;
+      var L = document.querySelectorAll(".nvmov-tb>.nvmov-it>.nvmov-tr");
+      for (var i = 0; i < L.length; i++){ var st = L[i].getAttribute("style") || ""; if (st.indexOf("minmax(0px, 1fr)") < 0 && st.indexOf("minmax(0,1fr)") < 0) L[i].style.setProperty("grid-template-columns", "minmax(0,1fr) minmax(0,1fr)", "important"); }
+    }
+    try { new MutationObserver(function(){ arreglar(); }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["style"] }); } catch(e){}
+    setInterval(arreglar, 700);
+  })();
   function pintar(){
     if (!ROOT || !ROOT.isConnected) return;
     ROOT.innerHTML = V.vista === "luci" ? vLuci() : V.id ? vFicha() : vLista();
