@@ -1330,6 +1330,11 @@
       if (b.precio){ tj.cargos = arr(tj.cargos).concat([{ monto: b.precio * b.n, fecha: hoyISO(), concepto: b.n + " × " + b.que + " retiradas", por: soy() }]); }
       return guardarFila("tejedoras", tj).then(function(){ return stk(b.n); }).then(function(){ return "Listo ✓ Sumé " + b.n + " al stock (" + s.cantidad + " en total)" + (e ? " y lo marqué en el encargo de " + tj.nombre : "") + "."; });
     }
+    if (acc.cmd === "stkmov"){
+      var it = arr(b.items), hechos = [];
+      return it.reduce(function(p, x){ return p.then(function(){ var s2 = stockId(x.sid); if (!s2) return; s2.cantidad = Math.max(0, (+s2.cantidad || 0) + (+x.n || 0)); hechos.push(s2.producto + " → " + s2.cantidad); return guardarFila("stock", s2); }); }, Promise.resolve())
+        .then(function(){ return "Listo ✓ Actualicé el stock:\n" + hechos.map(function(h){ return "• " + h; }).join("\n"); });
+    }
     if (acc.cmd === "usdfb"){
       var its = arr(b.items);
       return Promise.all(its.map(function(x){ return usdPendNuevo({ fecha: x.fecha, concepto: "PAGO " + (+x.usd) + " USD PUBLICIDAD", monto: +x.usd, notas: /proceso/i.test(x.estado || "") ? "figuraba en proceso" : "", origen: "Facebook · desde captura (Luci)" }); }))
@@ -1537,6 +1542,12 @@
       return;
     }
     if (x === "no"){ lcMarcar(m, "no"); luci("Dale, no toco nada 👍"); return; }
+    if (m.acc && m.acc.tipo === "tejstk"){
+      var k = Math.max(0, +i || 0); m.elegido = k; lcMarcar(m, "ok");
+      if (!k){ luci("Dale, las " + m.acc.n + " salen directo para pedidos 📦"); return; }
+      ejecutar({ cmd: "stkmov", b: { items: [{ sid: m.acc.sid, n: k }] } }).then(function(t){ luci(t + (m.acc.n - k ? "\nLas otras " + (m.acc.n - k) + " quedan para pedidos 📦" : "")); });
+      return;
+    }
     if (m.acc && m.acc.tipo === "elegir"){ var op = m.acc.ops[+i]; if (!op) return; lcMarcar(m, "ok"); var b = m.acc.base; b.sid = op[0]; luciPropone(m.acc.cmd, b); return; }
     lcMarcar(m, "ok");
     ejecutar(m.acc).then(function(t){ luci(t); }, function(e){ luci("No pude guardarlo 🙈 (" + (e && e.message || e) + ")"); });
@@ -1619,11 +1630,12 @@
       var lu = m.por === "luci", yo = !lu && m.por === me, a = m.acc, bt = "";
       if (a && !m.est){
         if (a.tipo === "elegir") bt = '<div class="bt">' + a.ops.map(function(o, i){ return '<button data-lc="' + m.id + '" data-x="ok" data-i="' + i + '">' + esc(o[1]) + '</button>'; }).join("") + '<button data-lc="' + m.id + '" data-x="no">Ninguno</button></div>';
+        else if (a.tipo === "tejstk"){ var oo = []; for (var k = a.n; k >= 0; k--) oo.push('<button' + (k === a.n ? ' class="dk"' : "") + ' data-lc="' + m.id + '" data-x="ok" data-i="' + k + '">' + (k === a.n ? "Todas a stock (" + k + ")" : k === 0 ? "Ninguna (todas a pedidos)" : k + " a stock · " + (a.n - k) + " a pedidos") + '</button>'); bt = '<div class="bt">' + oo.join("") + '</div>'; }
         else if (a.tipo === "conteo") bt = '<div class="bt"><button class="dk" data-lc="' + m.id + '" data-x="c0">📦 Abrir conteo</button></div>';
         else if (a.tipo === "seg") bt = '<div class="bt"><button class="dk" data-lc="' + m.id + '" data-x="seg">📋 Ver seguimientos</button></div>';
         else if (a.tipo === "pedok") bt = '<div class="bt"><button class="dk" data-lc="' + m.id + '" data-x="ok">Ya está pedido ✓</button><button data-lc="' + m.id + '" data-x="no">Todavía no</button></div>';
         else bt = '<div class="bt"><button class="dk" data-lc="' + m.id + '" data-x="ok">Sí, cargalo</button><button data-lc="' + m.id + '" data-x="no">No</button></div>';
-      } else if (a && m.est) bt = '<div class="est">' + (a.tipo === "pedok" ? (m.est === "ok" ? "✓ Pedido" : "Pendiente — te lo recuerdo mañana") : m.est === "ok" ? "✓ Aprobado" : "✕ Cancelado") + '</div>';
+      } else if (a && m.est) bt = '<div class="est">' + (a.tipo === "tejstk" ? "✓ " + (m.est === "ok" ? (m.elegido != null ? m.elegido + " a stock" : "Hecho") : "Cancelado") : a.tipo === "pedok" ? (m.est === "ok" ? "✓ Pedido" : "Pendiente — te lo recuerdo mañana") : m.est === "ok" ? "✓ Aprobado" : "✕ Cancelado") + '</div>';
       return '<div class="m' + (yo ? " yo" : lu ? "" : " otra") + '">' + (yo ? "" : '<div class="a">' + (lu ? '<img src="' + LUCI_IMG + '">' : esc(String(m.por || "?").charAt(0).toUpperCase())) + '</div>') +
         '<div class="b">' + esc(m.texto).replace(/@(Pau|Euge)/g, "<b>@$1</b>") + bt + '<small>' + (lu || yo ? "" : esc(m.por === "pau" ? "Pau" : m.por === "euge" ? "Euge" : m.por) + " · ") + hora(m.creado) + '</small></div></div>';
     }).join("") + (LC.tip ? '<div class="tip">Luci está escribiendo…</div>' : "");
@@ -2133,6 +2145,92 @@
     "@media (max-width:760px){.nvusd-th{display:none}.nvusd-tr{grid-template-columns:minmax(0,1fr) minmax(0,1fr);padding:12px}.nvusd-tr .c0{order:0}.nvusd-tr .c5{order:1;text-align:right}.nvusd-tr .c1{order:2;grid-column:1/-1}.nvusd-tr .c2{order:3}.nvusd-tr .c3{order:4}.nvusd-tr .c4{order:5;grid-column:1/-1}.nvusd-tr .or{order:6;grid-column:1/-1;padding:0}.nvusd-tr input{border-color:#EAE2DC;background:#fff;font-size:16px}.nvusd-tr input.pos,.nvusd-tr input.neg{text-align:left}}"
   ].join("\n"); document.head.appendChild(s); })();
   window.__nvUsd = { leer: usdPendLeer, nuevo: usdPendNuevo };
+  /* ---------- Stock automático (se activa solo después de cerrar el día cero) ---------- */
+  var ST0 = { f: null, ts: 0, at: 0 };
+  function stkDia0(){
+    if (ST0.f || !sb() || Date.now() - ST0.at < 5 * 60e3) return Promise.resolve(ST0.f); ST0.at = Date.now();
+    return sb().from("registros").select("id,data").eq("tabla", "luci_conteo").like("id", "dia0-%").then(function(r){
+      var L = (r.data || []).map(function(x){ return x.data; }).filter(function(d){ return d && d.cerrado && d.fecha; }).sort(function(a, b){ return String(a.fecha).localeCompare(String(b.fecha)); });
+      if (L.length){ ST0.f = L[0].fecha; ST0.ts = Date.parse(L[0].fecha + "T00:00:00"); } return ST0.f;
+    }, function(){ return null; });
+  }
+  var SK_GEN = { colgante: 1, aplique: 1, velador: 1, de: 1, la: 1, el: 1, x: 1, kit: 0 };
+  function skPal(s){ return nrm(s).split(" ").filter(function(w){ return w && w.length > 1 && !SK_GEN[w]; }); }
+  /* busca el producto de stock que mejor coincide con un texto (todas las palabras del stock en el texto, o al revés) */
+  function skBuscar(txt, tipo){
+    var w = skPal(txt), ws = " " + w.join(" ") + " "; if (!w.length) return null;
+    var L = (ST().stock || []).filter(function(s){ return !s.borrado && s.producto && ((s.tipo || "terminado") === "armazon") === (tipo === "armazon"); });
+    var best = null, bp = 0;
+    L.forEach(function(s){
+      var p = skPal(s.producto); if (!p.length) return;
+      var dentro = p.filter(function(z){ return ws.indexOf(" " + z + " ") >= 0 || /\d/.test(z) && ws.indexOf(z.replace(/cm$/, "")) >= 0; }).length;
+      var todosTxt = w.every(function(z){ return p.indexOf(z) >= 0; });
+      var pts = dentro === p.length ? 100 + dentro * 10 - (p.length - dentro) : todosTxt ? 80 + w.length * 10 - (p.length - w.length) : 0;
+      if (pts > bp){ bp = pts; best = s; }
+    });
+    return best;
+  }
+  function skCard(id, texto, items, aviso){
+    return sb().from("registros").select("id").eq("tabla", "chat").eq("id", id).then(function(r){
+      if (r.error || (r.data && r.data.length)) return; var now = Date.now();
+      var data = { id: id, adj: [], por: "luci", reac: {}, canal: "luci", texto: texto, creado: now, borrado: false, cambiado: now };
+      if (items) data.acc = items;
+      return sb().from("registros").upsert({ tabla: "chat", id: id, data: data, borrado: false, actualizado: new Date().toISOString(), por: "luci" }, { onConflict: "tabla,id", ignoreDuplicates: true }).then(function(w){ if (!w.error){ luciPush(aviso || texto.split("\n")[0], id); lcLeer(); } });
+    });
+  }
+  function skLin(x){ var s = stockId(x.sid); return "• " + (x.n > 0 ? "+" : "") + x.n + " " + (s ? s.producto : "?") + " (hay " + (+(s || {}).cantidad || 0) + " → " + Math.max(0, (+(s || {}).cantidad || 0) + x.n) + ")"; }
+  /* 1) ventas: restan del stock terminado */
+  function skVentas(){
+    var B = ST().bzData; if (!B) return;
+    [].concat(B.min || [], B.may || []).forEach(function(x){
+      var f = String(x.fecha || "").slice(0, 10), cre = +x.creado || 0, env = luEnv(x);
+      if (!f || f < ST0.f || (cre && cre < ST0.ts) || /CANCEL/.test(env)) return;
+      var ps = arr(x.prods).length ? arr(x.prods) : String(x.productos || "").split(/\n|,/).filter(Boolean), cs = String(x.cant || "").split("\n").filter(function(l){ return /\[.\]/.test(l); });
+      var items = [], sin = [];
+      ps.forEach(function(p, i){ var q = +((String(cs[i] || "").match(/\]\s*(\d+)/) || [])[1]) || 1, s = skBuscar(p, "terminado"); if (s) items.push({ sid: s.id, n: -q }); else sin.push(q + " " + p); });
+      if (!items.length) return;
+      var v = x.venta || x.num || x.cliente || "", id = "luci-stv-" + String(v || x.id).replace(/\s+/g, "");
+      skCard(id, "🛒 Entró la venta " + v + (x.cliente && x.cliente !== v ? " (" + x.cliente + ")" : "") + ". Resto del stock:\n" + items.map(skLin).join("\n") + (sin.length ? "\nNo encontré en stock: " + sin.join(", ") + " (si es para fabricar, lo veo en el aviso de las 18)." : "") + "\n¿Lo resto?", { tipo: "cmd", cmd: "stkmov", b: { items: items, motivo: "venta " + v } }, "Venta " + v + ": restar del stock");
+    });
+  }
+  /* 2) retiros de tejedoras: preguntar cuántas van a stock y cuántas a pedidos */
+  function skTejedoras(){
+    (ST().tejedoras || []).filter(function(t){ return !t.borrado; }).forEach(function(t){
+      arr(t.encargos).forEach(function(e){
+        arr(e.retiros).forEach(function(r, ri){
+          if (!r.fecha || r.fecha < ST0.f || !(+r.cant > 0)) return;
+          var n = +r.cant, s = skBuscar(e.que, "terminado"), id = "luci-tjs-" + t.id + "-" + e.id + "-" + ri;
+          skCard(id, "🧶 Retiraron de " + t.nombre + " " + n + " × " + String(e.que || "").replace(/^[•·\s]+/, "") + ".\n" + (s ? "¿Cuántas van a stock (" + s.producto + ", hay " + (+s.cantidad || 0) + ")? El resto sale directo para pedidos." : "No encontré ese producto en stock 🙈 Si van a stock, cargalo con /entra."), s ? { tipo: "tejstk", sid: s.id, n: n } : null, "Retiro de " + t.nombre + ": ¿cuántas van a stock?");
+        });
+      });
+    });
+  }
+  /* 3) Gabriel y proveedores: cuando el pedido llega al depósito, sumar lo que vino */
+  function skIngresos(){
+    provs().forEach(function(pv){
+      var arm = /herrer/i.test(pv.proveedor);
+      pedidosDe(pv).forEach(function(d){
+        if (etapaDe(pv, d) !== "deposito") return;
+        var t = d.etapaAt || Date.parse((d.fecha || "2000-01-01") + "T12:00:00"); if (t < ST0.ts) return;
+        var items = [], sin = [];
+        String(d.detalle || "").split(/\n|,/).map(function(l){ return l.trim(); }).filter(Boolean).forEach(function(l){
+          var m = l.match(/^(\d+)\s*(?:x|u|un|unid\w*)?\.?\s+(.+)$/i) || l.match(/^(.+?)\s*x\s*(\d+)$/i); if (!m) { sin.push(l); return; }
+          var q = /^\d+$/.test(m[1]) ? +m[1] : +m[2], txt = /^\d+$/.test(m[1]) ? m[2] : m[1], s = skBuscar(txt, arm ? "armazon" : "terminado");
+          if (s) items.push({ sid: s.id, n: q }); else sin.push(l);
+        });
+        if (!items.length && !sin.length) return;
+        var id = "luci-sti-" + pv.id + "-" + d.id;
+        skCard(id, (arm ? "🔨 Llegaron los armazones de Gabriel" : "📦 Llegó al depósito el pedido de " + pv.proveedor) + " (" + fcorta(d.fecha) + ").\n" + (items.length ? "Sumo al stock:\n" + items.map(skLin).join("\n") : "") + (sin.length ? "\nNo encontré en stock: " + sin.join(" · ") + " (cargalo con /entra si corresponde)." : "") + (items.length ? "\n¿Lo sumo?" : ""), items.length ? { tipo: "cmd", cmd: "stkmov", b: { items: items, motivo: (arm ? "Gabriel" : pv.proveedor) + " " + fcorta(d.fecha) } } : null, (arm ? "Armazones de Gabriel" : pv.proveedor) + ": sumar al stock");
+      });
+    });
+  }
+  var SKT = 0;
+  function luciStock(){
+    if (!sb() || !(LOADED || ST().loaded) || Date.now() - SKT < 3 * 60e3) return; SKT = Date.now();
+    stkDia0().then(function(f){ if (!f) return; try { skVentas(); } catch(e){} try { skTejedoras(); } catch(e){} try { skIngresos(); } catch(e){} });
+  }
+  setInterval(function(){ try { luciStock(); } catch(e){} }, 60000);
+  window.__nvStk = { buscar: skBuscar, dia0: function(){ return ST0.f; } };
   function pintar(){
     if (!ROOT || !ROOT.isConnected) return;
     ROOT.innerHTML = V.vista === "luci" ? vLuci() : V.id ? vFicha() : vLista();
