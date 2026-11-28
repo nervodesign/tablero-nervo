@@ -206,7 +206,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
     CARGANDO = (async function(){
       var all = [], from = 0;
       while (true){
-        var q = await SB().from("registros").select("tabla,id,data,borrado").in("tabla", TABLAS).range(from, from + 999);
+        var q = await SB().from("registros").select("tabla,id,data,borrado").in("tabla", TABLAS).order("tabla").order("id").range(from, from + 999);
         if (q.error) throw q.error;
         all = all.concat(q.data || []); if ((q.data || []).length < 1000) break; from += 1000;
       }
@@ -341,7 +341,7 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
     if (CARG) return CARG;
     CARG = (async function(){
       var all = [], from = 0;
-      while (true){ var q = await SB().from("registros").select("tabla,id,data").in("tabla", BT).eq("borrado", false).range(from, from + 999); if (q.error) throw q.error; all = all.concat(q.data || []); if ((q.data || []).length < 1000) break; from += 1000; }
+      while (true){ var q = await SB().from("registros").select("tabla,id,data").in("tabla", BT).eq("borrado", false).order("tabla").order("id").range(from, from + 999); if (q.error) throw q.error; all = all.concat(q.data || []); if ((q.data || []).length < 1000) break; from += 1000; }
       var M = {}; BT.forEach(function(t){ M[t] = []; });
       all.forEach(function(r){ var d = r.data || {}; if (d.id == null || d.id === "") d.id = r.id; M[r.tabla].push(d); });
       if (!all.length){ VACIOS++; if (VACIOS < 6) setTimeout(function(){ traer().then(avisarBase, function(){}); }, 2500); if (MEM && BT.some(function(t){ return (MEM[t] || []).length; })) return MEM; }
@@ -391,7 +391,16 @@ window.__nvRTxt = function(t){ var r = (t && t.rep) || ""; if (r === "diaria") r
   };
 
   /* ---------- lo que calcula Google (ventas, envíos, clima…): se muestra lo último al instante y se actualiza atrás ---------- */
-  var SWR = ["envios","pedidosGanancia","clima","mayoristasAT","resenasAT","mayHistAT"];
+  var SWR = ["envios","pedidosGanancia","clima"];
+  /* Airtable ya no se usa: mayoristas, reseñas e historial salen de la copia guardada en el tablero */
+  ["mayoristasAT","resenasAT","mayHistAT"].forEach(function(n){
+    L[n] = function(a){
+      return SB().from("registros").select("data").eq("tabla", "at_copia").eq("id", n).then(function(q){
+        var d = (q.data || [])[0]; if (d && d.data && d.data.r != null) return d.data.r;
+        throw new Error("Sin copia de " + n);
+      });
+    };
+  });
   var VIVOS = {};
   function clave(n, a){ return "nv-swr-" + n + "-" + JSON.stringify(a || []).slice(0, 80); }
   function leerC(k){ try { return JSON.parse(localStorage.getItem(k) || "null"); } catch(e){ return null; } }
