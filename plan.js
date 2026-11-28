@@ -1205,11 +1205,12 @@
   function luciUsd(){
     if (!sb() || Date.now() - LUUSD < 90e3) return; LUUSD = Date.now();
     var desde = new Date(Math.max(Date.now() - 3 * 864e5, Date.parse("2026-11-27T20:30:00Z"))).toISOString();
-    sb().from("movimientos").select("id,msg_id,texto,autor,monto,creado").gte("creado", desde).order("id", { ascending: false }).limit(60).then(function(r){
+    sb().from("movimientos").select("id,msg_id,texto,autor,monto,creado,adj").gte("creado", desde).order("id", { ascending: false }).limit(60).then(function(r){
       (r.data || []).forEach(function(mv){
         var t = String(mv.texto || ""), low = t.toLowerCase();
         if (!/(u\$s|us\$|usd|d[oó]lar)/i.test(t)) return;
-        var usd = usdDe(t); if (!usd) return;
+        var usd = usdDe(t);
+        if (!usd){ if (/facebook|meta|publicidad|\bads?\b/i.test(t)) usdFotoMov(mv, t); return; }
         var compra = /compr[eéoó]|compra/i.test(low), publi = /publicidad|facebook|meta|instagram|\bfb\b|\bads?\b/i.test(low);
         if (!compra && !publi) return;
         var id = "usdm-" + mv.id, monto = compra ? -usd : usd;
@@ -1228,6 +1229,34 @@
     }, function(){});
   }
   setInterval(function(){ try { luciUsd(); } catch(e){} }, 30000);
+  /* captura de Facebook subida en #movimientos: leerla y dejar en Movimientos USD lo que falte */
+  function usdFotoMov(mv, t){
+    var adj = arr(mv.adj).filter(function(a){ return a && a.id && /image/i.test((a.t || "") + " " + (a.n || "")); })[0]; if (!adj) return;
+    var run = window.google && google.script && google.script.run; if (!run) return;
+    var id = "luci-usdf-" + mv.id;
+    sb().from("registros").select("id").eq("tabla", "chat").eq("id", id).then(function(x){
+      if (x.error || (x.data && x.data.length)) return;
+      var marca = { tabla: "chat", id: id, data: { id: id, adj: [], por: "luci", reac: {}, canal: "luci", texto: "👀 Estoy leyendo la captura de Facebook que subiste en #movimientos…", creado: Date.now(), borrado: false, cambiado: Date.now() }, borrado: false, actualizado: new Date().toISOString(), por: "luci" };
+      sb().from("registros").upsert(marca, { onConflict: "tabla,id", ignoreDuplicates: true }).then(function(w){
+        if (w.error) return;
+        run.withSuccessHandler(function(du){
+          var b64 = String(du || "").split(",").pop(); if (!b64) return;
+          var q = "Mirá esta captura de movimientos de una billetera o banco. Devolvé SOLO un JSON (sin texto extra) con los pagos a Facebook o Meta (publicidad), así: [{\"fecha\":\"YYYY-MM-DD\",\"usd\":156.45,\"estado\":\"hecho o en proceso\"}]. Usá el monto en USD/USDs/USDc, nunca el de ARS. Si no dice el año, es " + new Date().getFullYear() + ". Si no hay pagos de Facebook devolvé [].";
+          run.withSuccessHandler(function(r){
+            var m = String(r && r.t || "").match(/\[[\s\S]*\]/), L = []; try { L = JSON.parse(m ? m[0] : "[]"); } catch(e){ L = []; }
+            L = L.filter(function(z){ return z && z.fecha && +z.usd > 0; });
+            Promise.all([usdCargados(), sb().from("registros").select("data,borrado").eq("tabla", "usd_pend").limit(1000).then(function(p){ return (p.data || []).filter(function(z){ return !z.borrado && z.data && z.data.estado !== "descartado"; }).map(function(z){ return { id: z.data.id, monto: z.data.monto, fecha: z.data.fecha }; }); })]).then(function(R){
+              var C = R[0].concat(R[1]), usados = {}, falta = [];
+              L.forEach(function(z){ var hit = C.filter(function(c){ return !usados[c.id] && Math.abs((+c.monto || 0) - (+z.usd)) < 0.02 && dDias(c.fecha, z.fecha) <= 3; })[0]; if (hit) usados[hit.id] = 1; else falta.push(z); });
+              return Promise.all(falta.map(function(z){ return usdPendNuevo({ fecha: z.fecha, concepto: "PAGO " + (+z.usd) + " USD PUBLICIDAD", monto: +z.usd, notas: /proceso/i.test(z.estado || "") ? "figuraba en proceso" : "", origen: "Facebook · captura en #movimientos (" + (mv.autor || "") + ")", por: mv.autor || "" }); })).then(function(){
+                luci(!L.length ? "Leí la captura de #movimientos pero no vi pagos de Facebook 🤔" : !falta.length ? "Leí la captura de #movimientos: los " + L.length + " pagos de Facebook ya estaban cargados ✓" : "Leí la captura de #movimientos 👀 Faltaban " + falta.length + ":\n" + falta.map(function(z){ return "• " + fcorta(z.fecha) + " · " + String((+z.usd).toFixed(2)).replace(".", ",") + " USD"; }).join("\n") + "\nLos dejé para aprobar en Movimientos → 🇺🇸 Movimientos USD 💵\n(El movimiento en pesos lo pueden descartar: esto va solo en dólares.)");
+              });
+            });
+          }).withFailureHandler(function(){}).luciIA(q, "{}", [], { mime: "image/jpeg", data: b64 });
+        }).withFailureHandler(function(){}).fotoB64(adj.id);
+      });
+    });
+  }
   window.__nvLuci = { alertas: function(){ return alertas(); }, texto: function(){ return textoChat(); }, usd: function(){ LUUSD = 0; luciUsd(); }, push: luciPush };
   /* ================= Canal "Luci" en el chat: comandos, aprobaciones y respuestas ================= */
   LUCI_CANAL = "luci";
