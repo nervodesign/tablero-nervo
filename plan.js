@@ -2260,6 +2260,23 @@
   }
   setInterval(function(){ try { luciStock(); } catch(e){} }, 60000);
   window.__nvStk = { buscar: skBuscar, dia0: function(){ return ST0.f; } };
+  /* ---------- Nervo 2026 en el celu: solapas en una sola tira deslizable y tarjetitas chicas ---------- */
+  (function(){
+    var CSS = "@media (max-width:760px){" +
+      "nav.tabs.nv2{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;max-width:100%!important;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px!important}" +
+      "nav.tabs.nv2::-webkit-scrollbar{display:none}" +
+      "nav.tabs.nv2 .bt{flex:0 0 auto!important;white-space:nowrap!important}" +
+      ".edash{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;overflow:visible!important}" +
+      ".edash .edt{min-height:0!important;height:auto!important;width:auto!important;min-width:0!important;padding:7px 9px!important;border-radius:12px!important;gap:1px!important;justify-content:center!important;align-items:flex-start!important;text-align:left!important}" +
+      ".edash .edt b{font-size:18px!important;line-height:1.1!important}" +
+      ".edash .edt span{font-size:10.5px!important;line-height:1.2!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;max-width:100%!important;display:block!important}" +
+      "}";
+    function poner(){
+      var hs = document.querySelectorAll(".bz-host");
+      for (var i = 0; i < hs.length; i++){ var sr = hs[i].shadowRoot; if (!sr || sr.getElementById("nvMovil")) continue; var s = document.createElement("style"); s.id = "nvMovil"; s.textContent = CSS; sr.appendChild(s); }
+    }
+    setInterval(function(){ try { poner(); } catch(e){} }, 1000);
+  })();
   function pintar(){
     if (!ROOT || !ROOT.isConnected) return;
     ROOT.innerHTML = V.vista === "luci" ? vLuci() : V.id ? vFicha() : vLista();
